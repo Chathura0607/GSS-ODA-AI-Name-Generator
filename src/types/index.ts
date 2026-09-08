@@ -37,7 +37,7 @@ export interface ProcessedProduct {
 
 export interface AppSettings {
   geminiApiKey: string;
-  geminiModel: 'gemini-2.0-flash' | 'gemini-1.5-flash' | 'gemini-1.5-pro';
+  geminiModel: string;
   retentionDays: number; // default 7
   autoProcessOnUpload: boolean;
   strictContainerCheck: boolean;

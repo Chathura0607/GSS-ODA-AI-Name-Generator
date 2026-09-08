@@ -49,7 +49,7 @@ export interface AnalysisResult {
 export async function analyzeProductImage(
   dataUrl: string,
   apiKey: string,
-  modelName: string = 'gemini-2.0-flash'
+  modelName: string = 'gemini-1.5-flash'
 ): Promise<AnalysisResult> {
   if (!apiKey) {
     throw new Error(
@@ -66,7 +66,7 @@ export async function analyzeProductImage(
   const mimeType = matches[1];
   const base64Data = matches[2];
 
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey.trim()}`;
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName.trim()}:generateContent?key=${apiKey.trim()}`;
 
   const requestBody = {
     contents: [
@@ -166,8 +166,8 @@ export async function analyzeProductImage(
 /**
  * Quick validation of an API Key
  */
-export async function testGeminiApiKey(apiKey: string, model: string = 'gemini-2.0-flash'): Promise<boolean> {
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey.trim()}`;
+export async function testGeminiApiKey(apiKey: string, model: string = 'gemini-1.5-flash'): Promise<boolean> {
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model.trim()}:generateContent?key=${apiKey.trim()}`;
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

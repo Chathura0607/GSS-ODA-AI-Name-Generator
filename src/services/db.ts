@@ -120,7 +120,7 @@ export async function saveSettings(settings: AppSettings): Promise<void> {
 export async function loadSettings(): Promise<AppSettings> {
   const defaultSettings: AppSettings = {
     geminiApiKey: localStorage.getItem('gss_gemini_key') || '',
-    geminiModel: 'gemini-2.0-flash',
+    geminiModel: 'gemini-1.5-flash',
     retentionDays: 7,
     autoProcessOnUpload: true,
     strictContainerCheck: true,

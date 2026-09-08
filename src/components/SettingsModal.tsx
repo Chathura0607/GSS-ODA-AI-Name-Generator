@@ -181,14 +181,30 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               AI Multimodal Vision Engine
             </label>
             <select
-              value={model}
-              onChange={e => setModel(e.target.value as any)}
+              value={['gemini-1.5-flash', 'gemini-2.5-flash', 'gemini-3.6-flash', 'gemini-1.5-pro', 'gemini-2.0-flash'].includes(model) ? model : 'custom'}
+              onChange={e => {
+                if (e.target.value !== 'custom') {
+                  setModel(e.target.value);
+                }
+              }}
               className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 focus:outline-none focus:border-cyan-500"
             >
-              <option value="gemini-2.0-flash">Gemini 2.0 Flash (Recommended - Ultra fast & highly accurate)</option>
-              <option value="gemini-1.5-flash">Gemini 1.5 Flash (Lightweight & high throughput)</option>
-              <option value="gemini-1.5-pro">Gemini 1.5 Pro (Deep complex reasoning)</option>
+              <option value="gemini-1.5-flash">Gemini 1.5 Flash (Recommended - Free Tier & High Limit)</option>
+              <option value="gemini-2.5-flash">Gemini 2.5 Flash (Next-Gen Fast & Accurate)</option>
+              <option value="gemini-3.6-flash">Gemini 3.6 Flash (Latest Vision Engine)</option>
+              <option value="gemini-1.5-pro">Gemini 1.5 Pro (Deep Complex Reasoning)</option>
+              <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+              <option value="custom">Custom Model Name...</option>
             </select>
+            {(!['gemini-1.5-flash', 'gemini-2.5-flash', 'gemini-3.6-flash', 'gemini-1.5-pro', 'gemini-2.0-flash'].includes(model) || model === 'custom') && (
+              <input
+                type="text"
+                value={model === 'custom' ? '' : model}
+                onChange={e => setModel(e.target.value)}
+                placeholder="e.g. gemini-1.5-flash-latest or gemini-3.6-flash"
+                className="w-full px-3 py-2 bg-slate-800/80 border border-purple-500/50 rounded-lg text-slate-200 font-mono text-xs focus:outline-none focus:border-purple-400"
+              />
+            )}
           </div>
 
           {/* Retention Days */}
