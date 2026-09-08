@@ -24,6 +24,7 @@ interface ProductTableProps {
   onDeleteProduct: (id: string) => void;
   onDeleteMultiple: (ids: string[]) => void;
   onReanalyze: (product: ProcessedProduct) => void;
+  onReanalyzeMultiple?: (products: ProcessedProduct[]) => void;
   onInspect: (product: ProcessedProduct) => void;
 }
 
@@ -33,13 +34,16 @@ export const ProductTable: React.FC<ProductTableProps> = ({
   onDeleteProduct,
   onDeleteMultiple,
   onReanalyze,
+  onReanalyzeMultiple,
   onInspect,
 }) => {
   const [search, setSearch] = useState('');
-  const [filterValid, setFilterValid] = useState<'all' | 'valid' | 'warning'>('all');
+  const [filterValid, setFilterValid] = useState<'all' | 'valid' | 'warning' | 'error'>('all');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [bulkCopied, setBulkCopied] = useState(false);
+
+  const failedProducts = products.filter(p => p.status === 'error');
 
   // Filter products
   const filteredProducts = products.filter(p => {
@@ -48,12 +52,14 @@ export const ProductTable: React.FC<ProductTableProps> = ({
       p.standardName.toLowerCase().includes(term) ||
       p.attributes.brand.toLowerCase().includes(term) ||
       p.attributes.item.toLowerCase().includes(term) ||
-      p.attributes.flavorOrVariant.toLowerCase().includes(term);
+      p.attributes.flavorOrVariant.toLowerCase().includes(term) ||
+      p.sourceFileName.toLowerCase().includes(term);
 
     if (!matchesSearch) return false;
 
-    if (filterValid === 'valid') return p.isLengthValid && p.isContainerValid && p.isAlphanumericValid;
+    if (filterValid === 'valid') return p.status === 'completed' && p.isLengthValid && p.isContainerValid && p.isAlphanumericValid;
     if (filterValid === 'warning') return !p.isLengthValid || !p.isContainerValid || !p.isAlphanumericValid;
+    if (filterValid === 'error') return p.status === 'error';
     return true;
   });
 
@@ -134,14 +140,50 @@ export const ProductTable: React.FC<ProductTableProps> = ({
               <option value="all">All Products ({products.length})</option>
               <option value="valid">100% Valid Only</option>
               <option value="warning">Has Rule Warnings</option>
+              {failedProducts.length > 0 && (
+                <option value="error">⚠️ Failed Analysis ({failedProducts.length})</option>
+              )}
             </select>
           </div>
         </div>
 
-        {/* Bulk Action Controls */}
-        <div className="flex items-center gap-2">
+        {/* Action Controls */}
+        <div className="flex flex-wrap items-center gap-2">
+          {failedProducts.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                if (onReanalyzeMultiple) {
+                  onReanalyzeMultiple(failedProducts);
+                } else {
+                  failedProducts.forEach(p => onReanalyze(p));
+                }
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition-colors shadow-lg shadow-amber-500/10"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" />
+              ⚡ Retry Failed AI Analysis ({failedProducts.length})
+            </button>
+          )}
+
           {selectedIds.length > 0 && (
             <>
+              <button
+                type="button"
+                onClick={() => {
+                  const selected = products.filter(p => selectedIds.includes(p.id));
+                  if (onReanalyzeMultiple) {
+                    onReanalyzeMultiple(selected);
+                  } else {
+                    selected.forEach(p => onReanalyze(p));
+                  }
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 transition-colors"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                Re-run AI ({selectedIds.length})
+              </button>
+
               <button
                 type="button"
                 onClick={handleBulkCopy}
@@ -296,6 +338,30 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                             </button>
                           </div>
 
+                          {/* Error / Analyzing Status Notice */}
+                          {p.status === 'error' && (
+                            <div className="flex items-center justify-between gap-1.5 p-1.5 rounded-lg bg-rose-500/15 border border-rose-500/30 text-rose-300 text-[11px]">
+                              <div className="flex items-center gap-1 min-w-0 truncate" title={p.errorMessage || 'AI Analysis Failed'}>
+                                <AlertTriangle className="w-3 h-3 text-rose-400 shrink-0" />
+                                <span className="truncate">AI Failed: {p.errorMessage || 'Check Key / Model'}</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => onReanalyze(p)}
+                                className="px-1.5 py-0.5 rounded bg-rose-600/40 hover:bg-rose-600/70 text-white font-semibold text-[10px] shrink-0 transition-colors"
+                              >
+                                Retry
+                              </button>
+                            </div>
+                          )}
+
+                          {p.status === 'analyzing' && (
+                            <div className="flex items-center gap-1.5 p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-[11px] animate-pulse">
+                              <Sparkles className="w-3 h-3 text-cyan-400 animate-spin shrink-0" />
+                              <span>Analyzing image with AI...</span>
+                            </div>
+                          )}
+
                           <div className="flex items-center gap-2">
                             <span
                               className={`text-[10px] font-mono px-1.5 py-0.5 rounded font-semibold ${
@@ -306,6 +372,12 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                             >
                               {p.characterCount} / 150
                             </span>
+
+                            {p.status === 'completed' && p.confidenceScore > 0 && (
+                              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-medium">
+                                {p.confidenceScore}% AI Confidence
+                              </span>
+                            )}
 
                             {p.isAlphanumericValid ? (
                               <span className="text-[10px] text-emerald-400 flex items-center gap-0.5">

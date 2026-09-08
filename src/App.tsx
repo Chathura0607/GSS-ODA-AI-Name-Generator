@@ -207,6 +207,21 @@ export const App: React.FC = () => {
     await refreshStats();
   };
 
+  // Reanalyze multiple items (e.g. all failed or selected items)
+  const handleReanalyzeMultiple = async (items: ProcessedProduct[]) => {
+    if (!settings.geminiApiKey) {
+      setIsSettingsOpen(true);
+      return;
+    }
+    setIsProcessing(true);
+    for (const item of items) {
+      const updated = await analyzeSingle(item, settings.geminiApiKey, settings.geminiModel);
+      setProducts(prev => prev.map(p => (p.id === updated.id ? updated : p)));
+    }
+    setIsProcessing(false);
+    await refreshStats();
+  };
+
   // Update an existing product
   const handleUpdateProduct = async (updated: ProcessedProduct) => {
     setProducts(prev => prev.map(p => (p.id === updated.id ? updated : p)));
@@ -352,6 +367,7 @@ export const App: React.FC = () => {
           onDeleteProduct={handleDeleteProduct}
           onDeleteMultiple={handleDeleteMultiple}
           onReanalyze={handleReanalyze}
+          onReanalyzeMultiple={handleReanalyzeMultiple}
           onInspect={p => setInspectingProduct(p)}
         />
       </main>
