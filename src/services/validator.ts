@@ -273,26 +273,46 @@ export function validateStandardName(
   };
 }
 
+export interface SkuLinkInfo {
+  url: string | null;
+  isDirectProductPage: boolean;
+  domainName: string;
+}
+
 /**
- * Generates an exact Google Product/SKU Search URL matching Brand, Item, Flavor, Size, and Pack count.
+ * Generates an exact Product Page URL or high-precision Google Search URL matching Brand, Item, Flavor, Size, and Pack count.
  * Returns null if essential SKU identifiers (Brand and Item/Flavor) are missing.
  */
 export function generateGoogleSkuUrl(
-  productOrAttr: { attributes?: ProductAttributes; skuSearchQuery?: string } | ProductAttributes,
-  customQuery?: string
+  productOrAttr: { attributes?: ProductAttributes; skuSearchQuery?: string; exactProductUrl?: string; googleSkuUrl?: string } | ProductAttributes,
+  customQueryOrUrl?: string
 ): string | null {
-  if (customQuery && customQuery.trim()) {
-    return `https://www.google.com/search?q=${encodeURIComponent(customQuery.trim())}`;
+  if (customQueryOrUrl && customQueryOrUrl.trim()) {
+    const trimmed = customQueryOrUrl.trim();
+    if (/^https?:\/\//i.test(trimmed)) {
+      return trimmed;
+    }
+    return `https://www.google.com/search?q=${encodeURIComponent(trimmed)}`;
   }
 
-  if ('skuSearchQuery' in productOrAttr && productOrAttr.skuSearchQuery) {
-    return `https://www.google.com/search?q=${encodeURIComponent(productOrAttr.skuSearchQuery.trim())}`;
+  // 1. Direct exact product URL from product / attributes (e.g. https://snackje.com/products/... or https://toongabbie...)
+  if ('exactProductUrl' in productOrAttr && productOrAttr.exactProductUrl && /^https?:\/\//i.test(productOrAttr.exactProductUrl.trim())) {
+    return productOrAttr.exactProductUrl.trim();
   }
 
   const attr: ProductAttributes =
     'attributes' in productOrAttr && productOrAttr.attributes
       ? productOrAttr.attributes
       : (productOrAttr as ProductAttributes);
+
+  if (attr.exactProductUrl && /^https?:\/\//i.test(attr.exactProductUrl.trim())) {
+    return attr.exactProductUrl.trim();
+  }
+
+  // 2. Custom SKU query if specified
+  if ('skuSearchQuery' in productOrAttr && productOrAttr.skuSearchQuery) {
+    return `https://www.google.com/search?q=${encodeURIComponent(productOrAttr.skuSearchQuery.trim())}`;
+  }
 
   const brand = (attr.brand || '').trim();
   const subBrand = (attr.subBrand || '').trim();
@@ -322,5 +342,35 @@ export function generateGoogleSkuUrl(
 
   const query = queryParts.join(' ').replace(/\s+/g, ' ').trim();
   return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+}
+
+/**
+ * Returns metadata about the SKU link (e.g. whether it's a direct product page on snackje.com, etc., or Google Search)
+ */
+export function getSkuLinkInfo(
+  productOrAttr: { attributes?: ProductAttributes; skuSearchQuery?: string; exactProductUrl?: string; googleSkuUrl?: string } | ProductAttributes,
+  customQueryOrUrl?: string
+): SkuLinkInfo {
+  const url = generateGoogleSkuUrl(productOrAttr, customQueryOrUrl);
+  if (!url) {
+    return { url: null, isDirectProductPage: false, domainName: '' };
+  }
+
+  try {
+    const parsedUrl = new URL(url);
+    const host = parsedUrl.hostname.replace(/^www\./i, '');
+    const isGoogleSearch = host.includes('google.') && parsedUrl.pathname.includes('/search');
+    return {
+      url,
+      isDirectProductPage: !isGoogleSearch,
+      domainName: isGoogleSearch ? 'Google Search' : host,
+    };
+  } catch {
+    return {
+      url,
+      isDirectProductPage: false,
+      domainName: 'Product Link',
+    };
+  }
 }
 

@@ -16,7 +16,12 @@ import {
 import { ProcessedProduct, ProductAttributes } from '../types';
 import { ContainerTypeSelect } from './ContainerTypeSelect';
 import { MEASUREMENT_UNITS } from '../constants/containerTypes';
-import { assembleStandardName, validateStandardName, generateGoogleSkuUrl } from '../services/validator';
+import {
+  assembleStandardName,
+  validateStandardName,
+  generateGoogleSkuUrl,
+  getSkuLinkInfo,
+} from '../services/validator';
 
 interface ProductDetailModalProps {
   product: ProcessedProduct | null;
@@ -35,14 +40,17 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 }) => {
   if (!isOpen || !product) return null;
 
-  const [attributes, setAttributes] = useState<ProductAttributes>({ ...product.attributes });
+  const [attributes, setAttributes] = useState<ProductAttributes>({
+    ...product.attributes,
+    exactProductUrl: product.attributes.exactProductUrl || product.exactProductUrl || '',
+  });
   const [zoom, setZoom] = useState(1);
   const [copied, setCopied] = useState(false);
   const [copiedSku, setCopiedSku] = useState(false);
 
   const currentStandardName = assembleStandardName(attributes);
   const validation = validateStandardName(currentStandardName, attributes.containerType);
-  const skuUrl = generateGoogleSkuUrl(attributes);
+  const skuInfo = getSkuLinkInfo(attributes);
 
   const handleAttributeChange = (field: keyof ProductAttributes, value: string) => {
     const updated = { ...attributes, [field]: value };
@@ -58,7 +66,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
       isLengthValid: validation.isLengthValid,
       isContainerValid: validation.isContainerValid,
       isAlphanumericValid: validation.isAlphanumericValid,
-      googleSkuUrl: skuUrl || undefined,
+      googleSkuUrl: skuInfo.url || undefined,
+      exactProductUrl: attributes.exactProductUrl || undefined,
       updatedAt: Date.now(),
     };
     onUpdateProduct(updatedProduct);
@@ -72,8 +81,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   };
 
   const handleCopySku = () => {
-    if (!skuUrl) return;
-    navigator.clipboard.writeText(skuUrl);
+    if (!skuInfo.url) return;
+    navigator.clipboard.writeText(skuInfo.url);
     setCopiedSku(true);
     setTimeout(() => setCopiedSku(false), 2000);
   };
@@ -188,14 +197,22 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               )}
             </div>
 
-            {/* Google SKU Reference Section */}
+            {/* Exact Product SKU / Web Link Reference Section */}
             <div className="p-4 rounded-xl bg-slate-800/60 border border-slate-700/80 space-y-2.5">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <span className="text-xs uppercase font-bold text-slate-300 tracking-wider flex items-center gap-1.5">
-                  <Globe className="w-3.5 h-3.5 text-cyan-400" />
-                  Google SKU Search Reference
-                </span>
-                {skuUrl ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs uppercase font-bold text-slate-300 tracking-wider flex items-center gap-1.5">
+                    <Globe className="w-3.5 h-3.5 text-cyan-400" />
+                    Exact Product SKU Web Link
+                  </span>
+                  {skuInfo.isDirectProductPage && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      {skuInfo.domainName}
+                    </span>
+                  )}
+                </div>
+
+                {skuInfo.url ? (
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
@@ -210,18 +227,18 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                       ) : (
                         <>
                           <Link2 className="w-3.5 h-3.5" />
-                          <span>Copy SKU Link</span>
+                          <span>{skuInfo.isDirectProductPage ? 'Copy Product Link' : 'Copy SKU Link'}</span>
                         </>
                       )}
                     </button>
                     <a
-                      href={skuUrl}
+                      href={skuInfo.url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-600 transition-colors"
                     >
                       <ExternalLink className="w-3.5 h-3.5 text-cyan-400" />
-                      <span>Open Search</span>
+                      <span>{skuInfo.isDirectProductPage ? 'Open Product Page' : 'Open in Google'}</span>
                     </a>
                   </div>
                 ) : (
@@ -232,10 +249,38 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 )}
               </div>
 
-              {skuUrl ? (
+              {/* Direct Product URL input field */}
+              <div className="space-y-1">
+                <label className="block text-[11px] text-slate-400 font-medium">
+                  Direct Retail / Brand Website URL (or auto-detected product link)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="url"
+                    value={attributes.exactProductUrl || ''}
+                    onChange={e => handleAttributeChange('exactProductUrl', e.target.value)}
+                    placeholder="e.g. https://snackje.com/products/monster-energy-ultra-vice-guava-500ml"
+                    className="w-full px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-xs font-mono text-cyan-300 placeholder-slate-600 focus:border-cyan-500 focus:outline-none"
+                  />
+                  {attributes.exactProductUrl && (
+                    <button
+                      type="button"
+                      onClick={() => handleAttributeChange('exactProductUrl', '')}
+                      className="px-2 py-1.5 text-xs text-slate-400 hover:text-rose-400 bg-slate-800 border border-slate-700 rounded-lg transition-colors"
+                      title="Clear custom URL"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {skuInfo.url ? (
                 <div className="font-mono text-xs text-slate-300 bg-slate-950/80 p-2.5 rounded-lg border border-slate-800 break-all select-all">
-                  <span className="text-slate-500 select-none">Search Query URL: </span>
-                  <span className="text-cyan-300">{skuUrl}</span>
+                  <span className="text-slate-500 select-none">Active SKU Link: </span>
+                  <span className={skuInfo.isDirectProductPage ? 'text-emerald-300' : 'text-cyan-300'}>
+                    {skuInfo.url}
+                  </span>
                 </div>
               ) : (
                 <p className="text-[11px] text-slate-400 italic">

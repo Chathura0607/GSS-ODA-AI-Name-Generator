@@ -17,7 +17,12 @@ import {
 } from 'lucide-react';
 import { ProcessedProduct, ProductAttributes } from '../types';
 import { ContainerTypeSelect } from './ContainerTypeSelect';
-import { assembleStandardName, validateStandardName, generateGoogleSkuUrl } from '../services/validator';
+import {
+  assembleStandardName,
+  validateStandardName,
+  generateGoogleSkuUrl,
+  getSkuLinkInfo,
+} from '../services/validator';
 import { exportToExcel } from '../services/excelExport';
 
 interface ProductTableProps {
@@ -287,7 +292,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                 filteredProducts.map(p => {
                   const isSelected = selectedIds.includes(p.id);
                   const isNameOverLimit = p.characterCount > 150;
-                  const skuUrl = generateGoogleSkuUrl(p);
+                  const skuInfo = getSkuLinkInfo(p);
 
                   return (
                     <tr
@@ -410,15 +415,31 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                             )}
                           </div>
 
-                          {/* Google SKU Search & Copy Link */}
+                          {/* Exact Product SKU / Web URL Link */}
                           <div className="pt-1 flex items-center gap-1.5 flex-wrap">
-                            {skuUrl ? (
-                              <div className="inline-flex items-center gap-1 bg-slate-800/90 border border-slate-700 rounded-md px-1.5 py-0.5">
+                            {skuInfo.url ? (
+                              <div
+                                className={`inline-flex items-center gap-1.5 border rounded-md px-2 py-0.5 ${
+                                  skuInfo.isDirectProductPage
+                                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                                    : 'bg-slate-800/90 border-slate-700 text-cyan-300'
+                                }`}
+                              >
+                                {skuInfo.isDirectProductPage && (
+                                  <span className="text-[10px] font-bold px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300">
+                                    {skuInfo.domainName}
+                                  </span>
+                                )}
+
                                 <button
                                   type="button"
-                                  onClick={() => handleCopySku(p.id, skuUrl)}
-                                  className="flex items-center gap-1 text-[11px] font-medium text-cyan-300 hover:text-white transition-colors"
-                                  title="Copy exact Google SKU reference link"
+                                  onClick={() => handleCopySku(p.id, skuInfo.url!)}
+                                  className={`flex items-center gap-1 text-[11px] font-medium transition-colors ${
+                                    skuInfo.isDirectProductPage
+                                      ? 'text-emerald-300 hover:text-white'
+                                      : 'text-cyan-300 hover:text-white'
+                                  }`}
+                                  title={`Copy link: ${skuInfo.url}`}
                                 >
                                   {copiedSkuId === p.id ? (
                                     <>
@@ -427,20 +448,20 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                                     </>
                                   ) : (
                                     <>
-                                      <Link2 className="w-3 h-3 text-cyan-400" />
-                                      <span>Copy SKU Link</span>
+                                      <Link2 className="w-3 h-3 text-current" />
+                                      <span>{skuInfo.isDirectProductPage ? 'Copy Product Link' : 'Copy SKU Link'}</span>
                                     </>
                                   )}
                                 </button>
                                 <span className="text-slate-600">|</span>
                                 <a
-                                  href={skuUrl}
+                                  href={skuInfo.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="flex items-center gap-0.5 text-[11px] text-slate-400 hover:text-cyan-300 transition-colors"
-                                  title="Open Google Search in new tab to verify SKU"
+                                  className="flex items-center gap-0.5 text-[11px] text-slate-400 hover:text-white transition-colors"
+                                  title={`Open ${skuInfo.domainName} in new tab`}
                                 >
-                                  <span>Google</span>
+                                  <span>{skuInfo.isDirectProductPage ? 'Open Site' : 'Google'}</span>
                                   <ExternalLink className="w-2.5 h-2.5" />
                                 </a>
                               </div>

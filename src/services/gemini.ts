@@ -27,19 +27,23 @@ If none matches or it's unidentifiable, use "None" or the closest match like "Bo
    - Any age statements, edition descriptors, or value pack claims (e.g. "18 Year Old Limited Edition", "Limited Edition", "Special Edition", "Collector Edition", "Value Pack", "3x Eco Refill", "Bonus Pack", "Buy 1 Get 1 Free") MUST be placed in "valuePacksDescription".
    - Example output: "Glenfiddich Single Malt Scotch Whisky Cardboard Box 700 ml 18 Year Old Limited Edition".
 11. Cleanliness: Remove trailing packaging punctuation, marketing slogans, and ensure words are properly capitalized.
+12. Exact Product Web URL / Grounding:
+   - If you can identify or find the exact direct product URL or retail listing web page for this exact matching product SKU (e.g. from brand site or online store listing like snackje.com, supercellars.com.au, woolworths, coles, dan murphy's, amazon, etc.), return that full URL in "exactProductUrl".
+   - If not 100% sure of the exact product URL, return empty string "".
 
 You MUST return ONLY a valid JSON object with this exact structure:
 {
-  "brand": "Brand name, e.g. Dove, Cascade, Fanta, Mentos, Anchor, Stimorol, Elastoplast, Glenfiddich",
-  "subBrand": "Sub-brand if applicable, e.g. Moisturising, Ceda, Waves",
-  "item": "Product type, e.g. Hand Wash, Creaming Soda, Gum, Strips, Soft Drink, Single Malt Scotch Whisky",
-  "flavorOrVariant": "Flavor or scent, e.g. Wild Cherry Flavoured, Peppermint, Lemon Lime And Bitters",
+  "brand": "Brand name, e.g. Dove, Cascade, Fanta, Mentos, Anchor, Stimorol, Elastoplast, Glenfiddich, Monster Energy, Vodka Cruiser",
+  "subBrand": "Sub-brand if applicable, e.g. Moisturising, Ceda, Waves, Ultra",
+  "item": "Product type, e.g. Hand Wash, Creaming Soda, Gum, Strips, Soft Drink, Energy Drink, Flavoured Vodka, Single Malt Scotch Whisky",
+  "flavorOrVariant": "Flavor or scent, e.g. Vice Guava, Vanilla Cola, Wild Cherry Flavoured, Peppermint, Lemon Lime And Bitters",
   "additionalWordings": "Functional words, e.g. Sugarfree, Flexible Fabric Breathable Water Repellent, Refill, No Sugar",
   "containerType": "EXACT match from the 49 allowed GSS container types e.g. Plastic Container, Cardboard Box, Bottle, Can",
   "subPackages": "Pack count e.g. 6 Pack, 10 Pack, 12 Pack, 4 Pack, or empty",
-  "size": "Number only e.g. 60, 21, 100, 250, 375, 700, 1.5",
+  "size": "Number only e.g. 60, 21, 100, 250, 375, 500, 700, 1.5",
   "measurementUnit": "ml, l, g, kg, or Units (for pieces/strips/capsules/tablets)",
   "valuePacksDescription": "e.g. 18 Year Old Limited Edition, Value Pack, Special Edition, 3x eco-refill, or empty",
+  "exactProductUrl": "Full direct URL to the exact matching product page on the web if found (e.g. https://snackje.com/products/monster-energy-ultra-vice-guava-500ml), or empty string",
   "confidenceScore": integer between 0 and 100,
   "notes": "Brief reason for chosen container type and extracted fields"
 }`;
@@ -48,6 +52,7 @@ export interface AnalysisResult {
   attributes: ProductAttributes;
   standardName: string;
   confidenceScore: number;
+  exactProductUrl?: string;
   notes: string;
 }
 
@@ -238,6 +243,18 @@ export async function analyzeProductImage(
 
   const cleanedPackSize = cleanPackAndSize(parsed.subPackages, parsed.size, parsed.measurementUnit);
 
+  // Extract exact product URL from AI response or grounding metadata if available
+  let exactProductUrl = (parsed.exactProductUrl || '').trim();
+  if (!exactProductUrl || !/^https?:\/\//i.test(exactProductUrl)) {
+    const groundingChunks = data?.candidates?.[0]?.groundingMetadata?.groundingChunks;
+    if (Array.isArray(groundingChunks) && groundingChunks.length > 0) {
+      const firstWebUri = groundingChunks.find((c: any) => c?.web?.uri)?.web?.uri;
+      if (firstWebUri && /^https?:\/\//i.test(firstWebUri)) {
+        exactProductUrl = firstWebUri;
+      }
+    }
+  }
+
   const attributes: ProductAttributes = {
     brand: (parsed.brand || '').trim(),
     subBrand: (parsed.subBrand || '').trim(),
@@ -249,6 +266,7 @@ export async function analyzeProductImage(
     size: cleanedPackSize.size,
     measurementUnit: cleanedPackSize.measurementUnit,
     valuePacksDescription: (parsed.valuePacksDescription || '').trim(),
+    exactProductUrl: exactProductUrl || undefined,
   };
 
   const standardName = assembleStandardName(attributes);
@@ -257,6 +275,7 @@ export async function analyzeProductImage(
     attributes,
     standardName,
     confidenceScore: parsed.confidenceScore ?? 92,
+    exactProductUrl: exactProductUrl || undefined,
     notes: parsed.notes || '',
   };
 }

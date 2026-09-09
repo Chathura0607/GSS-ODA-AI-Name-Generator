@@ -11,6 +11,7 @@ export interface ProductAttributes {
   size: string; // e.g. 750, 300, 200
   measurementUnit: MeasurementUnit | string; // e.g. ml, l, g
   valuePacksDescription: string; // e.g. 3x eco-refill, Special Edition
+  exactProductUrl?: string; // Direct URL to the exact matching product page on the web (e.g. https://snackje.com/products/...)
 }
 
 export type ProcessingStatus = 'queued' | 'extracting' | 'analyzing' | 'completed' | 'error';
@@ -29,6 +30,7 @@ export interface ProcessedProduct {
   isLengthValid: boolean;
   confidenceScore: number; // 0 - 100
   googleSkuUrl?: string;
+  exactProductUrl?: string;
   skuSearchQuery?: string;
   notes?: string;
   status: ProcessingStatus;

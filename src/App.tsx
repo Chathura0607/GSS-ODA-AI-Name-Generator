@@ -106,6 +106,7 @@ export const App: React.FC = () => {
         isAlphanumericValid: validation.isAlphanumericValid,
         confidenceScore: result.confidenceScore,
         googleSkuUrl,
+        exactProductUrl: result.exactProductUrl || result.attributes.exactProductUrl || undefined,
         notes: result.notes,
         status: 'completed',
         updatedAt: Date.now(),
