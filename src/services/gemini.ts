@@ -4,32 +4,34 @@ import { assembleStandardName } from './validator';
 
 const SYSTEM_PROMPT = `You are an expert AI Operational Data Analyst (ODA) specialized in standardized Fast-Moving Consumer Goods (FMCG) and retail product cataloguing for GSS.
 
-Analyze the uploaded product image and extract attributes to generate the Standard English Product Name according to the official GSS ODA rules:
+Analyze the uploaded product image and extract attributes with highest precision to generate the official Standard English Product Name according to the GSS ODA formula:
 
 ### GSS ODA Product Naming Formula:
 [Brand] [Sub-Brand] [Item] [Attributes / Flavor] [Additional Wordings] [Container Type] [Sub Packages] [Size and Measurement Unit(s)] [Value Packs description]
 
 ### Critical Business Rules:
 1. Sub-Brand Duplication: If the Sub-Brand contains the Brand Name, do not duplicate the Brand in the final name.
-2. Item: Indicates product type (e.g. Hand Wash, Creaming Soda, Dry Ginger Ale, Chocolate).
-3. Value Packs / Additional Wordings: Specific attribute (e.g. "Special edition", "3x eco-refill", "No Sugar", "Genuine Refreshments", "Refill").
-4. Characters: English letters and numbers (Alphanumeric) only. Do NOT use special symbols like #, $, %, @, &.
-5. Length limit: Maximum 150 characters total.
-6. Container Type: MUST be chosen STRICTLY from this exact list of 49 official GSS container types:
+2. Item (Product Type): Primary category (e.g. Hand Wash, Creaming Soda, Dry Ginger Ale, Chocolate, Biscuits, Toothpaste, Fruit Cordial).
+3. Flavor / Variant / Scent: (e.g. Cucumber and Green Tea Scent, Orange, Mint, Vanilla, Lemon, Original).
+4. Value Packs / Additional Wordings: Key attributes (e.g. "Special edition", "3x eco-refill", "No Sugar", "Genuine Refreshments", "Refill", "Antibacterial", "Zero Calories").
+5. Characters: English letters and numbers (Alphanumeric) only. Do NOT use special symbols like #, $, %, @, &, -, /, +.
+6. Length limit: Maximum 150 characters total.
+7. Container Type: MUST be chosen STRICTLY from this exact list of 49 official GSS container types:
 ${CONTAINER_TYPES.join(', ')}
 If none matches or it's unidentifiable, use "None" or the closest match like "Bottle", "Can", "Pack", "Pack Plastic", "Pack Carton", or "Pouch".
-7. Measurement Units: Normalize units consistently (e.g. "ml", "l", "g", "kg", "cl", "oz").
+8. Measurement Units: Standardize units consistently (e.g. "ml", "l", "g", "kg", "cl", "oz").
+9. Cleanliness: Remove trailing packaging punctuation, marketing slogans, and ensure words are properly capitalized.
 
 You MUST return ONLY a valid JSON object with this exact structure:
 {
-  "brand": "Brand name, e.g. Dove, Cascade, Fanta, Mentos",
+  "brand": "Brand name, e.g. Dove, Cascade, Fanta, Mentos, Anchor",
   "subBrand": "Sub-brand if applicable, e.g. Moisturising, Ceda",
   "item": "Product type, e.g. Hand Wash, Creaming Soda, Ginger Ale, Chocolate",
   "flavorOrVariant": "Flavor or scent, e.g. Cucumber and Green Tea Scent, Orange, Mint",
   "additionalWordings": "Additional words on packaging, e.g. Refill, No Sugar, Refreshing",
   "containerType": "EXACT match from the 49 allowed GSS container types",
   "subPackages": "Pack count e.g. 12 Pack, 4 Pack, 8 Mini Cans, or empty",
-  "size": "Number only or combined e.g. 750, 300, 200",
+  "size": "Number only or combined e.g. 750, 300, 200, 1.5",
   "measurementUnit": "Standardized unit e.g. ml, l, g, kg",
   "valuePacksDescription": "e.g. 3x eco-refill, Value Pack, Special Edition, or empty",
   "confidenceScore": integer between 0 and 100,
@@ -48,6 +50,20 @@ export interface ModelOption {
   name: string;
   description?: string;
 }
+
+// Fallback priority order of Gemini models
+export const CANDIDATE_MODELS = [
+  'gemini-3.6-flash',
+  'gemini-3.6-flash-latest',
+  'gemini-1.5-flash-latest',
+  'gemini-1.5-flash-002',
+  'gemini-1.5-flash-001',
+  'gemini-1.5-flash',
+  'gemini-1.5-flash-8b',
+  'gemini-1.5-pro-latest',
+  'gemini-1.5-pro',
+  'gemini-2.0-flash-exp',
+];
 
 /**
  * Fetch list of valid Gemini models directly from Google AI Studio API for the given key
@@ -75,7 +91,7 @@ export async function fetchAvailableModels(apiKey: string): Promise<ModelOption[
 }
 
 /**
- * Execute Gemini Vision generateContent with auto-fallback to available models
+ * Execute Gemini Vision generateContent
  */
 async function callGeminiVision(
   model: string,
@@ -92,12 +108,12 @@ async function callGeminiVision(
 }
 
 /**
- * Call Google Gemini Vision API to analyze product image
+ * Call Google Gemini Vision API to analyze product image with automatic model resolution and fallback
  */
 export async function analyzeProductImage(
   dataUrl: string,
   apiKey: string,
-  modelName: string = 'gemini-1.5-flash-latest'
+  modelName: string = 'gemini-3.6-flash'
 ): Promise<AnalysisResult> {
   if (!apiKey) {
     throw new Error(
@@ -149,30 +165,21 @@ export async function analyzeProductImage(
       response.status === 404 ||
       message.includes('not found') ||
       message.includes('no longer available') ||
-      message.includes('ListModels')
+      message.includes('ListModels') ||
+      message.includes('not supported')
     ) {
       // Auto-fetch models available for this API Key
       const available = await fetchAvailableModels(apiKey);
       const fallbackModel =
-        available.find(m => m.id.includes('flash') || m.id.includes('gemini'))?.id ||
+        available.find(m => m.id.includes('3.6') || m.id.includes('flash') || m.id.includes('gemini'))?.id ||
         (available.length > 0 ? available[0].id : null);
 
       if (fallbackModel && fallbackModel !== modelName.trim().replace(/^models\//, '')) {
         console.info(`Switching from ${modelName} to available model: ${fallbackModel}`);
         response = await callGeminiVision(fallbackModel, apiKey, requestBody);
       } else {
-        // Try standard aliases
-        const standardFallbacks = [
-          'gemini-1.5-flash-latest',
-          'gemini-1.5-flash-001',
-          'gemini-1.5-flash-002',
-          'gemini-1.5-flash-8b',
-          'gemini-1.5-pro-latest',
-          'gemini-2.5-flash',
-          'gemini-2.0-flash-exp',
-        ];
-
-        for (const candidate of standardFallbacks) {
+        // Try candidate models in sequence
+        for (const candidate of CANDIDATE_MODELS) {
           if (candidate === modelName.trim().replace(/^models\//, '')) continue;
           const retryRes = await callGeminiVision(candidate, apiKey, requestBody);
           if (retryRes.ok) {
@@ -241,35 +248,54 @@ export async function analyzeProductImage(
   return {
     attributes,
     standardName,
-    confidenceScore: parsed.confidenceScore ?? 90,
+    confidenceScore: parsed.confidenceScore ?? 92,
     notes: parsed.notes || '',
   };
 }
 
 /**
- * Quick validation of an API Key with model discovery
+ * Quick validation of an API Key with model discovery and automatic fallback
  */
 export async function testGeminiApiKey(
   apiKey: string,
-  model: string = 'gemini-1.5-flash-latest'
+  model: string = 'gemini-3.6-flash'
 ): Promise<{ success: boolean; activeModel: string; availableModels: ModelOption[] }> {
   const models = await fetchAvailableModels(apiKey);
   const cleanModel = model.trim().replace(/^models\//, '');
 
   let targetModel = cleanModel;
   if (models.length > 0 && !models.some(m => m.id === cleanModel)) {
-    targetModel = models[0].id;
+    // Pick the best match from available models
+    targetModel =
+      models.find(m => m.id.includes('3.6') || m.id.includes('flash'))?.id || models[0].id;
   }
 
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${apiKey.trim()}`;
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: 'Hello, reply with OK if alive.' }] }],
-      generationConfig: { maxOutputTokens: 5 },
-    }),
-  });
+  const tryTest = async (modelToTest: string) => {
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelToTest}:generateContent?key=${apiKey.trim()}`;
+    return fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: 'Hello' }] }],
+        generationConfig: { maxOutputTokens: 5 },
+      }),
+    });
+  };
+
+  let response = await tryTest(targetModel);
+
+  // If failed with 404 or not found, try other candidate models
+  if (!response.ok) {
+    for (const candidate of CANDIDATE_MODELS) {
+      if (candidate === targetModel) continue;
+      const res = await tryTest(candidate);
+      if (res.ok) {
+        response = res;
+        targetModel = candidate;
+        break;
+      }
+    }
+  }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));

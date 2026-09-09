@@ -30,7 +30,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onSaveSettings,
 }) => {
   const [apiKey, setApiKey] = useState(settings.geminiApiKey || '');
-  const [model, setModel] = useState(settings.geminiModel || 'gemini-1.5-flash-latest');
+  const [model, setModel] = useState(settings.geminiModel || 'gemini-3.6-flash');
   const [retentionDays, setRetentionDays] = useState(settings.retentionDays || 7);
   const [autoProcess, setAutoProcess] = useState(settings.autoProcessOnUpload ?? true);
   const [strictContainer, setStrictContainer] = useState(settings.strictContainerCheck ?? true);
@@ -213,7 +213,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               value={
                 availableModels.length > 0
                   ? (availableModels.some(m => m.id === model) ? model : 'custom')
-                  : (['gemini-1.5-flash-latest', 'gemini-1.5-flash', 'gemini-1.5-flash-002', 'gemini-2.5-flash', 'gemini-3.6-flash', 'gemini-1.5-pro-latest', 'gemini-1.5-pro'].includes(model) ? model : 'custom')
+                  : (['gemini-3.6-flash', 'gemini-3.6-flash-latest', 'gemini-1.5-flash-latest', 'gemini-1.5-flash-002', 'gemini-1.5-flash', 'gemini-1.5-pro-latest', 'gemini-1.5-pro'].includes(model) ? model : 'custom')
               }
               onChange={e => {
                 if (e.target.value !== 'custom') {
@@ -233,11 +233,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </>
               ) : (
                 <>
-                  <option value="gemini-1.5-flash-latest">Gemini 1.5 Flash Latest (Recommended - Free Tier)</option>
-                  <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                  <option value="gemini-3.6-flash">Gemini 3.6 Flash (Recommended - Free Tier & High Precision)</option>
+                  <option value="gemini-3.6-flash-latest">Gemini 3.6 Flash Latest</option>
+                  <option value="gemini-1.5-flash-latest">Gemini 1.5 Flash Latest</option>
                   <option value="gemini-1.5-flash-002">Gemini 1.5 Flash 002</option>
-                  <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                  <option value="gemini-3.6-flash">Gemini 3.6 Flash</option>
+                  <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
                   <option value="gemini-1.5-pro-latest">Gemini 1.5 Pro Latest</option>
                   <option value="custom">Custom Model Name...</option>
                 </>
