@@ -12,10 +12,12 @@ import {
   FileSpreadsheet,
   CheckSquare,
   Square,
+  ExternalLink,
+  Link2,
 } from 'lucide-react';
 import { ProcessedProduct, ProductAttributes } from '../types';
 import { ContainerTypeSelect } from './ContainerTypeSelect';
-import { assembleStandardName, validateStandardName } from '../services/validator';
+import { assembleStandardName, validateStandardName, generateGoogleSkuUrl } from '../services/validator';
 import { exportToExcel } from '../services/excelExport';
 
 interface ProductTableProps {
@@ -41,6 +43,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
   const [filterValid, setFilterValid] = useState<'all' | 'valid' | 'warning' | 'error'>('all');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [copiedSkuId, setCopiedSkuId] = useState<string | null>(null);
   const [bulkCopied, setBulkCopied] = useState(false);
 
   const failedProducts = products.filter(p => p.status === 'error');
@@ -83,6 +86,12 @@ export const ProductTable: React.FC<ProductTableProps> = ({
     setTimeout(() => setCopiedId(null), 1800);
   };
 
+  const handleCopySku = (id: string, url: string) => {
+    navigator.clipboard.writeText(url);
+    setCopiedSkuId(id);
+    setTimeout(() => setCopiedSkuId(null), 1800);
+  };
+
   const handleBulkCopy = () => {
     const selectedItems = products.filter(p => selectedIds.includes(p.id));
     const textToCopy = selectedItems.map(p => p.standardName).join('\n');
@@ -99,6 +108,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
     const updatedAttributes = { ...product.attributes, [field]: val };
     const standardName = assembleStandardName(updatedAttributes);
     const validation = validateStandardName(standardName, updatedAttributes.containerType);
+    const googleSkuUrl = generateGoogleSkuUrl(updatedAttributes) || undefined;
 
     const updated: ProcessedProduct = {
       ...product,
@@ -108,6 +118,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
       isLengthValid: validation.isLengthValid,
       isContainerValid: validation.isContainerValid,
       isAlphanumericValid: validation.isAlphanumericValid,
+      googleSkuUrl,
       updatedAt: Date.now(),
     };
 
@@ -276,6 +287,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                 filteredProducts.map(p => {
                   const isSelected = selectedIds.includes(p.id);
                   const isNameOverLimit = p.characterCount > 150;
+                  const skuUrl = generateGoogleSkuUrl(p);
 
                   return (
                     <tr
@@ -362,7 +374,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                             </div>
                           )}
 
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span
                               className={`text-[10px] font-mono px-1.5 py-0.5 rounded font-semibold ${
                                 isNameOverLimit
@@ -394,6 +406,48 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                             {p.isContainerValid && (
                               <span className="text-[10px] text-cyan-400 font-medium">
                                 Valid Container
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Google SKU Search & Copy Link */}
+                          <div className="pt-1 flex items-center gap-1.5 flex-wrap">
+                            {skuUrl ? (
+                              <div className="inline-flex items-center gap-1 bg-slate-800/90 border border-slate-700 rounded-md px-1.5 py-0.5">
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopySku(p.id, skuUrl)}
+                                  className="flex items-center gap-1 text-[11px] font-medium text-cyan-300 hover:text-white transition-colors"
+                                  title="Copy exact Google SKU reference link"
+                                >
+                                  {copiedSkuId === p.id ? (
+                                    <>
+                                      <Check className="w-3 h-3 text-emerald-400" />
+                                      <span className="text-emerald-300 font-semibold">Copied SKU Link</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Link2 className="w-3 h-3 text-cyan-400" />
+                                      <span>Copy SKU Link</span>
+                                    </>
+                                  )}
+                                </button>
+                                <span className="text-slate-600">|</span>
+                                <a
+                                  href={skuUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-0.5 text-[11px] text-slate-400 hover:text-cyan-300 transition-colors"
+                                  title="Open Google Search in new tab to verify SKU"
+                                >
+                                  <span>Google</span>
+                                  <ExternalLink className="w-2.5 h-2.5" />
+                                </a>
+                              </div>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                                <AlertTriangle className="w-3 h-3 text-amber-400" />
+                                Can't find proper SKU
                               </span>
                             )}
                           </div>

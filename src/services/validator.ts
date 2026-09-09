@@ -272,3 +272,55 @@ export function validateStandardName(
     warnings,
   };
 }
+
+/**
+ * Generates an exact Google Product/SKU Search URL matching Brand, Item, Flavor, Size, and Pack count.
+ * Returns null if essential SKU identifiers (Brand and Item/Flavor) are missing.
+ */
+export function generateGoogleSkuUrl(
+  productOrAttr: { attributes?: ProductAttributes; skuSearchQuery?: string } | ProductAttributes,
+  customQuery?: string
+): string | null {
+  if (customQuery && customQuery.trim()) {
+    return `https://www.google.com/search?q=${encodeURIComponent(customQuery.trim())}`;
+  }
+
+  if ('skuSearchQuery' in productOrAttr && productOrAttr.skuSearchQuery) {
+    return `https://www.google.com/search?q=${encodeURIComponent(productOrAttr.skuSearchQuery.trim())}`;
+  }
+
+  const attr: ProductAttributes =
+    'attributes' in productOrAttr && productOrAttr.attributes
+      ? productOrAttr.attributes
+      : (productOrAttr as ProductAttributes);
+
+  const brand = (attr.brand || '').trim();
+  const subBrand = (attr.subBrand || '').trim();
+  const item = (attr.item || '').trim();
+  const flavor = (attr.flavorOrVariant || '').trim();
+  const subPackages = (attr.subPackages || '').trim();
+  const size = (attr.size || '').trim();
+  const unit = normalizeMeasurementUnit(attr.measurementUnit || '');
+
+  // If brand is empty or placeholder (e.g. "Image 1") or no identifying product type/flavor
+  if (!brand || /^image\s*\d+$/i.test(brand) || (!item && !flavor)) {
+    return null;
+  }
+
+  const queryParts = [
+    brand,
+    subBrand && !subBrand.toLowerCase().includes(brand.toLowerCase()) ? subBrand : '',
+    item,
+    flavor,
+    subPackages,
+    size ? (unit && unit !== 'None' ? `${size} ${unit}` : size) : '',
+  ].filter(Boolean);
+
+  if (queryParts.length < 2) {
+    return null;
+  }
+
+  const query = queryParts.join(' ').replace(/\s+/g, ' ').trim();
+  return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+}
+

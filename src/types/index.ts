@@ -28,6 +28,8 @@ export interface ProcessedProduct {
   isContainerValid: boolean;
   isLengthValid: boolean;
   confidenceScore: number; // 0 - 100
+  googleSkuUrl?: string;
+  skuSearchQuery?: string;
   notes?: string;
   status: ProcessingStatus;
   errorMessage?: string;

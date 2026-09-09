@@ -9,11 +9,14 @@ import {
   Sparkles,
   AlertTriangle,
   Save,
+  Globe,
+  ExternalLink,
+  Link2,
 } from 'lucide-react';
 import { ProcessedProduct, ProductAttributes } from '../types';
 import { ContainerTypeSelect } from './ContainerTypeSelect';
 import { MEASUREMENT_UNITS } from '../constants/containerTypes';
-import { assembleStandardName, validateStandardName } from '../services/validator';
+import { assembleStandardName, validateStandardName, generateGoogleSkuUrl } from '../services/validator';
 
 interface ProductDetailModalProps {
   product: ProcessedProduct | null;
@@ -35,9 +38,11 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   const [attributes, setAttributes] = useState<ProductAttributes>({ ...product.attributes });
   const [zoom, setZoom] = useState(1);
   const [copied, setCopied] = useState(false);
+  const [copiedSku, setCopiedSku] = useState(false);
 
   const currentStandardName = assembleStandardName(attributes);
   const validation = validateStandardName(currentStandardName, attributes.containerType);
+  const skuUrl = generateGoogleSkuUrl(attributes);
 
   const handleAttributeChange = (field: keyof ProductAttributes, value: string) => {
     const updated = { ...attributes, [field]: value };
@@ -53,6 +58,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
       isLengthValid: validation.isLengthValid,
       isContainerValid: validation.isContainerValid,
       isAlphanumericValid: validation.isAlphanumericValid,
+      googleSkuUrl: skuUrl || undefined,
       updatedAt: Date.now(),
     };
     onUpdateProduct(updatedProduct);
@@ -63,6 +69,13 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
     navigator.clipboard.writeText(currentStandardName);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleCopySku = () => {
+    if (!skuUrl) return;
+    navigator.clipboard.writeText(skuUrl);
+    setCopiedSku(true);
+    setTimeout(() => setCopiedSku(false), 2000);
   };
 
   return (
@@ -153,7 +166,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-cyan-600/30 hover:bg-cyan-600/50 text-cyan-300 border border-cyan-500/40 transition-colors"
                   >
                     {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                    {copied ? 'Copied' : 'Copy'}
+                    {copied ? 'Copied' : 'Copy Name'}
                   </button>
                 </div>
               </div>
@@ -172,6 +185,62 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     </div>
                   ))}
                 </div>
+              )}
+            </div>
+
+            {/* Google SKU Reference Section */}
+            <div className="p-4 rounded-xl bg-slate-800/60 border border-slate-700/80 space-y-2.5">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <span className="text-xs uppercase font-bold text-slate-300 tracking-wider flex items-center gap-1.5">
+                  <Globe className="w-3.5 h-3.5 text-cyan-400" />
+                  Google SKU Search Reference
+                </span>
+                {skuUrl ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCopySku}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-cyan-600/30 hover:bg-cyan-600/50 text-cyan-300 border border-cyan-500/40 transition-colors"
+                    >
+                      {copiedSku ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Copied Link</span>
+                        </>
+                      ) : (
+                        <>
+                          <Link2 className="w-3.5 h-3.5" />
+                          <span>Copy SKU Link</span>
+                        </>
+                      )}
+                    </button>
+                    <a
+                      href={skuUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-slate-700 hover:bg-slate-600 text-slate-200 border border-slate-600 transition-colors"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Open Search</span>
+                    </a>
+                  </div>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded border border-amber-500/20">
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                    Can't find proper SKU
+                  </span>
+                )}
+              </div>
+
+              {skuUrl ? (
+                <div className="font-mono text-xs text-slate-300 bg-slate-950/80 p-2.5 rounded-lg border border-slate-800 break-all select-all">
+                  <span className="text-slate-500 select-none">Search Query URL: </span>
+                  <span className="text-cyan-300">{skuUrl}</span>
+                </div>
+              ) : (
+                <p className="text-[11px] text-slate-400 italic">
+                  Brand and Product Type/Flavor are required to generate an exact matching Google SKU link.
+                </p>
               )}
             </div>
 

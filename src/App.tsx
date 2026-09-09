@@ -11,7 +11,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { ProcessedProduct, AppSettings } from './types';
 import { ExtractedImageFile } from './services/archiveExtractor';
 import { analyzeProductImage } from './services/gemini';
-import { assembleStandardName, validateStandardName } from './services/validator';
+import { assembleStandardName, validateStandardName, generateGoogleSkuUrl } from './services/validator';
 import {
   saveProduct,
   saveProducts,
@@ -94,6 +94,7 @@ export const App: React.FC = () => {
       // Call Gemini API
       const result = await analyzeProductImage(item.thumbnailUrl, currentApiKey, currentModel);
       const validation = validateStandardName(result.standardName, result.attributes.containerType);
+      const googleSkuUrl = generateGoogleSkuUrl(result.attributes) || undefined;
 
       const completed: ProcessedProduct = {
         ...item,
@@ -104,6 +105,7 @@ export const App: React.FC = () => {
         isContainerValid: validation.isContainerValid,
         isAlphanumericValid: validation.isAlphanumericValid,
         confidenceScore: result.confidenceScore,
+        googleSkuUrl,
         notes: result.notes,
         status: 'completed',
         updatedAt: Date.now(),

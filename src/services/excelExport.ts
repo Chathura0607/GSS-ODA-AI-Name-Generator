@@ -1,11 +1,14 @@
 import * as XLSX from 'xlsx';
 import { ProcessedProduct } from '../types';
+import { generateGoogleSkuUrl } from './validator';
 
 /**
  * Format products into tabular rows suitable for Excel / CSV
  */
 function prepareProductRows(products: ProcessedProduct[]) {
   return products.map((p, index) => {
+    const googleSkuLink = generateGoogleSkuUrl(p);
+
     return {
       'No.': index + 1,
       'Standard Product Name': p.standardName,
@@ -13,6 +16,7 @@ function prepareProductRows(products: ProcessedProduct[]) {
       'Length Valid (<=150)': p.isLengthValid ? 'YES' : 'NO',
       'Container Valid': p.isContainerValid ? 'YES' : 'NO',
       'Alphanumeric Valid': p.isAlphanumericValid ? 'YES' : 'NO',
+      'Google SKU Reference Link': googleSkuLink || "Can't find proper SKU",
       'Brand': p.attributes.brand || '',
       'Sub-Brand': p.attributes.subBrand || '',
       'Item (Product Type)': p.attributes.item || '',
@@ -53,6 +57,7 @@ export function exportToExcel(products: ProcessedProduct[], fileNamePrefix: stri
     { wch: 18 }, // Length Valid
     { wch: 16 }, // Container Valid
     { wch: 18 }, // Alphanumeric Valid
+    { wch: 50 }, // Google SKU Reference Link
     { wch: 16 }, // Brand
     { wch: 18 }, // Sub-Brand
     { wch: 20 }, // Item
