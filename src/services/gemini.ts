@@ -27,13 +27,15 @@ If none matches or it's unidentifiable, use "None" or the closest match like "Bo
    - Any age statements, edition descriptors, or value pack claims (e.g. "18 Year Old Limited Edition", "Limited Edition", "Special Edition", "Collector Edition", "Value Pack", "3x Eco Refill", "Bonus Pack", "Buy 1 Get 1 Free") MUST be placed in "valuePacksDescription".
    - Example output: "Glenfiddich Single Malt Scotch Whisky Cardboard Box 700 ml 18 Year Old Limited Edition".
 11. Cleanliness: Remove trailing packaging punctuation, marketing slogans, and ensure words are properly capitalized.
-12. Exact Product Web URL / Grounding:
-   - If you can identify or find the exact direct product URL or retail listing web page for this exact matching product SKU (e.g. from brand site or online store listing like snackje.com, supercellars.com.au, woolworths, coles, dan murphy's, amazon, etc.), return that full URL in "exactProductUrl".
-   - If not 100% sure of the exact product URL, return empty string "".
+12. Exact Direct Product Web URL (CRITICAL REQUIREMENT):
+   - Search the web for this exact product image (matching brand, variant, flavor, size, and packaging).
+   - You MUST return the real, direct product listing web page URL where this exact product is hosted or sold online (e.g., https://snackje.com/products/monster-energy-ultra-vice-guava-500ml, https://onlinekade.lk/product/monster-energy-nas-ultra-fantasy-ruby-red-500ml/, https://www.liquorland.co.nz/smirnoff-vodka-crush-lemon-lime-57-4-pack-cans-440ml-857476, https://toongabbie.shop.supercellars.com.au/lines/cruiser-vanilla-cola-4-6-bottles, https://www.amazon.com.au/Coca-Cola-Drink-Multipack-Bottles-1-25L/dp/B07D8FP1YY, https://www.woolworths.com.au/shop/productdetails/938941/fanta-grape-zero-sugar-bottle, https://www.amazon.co.uk/Bic-Flex-3-Sensit-Blister-Unit/dp/B0B4WHHV8D, https://www.walmart.com/ip/Bic-Soleil-Bella-Disposable-Shavers-3-ea-Pack-of-6/378927583, https://www.tommy.hr/en-GB/proizvodi/pampers-sensitive-baby-wipes-80-pcs, https://gshop.lv/product/latviesu-lenor-professional-purple-bloom-velas-mikstinatajs-4-l/, or official brand/retailer shop link).
+   - Place the full URL directly in "exactProductUrl".
+   - Do NOT return a Google search link (such as https://www.google.com/search?q=...). Return the direct store/product page link.
 
 You MUST return ONLY a valid JSON object with this exact structure:
 {
-  "brand": "Brand name, e.g. Dove, Cascade, Fanta, Mentos, Anchor, Stimorol, Elastoplast, Glenfiddich, Monster Energy, Vodka Cruiser",
+  "brand": "Brand name, e.g. Dove, Cascade, Fanta, Mentos, Anchor, Stimorol, Elastoplast, Glenfiddich, Monster Energy, Vodka Cruiser, Coca-Cola",
   "subBrand": "Sub-brand if applicable, e.g. Moisturising, Ceda, Waves, Ultra",
   "item": "Product type, e.g. Hand Wash, Creaming Soda, Gum, Strips, Soft Drink, Energy Drink, Flavoured Vodka, Single Malt Scotch Whisky",
   "flavorOrVariant": "Flavor or scent, e.g. Vice Guava, Vanilla Cola, Wild Cherry Flavoured, Peppermint, Lemon Lime And Bitters",
@@ -43,7 +45,7 @@ You MUST return ONLY a valid JSON object with this exact structure:
   "size": "Number only e.g. 60, 21, 100, 250, 375, 500, 700, 1.5",
   "measurementUnit": "ml, l, g, kg, or Units (for pieces/strips/capsules/tablets)",
   "valuePacksDescription": "e.g. 18 Year Old Limited Edition, Value Pack, Special Edition, 3x eco-refill, or empty",
-  "exactProductUrl": "Full direct URL to the exact matching product page on the web if found (e.g. https://snackje.com/products/monster-energy-ultra-vice-guava-500ml), or empty string",
+  "exactProductUrl": "Direct URL to the exact matching product page on the web (e.g. https://snackje.com/products/monster-energy-ultra-vice-guava-500ml or https://toongabbie.shop.supercellars.com.au/lines/cruiser-vanilla-cola-4-6-bottles)",
   "confidenceScore": integer between 0 and 100,
   "notes": "Brief reason for chosen container type and extracted fields"
 }`;
@@ -141,13 +143,15 @@ export async function analyzeProductImage(
   const mimeType = matches[1];
   const base64Data = matches[2];
 
-  const requestBody = {
+  const buildRequestBody = (includeTools: boolean) => ({
     contents: [
       {
         role: 'user',
         parts: [
           {
-            text: SYSTEM_PROMPT + '\n\nPlease analyze this product image and output the JSON result now:',
+            text:
+              SYSTEM_PROMPT +
+              '\n\nPlease search for this exact product image online, identify the exact direct product URL, and output the JSON result now:',
           },
           {
             inlineData: {
@@ -158,14 +162,22 @@ export async function analyzeProductImage(
         ],
       },
     ],
+    ...(includeTools ? { tools: [{ google_search: {} }] } : {}),
     generationConfig: {
       temperature: 0.1,
       responseMimeType: 'application/json',
     },
-  };
+  });
 
-  // Primary attempt
+  // Primary attempt with Google Search grounding
+  let requestBody = buildRequestBody(true);
   let response = await callGeminiVision(modelName, apiKey, requestBody);
+
+  // If tools or grounding returned an error (e.g. 400 or unsupported), retry without tools
+  if (!response.ok && response.status === 400) {
+    requestBody = buildRequestBody(false);
+    response = await callGeminiVision(modelName, apiKey, requestBody);
+  }
 
   // If model is not found or deprecated, auto-discover working models from Google API
   if (!response.ok) {
@@ -245,12 +257,22 @@ export async function analyzeProductImage(
 
   // Extract exact product URL from AI response or grounding metadata if available
   let exactProductUrl = (parsed.exactProductUrl || '').trim();
-  if (!exactProductUrl || !/^https?:\/\//i.test(exactProductUrl)) {
+  const isGoogleSearchUrl = /google\.[a-z.]+\/search/i.test(exactProductUrl);
+
+  if (!exactProductUrl || !/^https?:\/\//i.test(exactProductUrl) || isGoogleSearchUrl) {
     const groundingChunks = data?.candidates?.[0]?.groundingMetadata?.groundingChunks;
     if (Array.isArray(groundingChunks) && groundingChunks.length > 0) {
-      const firstWebUri = groundingChunks.find((c: any) => c?.web?.uri)?.web?.uri;
-      if (firstWebUri && /^https?:\/\//i.test(firstWebUri)) {
-        exactProductUrl = firstWebUri;
+      // Prioritize direct retail store / brand product pages (non-google domain)
+      const storeChunk = groundingChunks.find(
+        (c: any) => c?.web?.uri && /^https?:\/\//i.test(c.web.uri) && !/google\.[a-z.]+/i.test(c.web.uri)
+      );
+      if (storeChunk?.web?.uri) {
+        exactProductUrl = storeChunk.web.uri;
+      } else {
+        const firstWeb = groundingChunks.find((c: any) => c?.web?.uri && /^https?:\/\//i.test(c.web.uri));
+        if (firstWeb?.web?.uri) {
+          exactProductUrl = firstWeb.web.uri;
+        }
       }
     }
   }
