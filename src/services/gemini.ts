@@ -43,13 +43,61 @@ export interface AnalysisResult {
   notes: string;
 }
 
+export interface ModelOption {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+/**
+ * Fetch list of valid Gemini models directly from Google AI Studio API for the given key
+ */
+export async function fetchAvailableModels(apiKey: string): Promise<ModelOption[]> {
+  if (!apiKey.trim()) return [];
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey.trim()}`
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    const models = data.models || [];
+    return models
+      .filter((m: any) => m.supportedGenerationMethods?.includes('generateContent'))
+      .map((m: any) => ({
+        id: m.name.replace(/^models\//, ''),
+        name: m.displayName || m.name.replace(/^models\//, ''),
+        description: m.description || '',
+      }));
+  } catch (err) {
+    console.warn('Could not list models from Google API:', err);
+    return [];
+  }
+}
+
+/**
+ * Execute Gemini Vision generateContent with auto-fallback to available models
+ */
+async function callGeminiVision(
+  model: string,
+  apiKey: string,
+  requestBody: any
+): Promise<Response> {
+  const cleanModel = model.trim().replace(/^models\//, '');
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:generateContent?key=${apiKey.trim()}`;
+  return fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(requestBody),
+  });
+}
+
 /**
  * Call Google Gemini Vision API to analyze product image
  */
 export async function analyzeProductImage(
   dataUrl: string,
   apiKey: string,
-  modelName: string = 'gemini-1.5-flash'
+  modelName: string = 'gemini-1.5-flash-latest'
 ): Promise<AnalysisResult> {
   if (!apiKey) {
     throw new Error(
@@ -65,8 +113,6 @@ export async function analyzeProductImage(
 
   const mimeType = matches[1];
   const base64Data = matches[2];
-
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${modelName.trim()}:generateContent?key=${apiKey.trim()}`;
 
   const requestBody = {
     contents: [
@@ -91,13 +137,52 @@ export async function analyzeProductImage(
     },
   };
 
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(requestBody),
-  });
+  // Primary attempt
+  let response = await callGeminiVision(modelName, apiKey, requestBody);
+
+  // If model is not found or deprecated, auto-discover working models from Google API
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    const message = errorData?.error?.message || '';
+
+    if (
+      response.status === 404 ||
+      message.includes('not found') ||
+      message.includes('no longer available') ||
+      message.includes('ListModels')
+    ) {
+      // Auto-fetch models available for this API Key
+      const available = await fetchAvailableModels(apiKey);
+      const fallbackModel =
+        available.find(m => m.id.includes('flash') || m.id.includes('gemini'))?.id ||
+        (available.length > 0 ? available[0].id : null);
+
+      if (fallbackModel && fallbackModel !== modelName.trim().replace(/^models\//, '')) {
+        console.info(`Switching from ${modelName} to available model: ${fallbackModel}`);
+        response = await callGeminiVision(fallbackModel, apiKey, requestBody);
+      } else {
+        // Try standard aliases
+        const standardFallbacks = [
+          'gemini-1.5-flash-latest',
+          'gemini-1.5-flash-001',
+          'gemini-1.5-flash-002',
+          'gemini-1.5-flash-8b',
+          'gemini-1.5-pro-latest',
+          'gemini-2.5-flash',
+          'gemini-2.0-flash-exp',
+        ];
+
+        for (const candidate of standardFallbacks) {
+          if (candidate === modelName.trim().replace(/^models\//, '')) continue;
+          const retryRes = await callGeminiVision(candidate, apiKey, requestBody);
+          if (retryRes.ok) {
+            response = retryRes;
+            break;
+          }
+        }
+      }
+    }
+  }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -118,7 +203,6 @@ export async function analyzeProductImage(
   // Parse JSON response
   let parsed: any;
   try {
-    // Strip markdown code fences if present
     const cleanJson = textOutput.replace(/```json/gi, '').replace(/```/g, '').trim();
     parsed = JSON.parse(cleanJson);
   } catch (err) {
@@ -133,7 +217,6 @@ export async function analyzeProductImage(
   if (matchedContainer) {
     containerType = matchedContainer;
   } else {
-    // Fallback search
     const partial = CONTAINER_TYPES.find(c =>
       containerType.toLowerCase().includes(c.toLowerCase())
     );
@@ -164,10 +247,21 @@ export async function analyzeProductImage(
 }
 
 /**
- * Quick validation of an API Key
+ * Quick validation of an API Key with model discovery
  */
-export async function testGeminiApiKey(apiKey: string, model: string = 'gemini-1.5-flash'): Promise<boolean> {
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model.trim()}:generateContent?key=${apiKey.trim()}`;
+export async function testGeminiApiKey(
+  apiKey: string,
+  model: string = 'gemini-1.5-flash-latest'
+): Promise<{ success: boolean; activeModel: string; availableModels: ModelOption[] }> {
+  const models = await fetchAvailableModels(apiKey);
+  const cleanModel = model.trim().replace(/^models\//, '');
+
+  let targetModel = cleanModel;
+  if (models.length > 0 && !models.some(m => m.id === cleanModel)) {
+    targetModel = models[0].id;
+  }
+
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${apiKey.trim()}`;
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -176,9 +270,11 @@ export async function testGeminiApiKey(apiKey: string, model: string = 'gemini-1
       generationConfig: { maxOutputTokens: 5 },
     }),
   });
+
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData?.error?.message || `Validation failed (${response.status})`);
   }
-  return true;
+
+  return { success: true, activeModel: targetModel, availableModels: models };
 }

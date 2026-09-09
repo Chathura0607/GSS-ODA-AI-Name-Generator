@@ -13,7 +13,7 @@ import {
   Save,
 } from 'lucide-react';
 import { AppSettings } from '../types';
-import { testGeminiApiKey } from '../services/gemini';
+import { testGeminiApiKey, fetchAvailableModels, ModelOption } from '../services/gemini';
 import { saveSettings } from '../services/db';
 
 interface SettingsModalProps {
@@ -30,15 +30,27 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onSaveSettings,
 }) => {
   const [apiKey, setApiKey] = useState(settings.geminiApiKey || '');
-  const [model, setModel] = useState(settings.geminiModel || 'gemini-2.0-flash');
+  const [model, setModel] = useState(settings.geminiModel || 'gemini-1.5-flash-latest');
   const [retentionDays, setRetentionDays] = useState(settings.retentionDays || 7);
   const [autoProcess, setAutoProcess] = useState(settings.autoProcessOnUpload ?? true);
   const [strictContainer, setStrictContainer] = useState(settings.strictContainerCheck ?? true);
 
+  const [availableModels, setAvailableModels] = useState<ModelOption[]>([]);
   const [showKey, setShowKey] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  // Auto-fetch available models when modal is open and API Key is provided
+  React.useEffect(() => {
+    if (isOpen && apiKey.trim()) {
+      fetchAvailableModels(apiKey.trim()).then(models => {
+        if (models.length > 0) {
+          setAvailableModels(models);
+        }
+      });
+    }
+  }, [isOpen, apiKey]);
 
   if (!isOpen) return null;
 
@@ -50,8 +62,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setIsTesting(true);
     setTestResult(null);
     try {
-      await testGeminiApiKey(apiKey.trim(), model);
-      setTestResult({ success: true, message: 'Gemini API Key is valid and connected!' });
+      const res = await testGeminiApiKey(apiKey.trim(), model);
+      if (res.availableModels.length > 0) {
+        setAvailableModels(res.availableModels);
+      }
+      if (res.activeModel && res.activeModel !== model) {
+        setModel(res.activeModel);
+      }
+      setTestResult({
+        success: true,
+        message: `Gemini API Key is valid and connected! (Using: ${res.activeModel})`,
+      });
     } catch (err: any) {
       setTestResult({
         success: false,
@@ -176,12 +197,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
           {/* Model Selection */}
           <div className="space-y-2">
-            <label className="font-semibold text-white flex items-center gap-1.5">
-              <Cpu className="w-3.5 h-3.5 text-purple-400" />
-              AI Multimodal Vision Engine
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="font-semibold text-white flex items-center gap-1.5">
+                <Cpu className="w-3.5 h-3.5 text-purple-400" />
+                AI Multimodal Vision Engine
+              </label>
+              {availableModels.length > 0 && (
+                <span className="text-[10px] text-emerald-400 font-mono">
+                  {availableModels.length} models detected on your key
+                </span>
+              )}
+            </div>
+
             <select
-              value={['gemini-1.5-flash', 'gemini-2.5-flash', 'gemini-3.6-flash', 'gemini-1.5-pro', 'gemini-2.0-flash'].includes(model) ? model : 'custom'}
+              value={
+                availableModels.length > 0
+                  ? (availableModels.some(m => m.id === model) ? model : 'custom')
+                  : (['gemini-1.5-flash-latest', 'gemini-1.5-flash', 'gemini-1.5-flash-002', 'gemini-2.5-flash', 'gemini-3.6-flash', 'gemini-1.5-pro-latest', 'gemini-1.5-pro'].includes(model) ? model : 'custom')
+              }
               onChange={e => {
                 if (e.target.value !== 'custom') {
                   setModel(e.target.value);
@@ -189,14 +222,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               }}
               className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 focus:outline-none focus:border-cyan-500"
             >
-              <option value="gemini-1.5-flash">Gemini 1.5 Flash (Recommended - Free Tier & High Limit)</option>
-              <option value="gemini-2.5-flash">Gemini 2.5 Flash (Next-Gen Fast & Accurate)</option>
-              <option value="gemini-3.6-flash">Gemini 3.6 Flash (Latest Vision Engine)</option>
-              <option value="gemini-1.5-pro">Gemini 1.5 Pro (Deep Complex Reasoning)</option>
-              <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-              <option value="custom">Custom Model Name...</option>
+              {availableModels.length > 0 ? (
+                <>
+                  {availableModels.map(m => (
+                    <option key={m.id} value={m.id}>
+                      {m.name} ({m.id})
+                    </option>
+                  ))}
+                  <option value="custom">Custom Model Name...</option>
+                </>
+              ) : (
+                <>
+                  <option value="gemini-1.5-flash-latest">Gemini 1.5 Flash Latest (Recommended - Free Tier)</option>
+                  <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                  <option value="gemini-1.5-flash-002">Gemini 1.5 Flash 002</option>
+                  <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                  <option value="gemini-3.6-flash">Gemini 3.6 Flash</option>
+                  <option value="gemini-1.5-pro-latest">Gemini 1.5 Pro Latest</option>
+                  <option value="custom">Custom Model Name...</option>
+                </>
+              )}
             </select>
-            {(!['gemini-1.5-flash', 'gemini-2.5-flash', 'gemini-3.6-flash', 'gemini-1.5-pro', 'gemini-2.0-flash'].includes(model) || model === 'custom') && (
+
+            {((availableModels.length > 0 && !availableModels.some(m => m.id === model)) ||
+              (availableModels.length === 0 && !['gemini-1.5-flash-latest', 'gemini-1.5-flash', 'gemini-1.5-flash-002', 'gemini-2.5-flash', 'gemini-3.6-flash', 'gemini-1.5-pro-latest', 'gemini-1.5-pro'].includes(model)) ||
+              model === 'custom') && (
               <input
                 type="text"
                 value={model === 'custom' ? '' : model}
