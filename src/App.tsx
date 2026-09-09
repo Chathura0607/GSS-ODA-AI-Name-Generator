@@ -187,9 +187,13 @@ export const App: React.FC = () => {
       return;
     }
 
-    // Process one by one
+    // Process one by one with safe spacing for free-tier rate limits
     setIsProcessing(true);
-    for (const item of newItems) {
+    for (let i = 0; i < newItems.length; i++) {
+      const item = newItems[i];
+      if (i > 0) {
+        await new Promise(res => setTimeout(res, 1200));
+      }
       const finished = await analyzeSingle(item, settings.geminiApiKey, settings.geminiModel);
       setProducts(prev => prev.map(p => (p.id === finished.id ? finished : p)));
     }
@@ -217,7 +221,11 @@ export const App: React.FC = () => {
       return;
     }
     setIsProcessing(true);
-    for (const item of items) {
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (i > 0) {
+        await new Promise(res => setTimeout(res, 1200));
+      }
       const updated = await analyzeSingle(item, settings.geminiApiKey, settings.geminiModel);
       setProducts(prev => prev.map(p => (p.id === updated.id ? updated : p)));
     }

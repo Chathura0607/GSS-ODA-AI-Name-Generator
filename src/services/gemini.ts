@@ -103,6 +103,8 @@ export async function fetchAvailableModels(apiKey: string): Promise<ModelOption[
   }
 }
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 /**
  * Execute Gemini Vision generateContent
  */
@@ -121,7 +123,29 @@ async function callGeminiVision(
 }
 
 /**
- * Call Google Gemini Vision API to analyze product image with automatic model resolution and fallback
+ * Executes callGeminiVision with automatic exponential backoff on 429 Rate Limits
+ */
+async function callWithRetry(
+  model: string,
+  apiKey: string,
+  requestBody: any,
+  maxRetries: number = 3
+): Promise<Response> {
+  let delay = 2500;
+  for (let i = 0; i <= maxRetries; i++) {
+    const res = await callGeminiVision(model, apiKey, requestBody);
+    if (res.status !== 429 || i === maxRetries) {
+      return res;
+    }
+    console.warn(`Hit Gemini 429 (Rate Limit / Quota). Waiting ${delay}ms before retry ${i + 1}/${maxRetries}...`);
+    await sleep(delay);
+    delay = Math.min(delay * 2, 8000);
+  }
+  return callGeminiVision(model, apiKey, requestBody);
+}
+
+/**
+ * Call Google Gemini Vision API to analyze product image with automatic model resolution, rate limit backoff, and fallback
  */
 export async function analyzeProductImage(
   dataUrl: string,
@@ -169,14 +193,14 @@ export async function analyzeProductImage(
     },
   });
 
-  // Primary attempt with Google Search grounding
+  // Primary attempt with Google Search grounding and retry on 429
   let requestBody = buildRequestBody(true);
-  let response = await callGeminiVision(modelName, apiKey, requestBody);
+  let response = await callWithRetry(modelName, apiKey, requestBody);
 
-  // If tools or grounding returned an error (e.g. 400 or unsupported), retry without tools
-  if (!response.ok && response.status === 400) {
+  // If tools or grounding returned an error (e.g. 400 or 429 grounding quota limit), retry without tools
+  if (!response.ok && (response.status === 400 || response.status === 429)) {
     requestBody = buildRequestBody(false);
-    response = await callGeminiVision(modelName, apiKey, requestBody);
+    response = await callWithRetry(modelName, apiKey, requestBody);
   }
 
   // If model is not found or deprecated, auto-discover working models from Google API
@@ -199,12 +223,12 @@ export async function analyzeProductImage(
 
       if (fallbackModel && fallbackModel !== modelName.trim().replace(/^models\//, '')) {
         console.info(`Switching from ${modelName} to available model: ${fallbackModel}`);
-        response = await callGeminiVision(fallbackModel, apiKey, requestBody);
+        response = await callWithRetry(fallbackModel, apiKey, requestBody);
       } else {
         // Try candidate models in sequence
         for (const candidate of CANDIDATE_MODELS) {
           if (candidate === modelName.trim().replace(/^models\//, '')) continue;
-          const retryRes = await callGeminiVision(candidate, apiKey, requestBody);
+          const retryRes = await callWithRetry(candidate, apiKey, requestBody);
           if (retryRes.ok) {
             response = retryRes;
             break;
@@ -219,6 +243,9 @@ export async function analyzeProductImage(
     const message = errorData?.error?.message || `API error (${response.status}: ${response.statusText})`;
     if (response.status === 400 && message.includes('API_KEY_INVALID')) {
       throw new Error('Invalid Gemini API Key. Please verify your key in Settings.');
+    }
+    if (response.status === 429) {
+      throw new Error('Google Free Tier rate limit reached (Too Many Requests). Please wait 5 seconds and click Retry.');
     }
     throw new Error(`Gemini API Error: ${message}`);
   }
