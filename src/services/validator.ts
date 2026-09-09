@@ -47,7 +47,10 @@ export function sanitizeAlphanumeric(text: string): string {
 /**
  * Assembles the standard GSS ODA English Product Name according to official rules:
  * Formula:
- * [Brand] [Sub-Brand] [Item] [Attributes / Flavor] [Additional Wordings] [Container Type] [Sub Packages x Size Unit / Value Pack]
+ * [Brand] [Sub-Brand] [Item] [Attributes / Flavor] [Additional Wordings] [Container Type] [Sub Packages x Size Unit] [Value Packs description]
+ * 
+ * Note: Value Pack Description / Special Editions (e.g. 18 Year Old Limited Edition, Value Pack, 3x Eco Refill)
+ * MUST ALWAYS BE PLACED AT THE VERY END OF THE PRODUCT NAME.
  */
 export function assembleStandardName(attr: ProductAttributes): string {
   const parts: string[] = [];
@@ -56,12 +59,29 @@ export function assembleStandardName(attr: ProductAttributes): string {
   const subBrand = (attr.subBrand || '').trim();
   const item = (attr.item || '').trim();
   const flavor = (attr.flavorOrVariant || '').trim();
-  const additional = (attr.additionalWordings || '').trim();
+  let additional = (attr.additionalWordings || '').trim();
   const container = (attr.containerType || '').trim();
   const subPackages = (attr.subPackages || '').trim();
   const size = (attr.size || '').trim();
   const unit = normalizeMeasurementUnit(attr.measurementUnit || '');
-  const valuePack = (attr.valuePacksDescription || '').trim();
+  let valuePack = (attr.valuePacksDescription || '').trim();
+
+  // If additionalWordings contains edition / value pack phrases (e.g. "18 Year Old Limited Edition", "Limited Edition", "Special Edition", "Value Pack", "3x eco-refill")
+  // move them to valuePack so they are guaranteed to appear at the very end!
+  const valuePackRegex = /\b(?:\d+\s*(?:Year|Yr)\s*Old\s*)?(?:Limited|Special|Collector|Anniversary|Festive|Seasonal|Exclusive|Promo|Value|Bonus|Eco-Refill|\d+x\s*Eco-Refill)\s*(?:Edition|Pack|Set|Design|Series|Release)?\b/i;
+  
+  if (valuePackRegex.test(additional)) {
+    const match = additional.match(valuePackRegex);
+    if (match) {
+      const matchedPhrase = match[0].trim();
+      if (!valuePack) {
+        valuePack = matchedPhrase;
+      } else if (!valuePack.toLowerCase().includes(matchedPhrase.toLowerCase())) {
+        valuePack = `${valuePack} ${matchedPhrase}`;
+      }
+      additional = additional.replace(matchedPhrase, '').replace(/\s+/g, ' ').trim();
+    }
+  }
 
   // Rule 1: If Sub-Brand contains Brand Name, Brand isn't duplicated
   if (brand) {
@@ -75,7 +95,7 @@ export function assembleStandardName(attr: ProductAttributes): string {
     parts.push(subBrand);
   }
 
-  // Item (Product Type, e.g. Hand Wash, Creaming Soda, Gum, Strips)
+  // Item (Product Type, e.g. Single Malt Scotch Whisky, Hand Wash, Creaming Soda, Gum, Strips)
   if (item && !parts.some(p => p.toLowerCase().includes(item.toLowerCase()))) {
     parts.push(item);
   }
@@ -97,7 +117,7 @@ export function assembleStandardName(attr: ProductAttributes): string {
 
   // Sub packages + Size Unit formatting
   // Multi-pack with size: "6 Pack x 250 ml", "10 Pack x 375 ml"
-  // Single size: "750 ml", "60 Units", "100 Units"
+  // Single size: "700 ml", "60 Units", "100 Units"
   const sizeFormatted = size ? (unit ? `${size} ${unit}` : size) : '';
 
   if (subPackages && sizeFormatted) {
@@ -113,7 +133,8 @@ export function assembleStandardName(attr: ProductAttributes): string {
     parts.push(sizeFormatted);
   }
 
-  // Value Pack description (e.g. Special Edition, 3x eco-refill)
+  // Value Pack description / Editions (e.g. 18 Year Old Limited Edition, Special Edition, Value Pack, 3x eco-refill)
+  // MUST ALWAYS APPEAR AT THE VERY END AFTER CONTAINER & SIZE/UNIT
   if (valuePack && !parts.some(p => p.toLowerCase().includes(valuePack.toLowerCase()))) {
     parts.push(valuePack);
   }
