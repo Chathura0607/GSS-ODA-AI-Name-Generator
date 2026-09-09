@@ -71,6 +71,7 @@ export const MEASUREMENT_UNITS = [
   'oz',
   'fl oz',
   'lb',
+  'Units',
   'pack',
   'pcs',
   'sheets',
@@ -81,3 +82,4 @@ export const MEASUREMENT_UNITS = [
 ] as const;
 
 export type MeasurementUnit = typeof MEASUREMENT_UNITS[number];
+

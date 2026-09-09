@@ -1,38 +1,41 @@
 import { CONTAINER_TYPES } from '../constants/containerTypes';
 import { ProductAttributes } from '../types';
-import { assembleStandardName } from './validator';
+import { assembleStandardName, normalizeMeasurementUnit } from './validator';
 
 const SYSTEM_PROMPT = `You are an expert AI Operational Data Analyst (ODA) specialized in standardized Fast-Moving Consumer Goods (FMCG) and retail product cataloguing for GSS.
 
 Analyze the uploaded product image and extract attributes with highest precision to generate the official Standard English Product Name according to the GSS ODA formula:
 
 ### GSS ODA Product Naming Formula:
-[Brand] [Sub-Brand] [Item] [Attributes / Flavor] [Additional Wordings] [Container Type] [Sub Packages] [Size and Measurement Unit(s)] [Value Packs description]
+[Brand] [Sub-Brand] [Item] [Attributes / Flavor] [Additional Wordings] [Container Type] [Sub Packages x Size Unit / Value Pack]
 
 ### Critical Business Rules:
 1. Sub-Brand Duplication: If the Sub-Brand contains the Brand Name, do not duplicate the Brand in the final name.
-2. Item (Product Type): Primary category (e.g. Hand Wash, Creaming Soda, Dry Ginger Ale, Chocolate, Biscuits, Toothpaste, Fruit Cordial).
-3. Flavor / Variant / Scent: (e.g. Cucumber and Green Tea Scent, Orange, Mint, Vanilla, Lemon, Original).
-4. Value Packs / Additional Wordings: Key attributes (e.g. "Special edition", "3x eco-refill", "No Sugar", "Genuine Refreshments", "Refill", "Antibacterial", "Zero Calories").
+2. Item (Product Type): Primary category (e.g. Hand Wash, Creaming Soda, Dry Ginger Ale, Chocolate, Biscuits, Toothpaste, Fruit Cordial, Gum, Strips).
+3. Flavor / Variant / Scent: (e.g. Cucumber and Green Tea Scent, Wild Cherry Flavoured, Peppermint, Orange, Mint, Vanilla, Lemon, Original).
+4. Value Packs / Additional Wordings: Key attributes (e.g. "Flexible Fabric Breathable Water Repellent", "Special edition", "3x eco-refill", "No Sugar", "Genuine Refreshments", "Refill", "Antibacterial", "Zero Calories").
 5. Characters: English letters and numbers (Alphanumeric) only. Do NOT use special symbols like #, $, %, @, &, -, /, +.
 6. Length limit: Maximum 150 characters total.
 7. Container Type: MUST be chosen STRICTLY from this exact list of 49 official GSS container types:
 ${CONTAINER_TYPES.join(', ')}
-If none matches or it's unidentifiable, use "None" or the closest match like "Bottle", "Can", "Pack", "Pack Plastic", "Pack Carton", or "Pouch".
-8. Measurement Units: Standardize units consistently (e.g. "ml", "l", "g", "kg", "cl", "oz").
-9. Cleanliness: Remove trailing packaging punctuation, marketing slogans, and ensure words are properly capitalized.
+If none matches or it's unidentifiable, use "None" or the closest match like "Bottle", "Can", "Pack", "Pack Plastic", "Pack Carton", "Plastic Container", or "Cardboard Box".
+8. Measurement Units (CRITICAL):
+   - Metric volume & weight: Standardize to "ml", "l", "g", "kg", "cl", "oz".
+   - Count-based items (pieces, strips, tablets, capsules, wipes, sheets, bags, pods, count): STRICTLY use "Units" (e.g. "60 Units", "21 Units", "100 Units", "50 Units").
+9. Multi-Packs: If the product is a multi-pack (e.g. 6 cans of 250ml, 10 bottles of 375ml), set subPackages to "6 Pack" or "10 Pack", size to "250" or "375", and measurementUnit to "ml". The standard name will automatically format as "6 Pack x 250 ml", "10 Pack x 375 ml".
+10. Cleanliness: Remove trailing packaging punctuation, marketing slogans, and ensure words are properly capitalized.
 
 You MUST return ONLY a valid JSON object with this exact structure:
 {
-  "brand": "Brand name, e.g. Dove, Cascade, Fanta, Mentos, Anchor",
-  "subBrand": "Sub-brand if applicable, e.g. Moisturising, Ceda",
-  "item": "Product type, e.g. Hand Wash, Creaming Soda, Ginger Ale, Chocolate",
-  "flavorOrVariant": "Flavor or scent, e.g. Cucumber and Green Tea Scent, Orange, Mint",
-  "additionalWordings": "Additional words on packaging, e.g. Refill, No Sugar, Refreshing",
-  "containerType": "EXACT match from the 49 allowed GSS container types",
-  "subPackages": "Pack count e.g. 12 Pack, 4 Pack, 8 Mini Cans, or empty",
-  "size": "Number only or combined e.g. 750, 300, 200, 1.5",
-  "measurementUnit": "Standardized unit e.g. ml, l, g, kg",
+  "brand": "Brand name, e.g. Dove, Cascade, Fanta, Mentos, Anchor, Stimorol, Elastoplast",
+  "subBrand": "Sub-brand if applicable, e.g. Moisturising, Ceda, Waves",
+  "item": "Product type, e.g. Hand Wash, Creaming Soda, Gum, Strips, Soft Drink",
+  "flavorOrVariant": "Flavor or scent, e.g. Wild Cherry Flavoured, Peppermint, Lemon Lime And Bitters",
+  "additionalWordings": "Additional words on packaging, e.g. Sugarfree, Flexible Fabric Breathable Water Repellent, Refill, No Sugar",
+  "containerType": "EXACT match from the 49 allowed GSS container types e.g. Plastic Container, Cardboard Box, Bottle, Can",
+  "subPackages": "Pack count e.g. 6 Pack, 10 Pack, 12 Pack, 4 Pack, or empty",
+  "size": "Number only e.g. 60, 21, 100, 250, 375, 750, 1.5",
+  "measurementUnit": "ml, l, g, kg, or Units (for pieces/strips/capsules/tablets)",
   "valuePacksDescription": "e.g. 3x eco-refill, Value Pack, Special Edition, or empty",
   "confidenceScore": integer between 0 and 100,
   "notes": "Brief reason for chosen container type and extracted fields"
@@ -239,9 +242,18 @@ export async function analyzeProductImage(
     containerType,
     subPackages: (parsed.subPackages || '').trim(),
     size: (parsed.size || '').trim(),
-    measurementUnit: (parsed.measurementUnit || '').trim(),
+    measurementUnit: normalizeMeasurementUnit(parsed.measurementUnit || ''),
     valuePacksDescription: (parsed.valuePacksDescription || '').trim(),
   };
+
+  // If size contains unit text like "60 Pieces" or "100 Strips"
+  const sizeMatch = attributes.size.match(/^([0-9.]+)\s*([a-zA-Z\s]+)?$/);
+  if (sizeMatch) {
+    attributes.size = sizeMatch[1];
+    if (sizeMatch[2] && (!attributes.measurementUnit || attributes.measurementUnit === 'None')) {
+      attributes.measurementUnit = normalizeMeasurementUnit(sizeMatch[2]);
+    }
+  }
 
   const standardName = assembleStandardName(attributes);
 

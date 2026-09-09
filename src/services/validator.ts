@@ -2,13 +2,44 @@ import { CONTAINER_TYPES, ContainerType } from '../constants/containerTypes';
 import { ProductAttributes } from '../types';
 
 /**
+ * Normalizes measurement units:
+ * - Count-based items (pieces, strips, tablets, capsules, wipes, bags, etc.) are standardized to 'Units'.
+ * - Metric/Volume/Mass units (ml, l, g, kg, cl, oz) are standardized to clean lowercase.
+ */
+export function normalizeMeasurementUnit(rawUnit: string): string {
+  if (!rawUnit) return '';
+  const trimmed = rawUnit.trim();
+  const lower = trimmed.toLowerCase();
+
+  // Count items / Non-volume / Non-mass units -> strictly "Units"
+  if (
+    /^(pieces?|pcs|strips?|tablets?|capsules?|wipes?|sheets?|bags?|tea\s*bags?|pods?|units?|count|ct|chews?|lozenges?|sticks?|rolls?|items?|pills?)$/i.test(
+      lower
+    )
+  ) {
+    return 'Units';
+  }
+
+  // Volume and Weight units
+  if (/^(ml|milliliters?|millilitres?)$/i.test(lower)) return 'ml';
+  if (/^(l|liters?|litres?)$/i.test(lower)) return 'l';
+  if (/^(g|grams?)$/i.test(lower)) return 'g';
+  if (/^(kg|kilograms?|kilos?)$/i.test(lower)) return 'kg';
+  if (/^(cl|centiliters?|centilitres?)$/i.test(lower)) return 'cl';
+  if (/^(fl\s*oz|fluid\s*ounces?)$/i.test(lower)) return 'fl oz';
+  if (/^(oz|ounces?)$/i.test(lower)) return 'oz';
+  if (/^(lb|lbs|pounds?)$/i.test(lower)) return 'lb';
+
+  return trimmed;
+}
+
+/**
  * Normalizes text to ensure alphanumeric characters and single spaces.
  */
 export function sanitizeAlphanumeric(text: string): string {
   if (!text) return '';
-  // Replace non-alphanumeric (except standard spaces and safe punctuation like hyphen)
   return text
-    .replace(/[^a-zA-Z0-9\s-]/g, ' ')
+    .replace(/[^a-zA-Z0-9\s.-]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -16,7 +47,7 @@ export function sanitizeAlphanumeric(text: string): string {
 /**
  * Assembles the standard GSS ODA English Product Name according to official rules:
  * Formula:
- * [Brand] [Sub-Brand] [Item] [Attributes / Flavor] [Additional Wordings / Value Pack] [Container Type] [Sub Packages] [Size and Measurement Unit]
+ * [Brand] [Sub-Brand] [Item] [Attributes / Flavor] [Additional Wordings] [Container Type] [Sub Packages x Size Unit / Value Pack]
  */
 export function assembleStandardName(attr: ProductAttributes): string {
   const parts: string[] = [];
@@ -29,10 +60,10 @@ export function assembleStandardName(attr: ProductAttributes): string {
   const container = (attr.containerType || '').trim();
   const subPackages = (attr.subPackages || '').trim();
   const size = (attr.size || '').trim();
-  const unit = (attr.measurementUnit || '').trim();
+  const unit = normalizeMeasurementUnit(attr.measurementUnit || '');
   const valuePack = (attr.valuePacksDescription || '').trim();
 
-  // Rule 1: If Sub-Brand contains Brand Name, Brand isn't mandatory
+  // Rule 1: If Sub-Brand contains Brand Name, Brand isn't duplicated
   if (brand) {
     if (subBrand && subBrand.toLowerCase().includes(brand.toLowerCase())) {
       parts.push(subBrand);
@@ -44,17 +75,17 @@ export function assembleStandardName(attr: ProductAttributes): string {
     parts.push(subBrand);
   }
 
-  // Item (Product Type, e.g. Hand Wash, Creaming Soda)
+  // Item (Product Type, e.g. Hand Wash, Creaming Soda, Gum, Strips)
   if (item && !parts.some(p => p.toLowerCase().includes(item.toLowerCase()))) {
     parts.push(item);
   }
 
-  // Flavor / Variant (e.g. Cucumber and Green Tea Scent, Orange)
+  // Flavor / Variant (e.g. Cucumber and Green Tea Scent, Wild Cherry Flavoured, Peppermint)
   if (flavor) {
     parts.push(flavor);
   }
 
-  // Additional wordings (e.g. Refill, No Sugar, Genuine Refreshments)
+  // Additional wordings (e.g. Flexible Fabric Breathable Water Repellent, Refill, No Sugar)
   if (additional) {
     parts.push(additional);
   }
@@ -64,18 +95,22 @@ export function assembleStandardName(attr: ProductAttributes): string {
     parts.push(container);
   }
 
-  // Sub packages (e.g. 12 Pack, 4 Pack, 8 Mini Cans)
-  if (subPackages) {
-    parts.push(subPackages);
-  }
+  // Sub packages + Size Unit formatting
+  // Multi-pack with size: "6 Pack x 250 ml", "10 Pack x 375 ml"
+  // Single size: "750 ml", "60 Units", "100 Units"
+  const sizeFormatted = size ? (unit ? `${size} ${unit}` : size) : '';
 
-  // Size + Unit (e.g. 750 ml, 300 ml)
-  if (size) {
-    if (unit) {
-      parts.push(`${size} ${unit}`);
+  if (subPackages && sizeFormatted) {
+    // If subPackages already has 'x' or 'X' or '×' at the end
+    if (/(\s[xX×]$|^[0-9]+\s*[xX×]$)/.test(subPackages)) {
+      parts.push(`${subPackages} ${sizeFormatted}`);
     } else {
-      parts.push(size);
+      parts.push(`${subPackages} x ${sizeFormatted}`);
     }
+  } else if (subPackages) {
+    parts.push(subPackages);
+  } else if (sizeFormatted) {
+    parts.push(sizeFormatted);
   }
 
   // Value Pack description (e.g. Special Edition, 3x eco-refill)
