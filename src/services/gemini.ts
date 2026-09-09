@@ -1,6 +1,6 @@
 import { CONTAINER_TYPES } from '../constants/containerTypes';
 import { ProductAttributes } from '../types';
-import { assembleStandardName, normalizeMeasurementUnit } from './validator';
+import { assembleStandardName, normalizeMeasurementUnit, cleanPackAndSize } from './validator';
 
 const SYSTEM_PROMPT = `You are an expert AI Operational Data Analyst (ODA) specialized in standardized Fast-Moving Consumer Goods (FMCG) and retail product cataloguing for GSS.
 
@@ -236,6 +236,8 @@ export async function analyzeProductImage(
     containerType = partial || 'None';
   }
 
+  const cleanedPackSize = cleanPackAndSize(parsed.subPackages, parsed.size, parsed.measurementUnit);
+
   const attributes: ProductAttributes = {
     brand: (parsed.brand || '').trim(),
     subBrand: (parsed.subBrand || '').trim(),
@@ -243,20 +245,11 @@ export async function analyzeProductImage(
     flavorOrVariant: (parsed.flavorOrVariant || '').trim(),
     additionalWordings: (parsed.additionalWordings || '').trim(),
     containerType,
-    subPackages: (parsed.subPackages || '').trim(),
-    size: (parsed.size || '').trim(),
-    measurementUnit: normalizeMeasurementUnit(parsed.measurementUnit || ''),
+    subPackages: cleanedPackSize.subPackages,
+    size: cleanedPackSize.size,
+    measurementUnit: cleanedPackSize.measurementUnit,
     valuePacksDescription: (parsed.valuePacksDescription || '').trim(),
   };
-
-  // If size contains unit text like "60 Pieces" or "100 Strips"
-  const sizeMatch = attributes.size.match(/^([0-9.]+)\s*([a-zA-Z\s]+)?$/);
-  if (sizeMatch) {
-    attributes.size = sizeMatch[1];
-    if (sizeMatch[2] && (!attributes.measurementUnit || attributes.measurementUnit === 'None')) {
-      attributes.measurementUnit = normalizeMeasurementUnit(sizeMatch[2]);
-    }
-  }
 
   const standardName = assembleStandardName(attributes);
 

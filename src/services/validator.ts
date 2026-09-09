@@ -34,6 +34,75 @@ export function normalizeMeasurementUnit(rawUnit: string): string {
 }
 
 /**
+ * Intelligently cleans and normalizes multi-pack and size attributes:
+ * - Formats multi-packs: subPackages = "6 Pack", size = "250", unit = "ml"
+ * - Handles cases where AI places "6 Pack x 250 ml" or "10 x 375 ml" into size or subPackages
+ * - Normalizes standalone counts to "N Pack"
+ * - Standardizes count items (pieces, strips, tablets, capsules) to "Units"
+ */
+export function cleanPackAndSize(
+  rawSubPackages?: string,
+  rawSize?: string,
+  rawUnit?: string
+): { subPackages: string; size: string; measurementUnit: string } {
+  let subPackages = (rawSubPackages || '').trim();
+  let size = (rawSize || '').trim();
+  let unit = normalizeMeasurementUnit(rawUnit || '');
+
+  // 1. Check if size contains a multi-pack expression (e.g. "6 Pack x 250 ml", "10 x 375 ml", "6x250ml", "10 Pack 375 ml")
+  const multiPackInSize =
+    size.match(/^([0-9]+)\s*(?:Pack|Pk|Cans?|Bottles?|Bags?|Tins?|x|X|×)?\s*(?:[xX×])\s*([0-9.]+)\s*([a-zA-Z]+)?$/i) ||
+    size.match(/^([0-9]+)\s+(?:Pack|Pk|Cans?|Bottles?)\s+([0-9.]+)\s*([a-zA-Z]+)?$/i);
+
+  if (multiPackInSize) {
+    const packCount = multiPackInSize[1];
+    const unitSize = multiPackInSize[2];
+    const unitName = multiPackInSize[3] ? normalizeMeasurementUnit(multiPackInSize[3]) : unit;
+
+    subPackages = `${packCount} Pack`;
+    size = unitSize;
+    if (unitName) unit = unitName;
+  }
+
+  // 2. Check if subPackages contains a multi-pack expression (e.g. "6 Pack x 250 ml", "10 x 375 ml")
+  const multiPackInSub =
+    subPackages.match(/^([0-9]+)\s*(?:Pack|Pk|Cans?|Bottles?|Bags?|Tins?|x|X|×)?\s*(?:[xX×])\s*([0-9.]+)\s*([a-zA-Z]+)?$/i) ||
+    subPackages.match(/^([0-9]+)\s+(?:Pack|Pk|Cans?|Bottles?)\s+([0-9.]+)\s*([a-zA-Z]+)?$/i);
+
+  if (multiPackInSub) {
+    const packCount = multiPackInSub[1];
+    const unitSize = multiPackInSub[2];
+    const unitName = multiPackInSub[3] ? normalizeMeasurementUnit(multiPackInSub[3]) : unit;
+
+    subPackages = `${packCount} Pack`;
+    if (!size || size === packCount) {
+      size = unitSize;
+    }
+    if (unitName) unit = unitName;
+  }
+
+  // 3. Normalize subPackages: "6" -> "6 Pack", "10 Pk" -> "10 Pack", "6x" -> "6 Pack"
+  if (/^[0-9]+$/.test(subPackages)) {
+    subPackages = `${subPackages} Pack`;
+  } else if (/^([0-9]+)\s*(?:Pk|Packs?|Cans?|Bottles?|Tins?|[xX×])$/i.test(subPackages)) {
+    const m = subPackages.match(/^([0-9]+)/);
+    if (m) subPackages = `${m[1]} Pack`;
+  }
+
+  // 4. Clean standalone size if it has unit inside (e.g. "250 ml", "700ml", "60 Pieces", "100 Strips")
+  const singleSizeWithUnit = size.match(/^([0-9.]+)\s*([a-zA-Z\s]+)$/);
+  if (singleSizeWithUnit) {
+    size = singleSizeWithUnit[1];
+    const parsedUnit = normalizeMeasurementUnit(singleSizeWithUnit[2]);
+    if (parsedUnit && (!unit || unit === 'None')) {
+      unit = parsedUnit;
+    }
+  }
+
+  return { subPackages, size, measurementUnit: unit };
+}
+
+/**
  * Normalizes text to ensure alphanumeric characters and single spaces.
  */
 export function sanitizeAlphanumeric(text: string): string {
@@ -61,10 +130,13 @@ export function assembleStandardName(attr: ProductAttributes): string {
   const flavor = (attr.flavorOrVariant || '').trim();
   let additional = (attr.additionalWordings || '').trim();
   const container = (attr.containerType || '').trim();
-  const subPackages = (attr.subPackages || '').trim();
-  const size = (attr.size || '').trim();
-  const unit = normalizeMeasurementUnit(attr.measurementUnit || '');
   let valuePack = (attr.valuePacksDescription || '').trim();
+
+  // Clean subPackages and size with intelligent pack-and-size parser
+  const cleaned = cleanPackAndSize(attr.subPackages, attr.size, attr.measurementUnit);
+  const subPackages = cleaned.subPackages;
+  const size = cleaned.size;
+  const unit = cleaned.measurementUnit;
 
   // If additionalWordings contains edition / value pack phrases (e.g. "18 Year Old Limited Edition", "Limited Edition", "Special Edition", "Value Pack", "3x eco-refill")
   // move them to valuePack so they are guaranteed to appear at the very end!
@@ -95,17 +167,17 @@ export function assembleStandardName(attr: ProductAttributes): string {
     parts.push(subBrand);
   }
 
-  // Item (Product Type, e.g. Single Malt Scotch Whisky, Hand Wash, Creaming Soda, Gum, Strips)
+  // Item (Product Type, e.g. Single Malt Scotch Whisky, Hand Wash, Creaming Soda, Gum, Strips, Soft Drink)
   if (item && !parts.some(p => p.toLowerCase().includes(item.toLowerCase()))) {
     parts.push(item);
   }
 
-  // Flavor / Variant (e.g. Cucumber and Green Tea Scent, Wild Cherry Flavoured, Peppermint)
+  // Flavor / Variant (e.g. Cucumber and Green Tea Scent, Wild Cherry Flavoured, Peppermint, Lemon Lime And Bitters)
   if (flavor) {
     parts.push(flavor);
   }
 
-  // Additional wordings (e.g. Flexible Fabric Breathable Water Repellent, Refill, No Sugar)
+  // Additional wordings (e.g. Australian Family Owned, Flexible Fabric Breathable Water Repellent, Refill, No Sugar)
   if (additional) {
     parts.push(additional);
   }
