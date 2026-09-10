@@ -592,7 +592,21 @@ export const BrandManufacturerStudio: React.FC<BrandManufacturerStudioProps> = (
                     alt={`${activeBrand.brandName} Logo`}
                     className="max-h-full max-w-full object-contain filter drop-shadow-md transition-all hover:scale-105 duration-200"
                     onError={e => {
-                      (e.target as HTMLImageElement).src = `https://www.google.com/s2/favicons?domain=${activeBrand.brandName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com&sz=128`;
+                      const img = e.currentTarget;
+                      const cleanDomain = `${activeBrand.brandName.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`;
+                      const fallbacks = [
+                        `https://logo.clearbit.com/${cleanDomain}`,
+                        `https://unavatar.io/${cleanDomain}`,
+                        `https://www.google.com/s2/favicons?domain=${cleanDomain}&sz=256`,
+                        `https://icon.horse/icon/${cleanDomain}`,
+                      ];
+                      const currentSrc = img.src;
+                      const nextIndex = fallbacks.findIndex(f => f === currentSrc) + 1;
+                      if (nextIndex < fallbacks.length) {
+                        img.src = fallbacks[nextIndex];
+                      } else {
+                        img.style.display = 'none';
+                      }
                     }}
                   />
                 ) : (
@@ -601,6 +615,55 @@ export const BrandManufacturerStudio: React.FC<BrandManufacturerStudioProps> = (
                     <p className="text-xs">No direct image available</p>
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* Quick Multi-Source Logo Search & Download Links */}
+            <div className="space-y-2 pt-2 border-t border-slate-800">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                Direct Vector / High-Res Logo Sources:
+              </span>
+              <div className="grid grid-cols-2 gap-1.5 text-[11px]">
+                <a
+                  href={`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(activeBrand.brandName + ' logo png transparent hd')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-cyan-300 hover:text-white border border-slate-700/80 flex items-center justify-between transition-colors"
+                  title="Search High-Res Transparent Logos on Google Images"
+                >
+                  <span className="truncate">Google HD Logos</span>
+                  <ExternalLink className="w-3 h-3 shrink-0" />
+                </a>
+                <a
+                  href={`https://commons.wikimedia.org/w/index.php?search=${encodeURIComponent(activeBrand.brandName + ' logo')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-indigo-300 hover:text-white border border-slate-700/80 flex items-center justify-between transition-colors"
+                  title="Search Vector SVG on Wikimedia Commons"
+                >
+                  <span className="truncate">Wikimedia SVG</span>
+                  <ExternalLink className="w-3 h-3 shrink-0" />
+                </a>
+                <a
+                  href={`https://worldvectorlogo.com/search/${encodeURIComponent(activeBrand.brandName)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-purple-300 hover:text-white border border-slate-700/80 flex items-center justify-between transition-colors"
+                  title="Search Vector Logos on WorldVectorLogo"
+                >
+                  <span className="truncate">WorldVectorLogo</span>
+                  <ExternalLink className="w-3 h-3 shrink-0" />
+                </a>
+                <a
+                  href={`https://www.brandsoftheworld.com/logos/search/${encodeURIComponent(activeBrand.brandName)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-2.5 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-emerald-300 hover:text-white border border-slate-700/80 flex items-center justify-between transition-colors"
+                  title="Search Brands of the World"
+                >
+                  <span className="truncate">Brands of World</span>
+                  <ExternalLink className="w-3 h-3 shrink-0" />
+                </a>
               </div>
             </div>
 

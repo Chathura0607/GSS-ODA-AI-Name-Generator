@@ -384,7 +384,22 @@ export async function testGeminiApiKey(
 
 const BRAND_MANUFACTURER_PROMPT = `You are a world-class Global FMCG, Retail, and Brand Intelligence expert for GSS Operational Data Analysts (ODA).
 
-Analyze the requested Brand Name and identify its exact legal Manufacturer / Parent Corporate Entity, official Brand website, corporate Manufacturer website, and official high-resolution Logo download resources.
+Analyze the requested Brand Name and identify its **Ultimate Parent Corporation / Parent Manufacturing Entity**, official Brand website, corporate Manufacturer website, and official high-resolution Logo download resources.
+
+### CRITICAL RULE - ULTIMATE PARENT COMPANY:
+- Always identify and return the **Ultimate Parent Company / Corporate Owner** as the primary Manufacturer entity.
+- Do NOT return operating subsidiaries, local bottling units, sub-divisions, or distributor shell companies when an ultimate corporate parent owner exists.
+- Canonical Examples:
+  - "Glacéau" / "Smartwater" / "Vitaminwater" -> Parent: "The Coca-Cola Company" -> Standardized: "The Coca-Cola Co"
+  - "Doritos" / "Lay's" / "Cheetos" / "Quaker" -> Parent: "PepsiCo Inc" -> Standardized: "PepsiCo Inc"
+  - "Dove" / "Axe" / "Knorr" / "Hellmann's" / "Ben & Jerry's" -> Parent: "Unilever PLC" -> Standardized: "Unilever PLC"
+  - "Cascade" / "Tide" / "Pampers" / "Gillette" / "Oral-B" -> Parent: "The Procter & Gamble Company" -> Standardized: "The Procter & Gamble Co"
+  - "KitKat" / "Nescafe" / "Milo" / "Maggi" / "Purina" -> Parent: "Nestle SA" -> Standardized: "Nestle SA"
+  - "Oreo" / "Cadbury" / "Ritz" / "Milka" / "Toblerone" -> Parent: "Mondelez International Inc" -> Standardized: "Mondelez International Inc"
+  - "Monster Energy" -> Parent: "Monster Beverage Corporation" -> Standardized: "Monster Beverage Corp"
+  - "Tru Blu" -> Parent: "Tru Blu Beverages Pty Ltd" -> Standardized: "Tru Blu Beverages Pty Ltd"
+  - "Cargill Meat Solutions" -> Parent: "Cargill Meat Solutions Corporation" -> Standardized: "Cargill Meat Solutions Corp"
+  - "Pets' Kitchen" -> Parent: "Pets' Kitchen" (no suffix -> "Pets' Kitchen")
 
 ### GSS Manufacturer Clarification (Step 01 Short Form) Rules:
 - "Incorporated" -> "Inc"
@@ -409,26 +424,27 @@ Analyze the requested Brand Name and identify its exact legal Manufacturer / Par
 - If no company suffix exists (e.g. "Pets' Kitchen", "Norton Bros Fruit Farm"), keep the clean full original name.
 
 ### Logo & Download Website Requirements:
-- "logoUrl": Direct high-resolution image URL (SVG or transparent PNG vector logo) of this brand. Prefer reliable SVG or high-res PNG links from official CDN, Wikimedia Commons, or brand site.
-- "logoDownloadPageUrl": Direct website link where the logo or brand can be downloaded or viewed (e.g. Wikimedia Commons file page, WorldVectorLogo, Brands of the World, or official brand press/media kit).
-- "brandWebsite": Official brand homepage URL (e.g. https://www.coca-cola.com, https://www.monsterenergy.com).
-- "manufacturerWebsite": Official corporate parent manufacturer homepage URL (e.g. https://www.unilever.com).
+- "logoUrl": Direct high-resolution image URL (SVG or transparent PNG vector logo) of this brand from official CDN, brand website, or reliable asset library.
+- "logoDownloadPageUrl": Direct website link where the logo or brand can be downloaded or viewed (e.g. Wikimedia Commons file/search page, WorldVectorLogo, Brands of the World, or official brand press/media kit).
+- "brandWebsite": Official brand homepage URL (e.g. https://www.drinkglaceau.com, https://www.coca-cola.com, https://www.monsterenergy.com).
+- "manufacturerWebsite": Official corporate parent manufacturer homepage URL (e.g. https://www.coca-colacompany.com, https://www.unilever.com).
 
 You MUST return ONLY a valid JSON object with this exact format:
 {
   "brandName": "Brand Name",
-  "rawManufacturerName": "Full unshortened legal manufacturer entity name (e.g. Monster Beverage Corporation)",
-  "standardizedManufacturerName": "Standardized GSS name applying Step 01 rules (e.g. Monster Beverage Corp)",
+  "rawManufacturerName": "Full unshortened ultimate parent company legal entity name (e.g. The Coca-Cola Company)",
+  "standardizedManufacturerName": "Standardized GSS name applying Step 01 rules (e.g. The Coca-Cola Co)",
   "logoUrl": "Direct high quality SVG or PNG logo image URL",
   "logoDownloadPageUrl": "Website link to download or view the logo",
   "brandWebsite": "https://...",
   "manufacturerWebsite": "https://...",
   "country": "Country of origin or headquarters",
   "industry": "Industry or FMCG category (e.g. Beverages, Confectionery, Personal Care)",
-  "parentCompany": "Ultimate parent group if different from direct manufacturer",
-  "description": "1 concise sentence about the brand and products",
+  "parentCompany": "Ultimate parent corporation (e.g. The Coca-Cola Company)",
+  "operatingSubsidiary": "Operating subsidiary if applicable (e.g. Energy Brands)",
+  "description": "1 concise sentence about the brand, products, and parent company",
   "confidenceScore": 95,
-  "notes": "Context on manufacturer and entity"
+  "notes": "Context on parent manufacturer"
 }`;
 
 /**
@@ -486,7 +502,7 @@ export async function lookupBrandManufacturerAndLogo(
         role: 'user',
         parts: [
           {
-            text: `${BRAND_MANUFACTURER_PROMPT}\n\nSearch and identify manufacturer and logo resources for Brand: "${cleanBrand}"\nReturn JSON now:`,
+            text: `${BRAND_MANUFACTURER_PROMPT}\n\nIdentify the Ultimate Parent Manufacturer and Logo resources for Brand: "${cleanBrand}"\nReturn JSON now:`,
           },
         ],
       },
@@ -539,12 +555,21 @@ export async function lookupBrandManufacturerAndLogo(
     throw new Error('Failed to parse Brand AI output into structured format.');
   }
 
-  const rawManufacturerName = (parsed.rawManufacturerName || parsed.manufacturer || cleanBrand).trim();
+  // Priority: Always choose Ultimate Parent Company if present and valid
+  const parentCompanyCandidate = (parsed.parentCompany || '').trim();
+  const rawManufacturerCandidate = (parsed.rawManufacturerName || parsed.manufacturer || '').trim();
+
+  let finalRawManufacturer = cleanBrand;
+  if (parentCompanyCandidate && parentCompanyCandidate.toLowerCase() !== 'unknown') {
+    finalRawManufacturer = parentCompanyCandidate;
+  } else if (rawManufacturerCandidate && rawManufacturerCandidate.toLowerCase() !== 'unknown') {
+    finalRawManufacturer = rawManufacturerCandidate;
+  }
 
   // Run through our strict local GSS Manufacturer Clarification validator
-  const validationResult = standardizeManufacturerName(rawManufacturerName);
+  const validationResult = standardizeManufacturerName(finalRawManufacturer);
   const standardizedManufacturerName =
-    validationResult.standardized || (parsed.standardizedManufacturerName || rawManufacturerName).trim();
+    validationResult.standardized || (parsed.standardizedManufacturerName || finalRawManufacturer).trim();
   const clarificationRuleApplied = validationResult.ruleApplied;
 
   // Domain resolution for logo fallback
@@ -556,8 +581,8 @@ export async function lookupBrandManufacturerAndLogo(
 
   // Determine logo URL with multi-source fallback
   let logoUrl = (parsed.logoUrl || '').trim();
-  if (!logoUrl || !/^https?:\/\//i.test(logoUrl)) {
-    // Clearbit logo fallback using verified domain
+  // Filter out unstable or problematic raw wikimedia upload URLs that tend to 404
+  if (!logoUrl || !/^https?:\/\//i.test(logoUrl) || logoUrl.includes('/v1/AUTH_mw/')) {
     logoUrl = `https://logo.clearbit.com/${primaryDomain}`;
   }
 
@@ -570,7 +595,7 @@ export async function lookupBrandManufacturerAndLogo(
   return {
     id: `brand_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
     brandName: cleanBrand,
-    rawManufacturerName,
+    rawManufacturerName: finalRawManufacturer,
     standardizedManufacturerName,
     clarificationRuleApplied,
     logoUrl,
@@ -579,11 +604,12 @@ export async function lookupBrandManufacturerAndLogo(
     manufacturerWebsite: manufacturerWebsite || undefined,
     country: parsed.country || 'Global',
     industry: parsed.industry || 'Consumer Goods',
-    parentCompany: parsed.parentCompany || undefined,
+    parentCompany: parsed.parentCompany || finalRawManufacturer,
     description: parsed.description || undefined,
-    confidenceScore: parsed.confidenceScore ?? 94,
+    confidenceScore: parsed.confidenceScore ?? 95,
     notes: parsed.notes || undefined,
     searchedAt: Date.now(),
   };
 }
+
 
