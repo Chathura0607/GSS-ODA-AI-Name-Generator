@@ -69,6 +69,8 @@ export interface BrandManufacturerInfo {
   description?: string;
   confidenceScore?: number;
   notes?: string;
+  sources?: Array<{ title: string; url: string }>;
+  searchQueries?: string[];
   searchedAt: number;
 }
 

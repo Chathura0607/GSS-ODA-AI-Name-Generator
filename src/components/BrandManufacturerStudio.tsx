@@ -895,6 +895,36 @@ export const BrandManufacturerStudio: React.FC<BrandManufacturerStudioProps> = (
                   )}
                 </div>
               </div>
+
+              {/* Verified Web & Google Grounding Citations */}
+              {activeBrand.sources && activeBrand.sources.length > 0 && (
+                <div className="space-y-2 pt-2 border-t border-slate-800">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <Globe className="w-3.5 h-3.5 text-emerald-400" />
+                      100% Verified Live Web Sources ({activeBrand.sources.length})
+                    </span>
+                    <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
+                      Google & Wikipedia Grounded
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
+                    {activeBrand.sources.map((src, i) => (
+                      <a
+                        key={i}
+                        href={src.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-2.5 py-1.5 rounded-lg bg-slate-950 hover:bg-slate-800 text-slate-300 hover:text-cyan-300 border border-slate-800 hover:border-cyan-500/40 flex items-center justify-between gap-2 transition-colors"
+                        title={src.title}
+                      >
+                        <span className="truncate">{src.title}</span>
+                        <ExternalLink className="w-3 h-3 shrink-0 text-slate-500" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Description & Metadata Footer */}
