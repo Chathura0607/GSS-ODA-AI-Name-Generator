@@ -1,5 +1,5 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
-import { ProcessedProduct, AppSettings } from '../types';
+import { ProcessedProduct, AppSettings, BrandManufacturerInfo } from '../types';
 
 interface GssOdaDB extends DBSchema {
   products: {
@@ -10,6 +10,14 @@ interface GssOdaDB extends DBSchema {
       'by-status': string;
     };
   };
+  brands: {
+    key: string;
+    value: BrandManufacturerInfo;
+    indexes: {
+      'by-searched': number;
+      'by-brand': string;
+    };
+  };
   settings: {
     key: string;
     value: any;
@@ -17,19 +25,25 @@ interface GssOdaDB extends DBSchema {
 }
 
 const DB_NAME = 'gss_oda_db';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let dbPromise: Promise<IDBPDatabase<GssOdaDB>> | null = null;
 
 export function getDB() {
   if (!dbPromise) {
     dbPromise = openDB<GssOdaDB>(DB_NAME, DB_VERSION, {
-      upgrade(db) {
+      upgrade(db, oldVersion) {
         // Products store
         if (!db.objectStoreNames.contains('products')) {
           const productStore = db.createObjectStore('products', { keyPath: 'id' });
           productStore.createIndex('by-created', 'createdAt');
           productStore.createIndex('by-status', 'status');
+        }
+        // Brands store
+        if (!db.objectStoreNames.contains('brands')) {
+          const brandStore = db.createObjectStore('brands', { keyPath: 'id' });
+          brandStore.createIndex('by-searched', 'searchedAt');
+          brandStore.createIndex('by-brand', 'brandName');
         }
         // Settings store
         if (!db.objectStoreNames.contains('settings')) {
@@ -40,6 +54,7 @@ export function getDB() {
   }
   return dbPromise;
 }
+
 
 /**
  * Save or update a single product
@@ -83,6 +98,50 @@ export async function clearAllProducts(): Promise<void> {
   const db = await getDB();
   await db.clear('products');
 }
+
+/**
+ * Save or update brand info
+ */
+export async function saveBrandInfo(brand: BrandManufacturerInfo): Promise<void> {
+  const db = await getDB();
+  await db.put('brands', brand);
+}
+
+/**
+ * Bulk save brand infos
+ */
+export async function saveBrandInfos(brands: BrandManufacturerInfo[]): Promise<void> {
+  const db = await getDB();
+  const tx = db.transaction('brands', 'readwrite');
+  await Promise.all(brands.map(b => tx.store.put(b)));
+  await tx.done;
+}
+
+/**
+ * Retrieve all searched brands ordered by search timestamp descending
+ */
+export async function getAllBrands(): Promise<BrandManufacturerInfo[]> {
+  const db = await getDB();
+  const brands = await db.getAllFromIndex('brands', 'by-searched');
+  return brands.reverse();
+}
+
+/**
+ * Delete a brand entry
+ */
+export async function deleteBrand(id: string): Promise<void> {
+  const db = await getDB();
+  await db.delete('brands', id);
+}
+
+/**
+ * Clear all brand entries
+ */
+export async function clearAllBrands(): Promise<void> {
+  const db = await getDB();
+  await db.clear('brands');
+}
+
 
 /**
  * Purge records older than the retention period (default 7 days).
@@ -143,15 +202,18 @@ export async function loadSettings(): Promise<AppSettings> {
  */
 export async function exportBackupJSON(): Promise<string> {
   const products = await getAllProducts();
+  const brands = await getAllBrands();
   const settings = await loadSettings();
   const backup = {
     appName: 'GSS ODA Product Name Standardizer',
-    version: '1.0.0',
+    version: '1.1.0',
     exportTimestamp: Date.now(),
     exportDateISO: new Date().toISOString(),
     totalRecords: products.length,
+    totalBrands: brands.length,
     retentionPolicy: `${settings.retentionDays} days`,
     products,
+    brands,
   };
   return JSON.stringify(backup, null, 2);
 }
@@ -161,17 +223,32 @@ export async function exportBackupJSON(): Promise<string> {
  */
 export async function importBackupJSON(jsonContent: string): Promise<number> {
   const data = JSON.parse(jsonContent);
-  if (!data || !Array.isArray(data.products)) {
+  if (!data || (!Array.isArray(data.products) && !Array.isArray(data.brands))) {
     throw new Error('Invalid backup file format. Expected a valid GSS ODA backup.');
   }
 
-  const validProducts: ProcessedProduct[] = data.products.map((p: any) => ({
-    ...p,
-    id: p.id || `imported_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-    createdAt: p.createdAt || Date.now(),
-    updatedAt: Date.now(),
-  }));
+  let count = 0;
+  if (Array.isArray(data.products) && data.products.length > 0) {
+    const validProducts: ProcessedProduct[] = data.products.map((p: any) => ({
+      ...p,
+      id: p.id || `imported_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      createdAt: p.createdAt || Date.now(),
+      updatedAt: Date.now(),
+    }));
+    await saveProducts(validProducts);
+    count += validProducts.length;
+  }
 
-  await saveProducts(validProducts);
-  return validProducts.length;
+  if (Array.isArray(data.brands) && data.brands.length > 0) {
+    const validBrands: BrandManufacturerInfo[] = data.brands.map((b: any) => ({
+      ...b,
+      id: b.id || `imported_brand_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      searchedAt: b.searchedAt || Date.now(),
+    }));
+    await saveBrandInfos(validBrands);
+    count += validBrands.length;
+  }
+
+  return count;
 }
+

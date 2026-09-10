@@ -12,6 +12,7 @@ import {
   Globe,
   ExternalLink,
   Link2,
+  Building2,
 } from 'lucide-react';
 import { ProcessedProduct, ProductAttributes } from '../types';
 import { ContainerTypeSelect } from './ContainerTypeSelect';
@@ -29,6 +30,7 @@ interface ProductDetailModalProps {
   onClose: () => void;
   onUpdateProduct: (updated: ProcessedProduct) => void;
   onReanalyze: (product: ProcessedProduct) => void;
+  onLookupBrand?: (brand: string) => void;
 }
 
 export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
@@ -37,7 +39,9 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   onClose,
   onUpdateProduct,
   onReanalyze,
+  onLookupBrand,
 }) => {
+
   if (!isOpen || !product) return null;
 
   const [attributes, setAttributes] = useState<ProductAttributes>({
@@ -298,7 +302,23 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 {/* Brand */}
                 <div>
-                  <label className="block text-slate-400 mb-1 font-medium">Brand Name</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-slate-400 font-medium">Brand Name</label>
+                    {attributes.brand && onLookupBrand && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          onLookupBrand(attributes.brand);
+                        }}
+                        className="text-[10px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-semibold"
+                        title="Lookup manufacturer & logo"
+                      >
+                        <Building2 className="w-3 h-3" />
+                        Lookup Logo & Mfg
+                      </button>
+                    )}
+                  </div>
                   <input
                     type="text"
                     value={attributes.brand}
@@ -307,6 +327,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     className="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 focus:border-cyan-500 focus:outline-none"
                   />
                 </div>
+
 
                 {/* Sub-Brand */}
                 <div>

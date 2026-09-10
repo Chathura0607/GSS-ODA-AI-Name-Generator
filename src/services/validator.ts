@@ -373,4 +373,271 @@ export function getSkuLinkInfo(
     };
   }
 }
+/**
+ * Official GSS Manufacturer Clarification Rules & Short Forms (Step 01):
+ * - Incorporated -> Inc
+ * - Limited Liability Company -> LLC
+ * - Limited Company -> LC
+ * - Company -> Co
+ * - Corporation -> Corp
+ * - Cooperatives -> Coop
+ * - Proprietary Limited -> Pty Ltd
+ * - Licensed Taxi Drivers' Association -> LTDA
+ * - (P) Ltd -> Pvt Ltd
+ * - S.P.A / Spa -> SPA
+ * - B.V. -> BV
+ * - S.A. -> SA
+ * - S.A. DE C.V. -> SA De CV
+ * - A/S -> AS
+ * - Srl -> SRL
+ * - Gmbh -> GMBH
+ * - PDTS -> Products
+ * - MFG. CO -> Mfg Co
+ * - L.P(Limited Partnership) -> LP
+ * - If no company suffix exists (e.g. "Pets' Kitchen"), full original name is preserved.
+ */
+export interface ManufacturerStandardizationResult {
+  raw: string;
+  standardized: string;
+  ruleApplied: string;
+  isModified: boolean;
+}
 
+export const MANUFACTURER_RULE_MAPPINGS = [
+  { full: 'Incorporated', short: 'Inc', pattern: /\bIncorporated\b|\bInc\.?\b/gi },
+  { full: 'Limited Liability Company', short: 'LLC', pattern: /\bLimited Liability Company\b|\bL\.?L\.?C\.?\b/gi },
+  { full: 'Limited Company', short: 'LC', pattern: /\bLimited Company\b/gi },
+  { full: 'Proprietary Limited', short: 'Pty Ltd', pattern: /\bProprietary Limited\b|\bPty\.?\s*Ltd\.?\b/gi },
+  { full: 'Licensed Taxi Drivers\' Association', short: 'LTDA', pattern: /\bLicensed Taxi Drivers'? Association\b/gi },
+  { full: 'Corporation', short: 'Corp', pattern: /\bCorporation\b|\bCorp\.?\b/gi },
+  { full: 'Cooperatives', short: 'Coop', pattern: /\bCooperatives?\b|\bCoop\.?\b/gi },
+  { full: '(P) Ltd / Pvt Ltd', short: 'Pvt Ltd', pattern: /\(?P\)?\s*Ltd\.?|\(?Pvt\)?\.?\s*Ltd\.?/gi },
+  { full: 'Company', short: 'Co', pattern: /\bCompany\b|\bCo\.?\b/gi },
+  { full: 'S.P.A', short: 'SPA', pattern: /\bS\.?P\.?A\.?\b|\bSpa\b/gi },
+  { full: 'B.V.', short: 'BV', pattern: /\bB\.?V\.?\b|\bBv\b/gi },
+  { full: 'S.A.', short: 'SA', pattern: /\bS\.?A\.?\b(?!\s*DE\s*C\.?V\.?)/gi },
+  { full: 'S.A. DE C.V.', short: 'SA De CV', pattern: /\bS\.?A\.?\s*DE\s*C\.?V\.?\b|\bS\.?A\.?\s*de\s*C\.?V\.?\b/gi },
+  { full: 'A/S', short: 'AS', pattern: /\bA\/S\b/gi },
+  { full: 'Srl', short: 'SRL', pattern: /\bS\.?R\.?L\.?\b|\bSrl\b/gi },
+  { full: 'Gmbh', short: 'GMBH', pattern: /\bG\.?m\.?b\.?H\.?\b|\bGmbh\b|\bGMBH\b/gi },
+  { full: 'PDTS', short: 'Products', pattern: /\bPDTS\b|\bPdts\b/gi },
+  { full: 'MFG. CO', short: 'Mfg Co', pattern: /\bMFG\.?\s*CO\.?\b|\bMfg\.?\s*Co\.?\b/gi },
+  { full: 'Limited Partnership', short: 'LP', pattern: /\bL\.?P\.?\s*\(Limited Partnership\)|\bL\.?P\.?\b/gi },
+];
+
+/**
+ * Standardizes a manufacturer name according to official GSS Manufacturer Clarification Step 01 guidelines.
+ */
+export function standardizeManufacturerName(rawName: string): ManufacturerStandardizationResult {
+  if (!rawName || !rawName.trim()) {
+    return { raw: '', standardized: '', ruleApplied: 'None', isModified: false };
+  }
+
+  const raw = rawName.trim();
+  let result = raw;
+  const appliedRules: string[] = [];
+
+  // 1. Convert ALL-CAPS strings into readable Title Case while protecting standard acronyms
+  const isAllCaps = result.length > 3 && result === result.toUpperCase() && /[A-Z]/.test(result);
+  if (isAllCaps) {
+    // Replace hyphen in uppercase brand compounds (e.g. QUEEN-ANN -> Queen Ann)
+    result = result.replace(/([A-Z]+)-([A-Z]+)/g, '$1 $2');
+
+    result = result
+      .toLowerCase()
+      .split(' ')
+      .map(word => {
+        if (!word) return '';
+        // preserve specific short acronyms / short initialisms
+        if (/^(llc|inc|corp|co|sa|spa|bv|gmbh|srl|as|lp|mfg|pdts|cv|rp)$/i.test(word)) {
+          return word.toUpperCase();
+        }
+        if (/^ltd$/i.test(word)) {
+          return 'Ltd';
+        }
+        if (/^de$/i.test(word)) {
+          return 'De';
+        }
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      })
+      .join(' ');
+  }
+
+
+  // 2. Specific multi-word / complex replacements
+  // Licensed Taxi Drivers' Association -> LTDA
+  if (/Licensed Taxi Drivers'? Association/i.test(result)) {
+    result = result.replace(/Licensed Taxi Drivers'? Association/gi, 'LTDA');
+    appliedRules.push("Licensed Taxi Drivers' Association → LTDA");
+  }
+
+  // Limited Liability Company / LLC
+  if (/Limited Liability Company/i.test(result)) {
+    result = result.replace(/Limited Liability Company/gi, 'LLC');
+    appliedRules.push('Limited Liability Company → LLC');
+  }
+
+  // Proprietary Limited / Pty Ltd
+  if (/Proprietary Limited/i.test(result) || /Pty\.?\s*Ltd\.?/i.test(result)) {
+    result = result.replace(/Proprietary Limited/gi, 'Pty Ltd').replace(/Pty\.?\s*Ltd\.?/gi, 'Pty Ltd');
+    appliedRules.push('Proprietary Limited → Pty Ltd');
+  }
+
+  // Limited Partnership: L.P(Limited Partnership) / L.P. -> LP
+  if (/L\.?P\.?\s*\(Limited Partnership\)/i.test(result) || /,\s*L\.?P\.?\b/i.test(result)) {
+    result = result
+      .replace(/,\s*L\.?P\.?\s*\(Limited Partnership\)/gi, ' LP')
+      .replace(/L\.?P\.?\s*\(Limited Partnership\)/gi, 'LP')
+      .replace(/,\s*L\.?P\.?/gi, ' LP')
+      .replace(/\bL\.?P\.?\b/g, 'LP');
+    appliedRules.push('L.P(Limited Partnership) → LP');
+  }
+
+  // (P) Ltd / (Pvt) Ltd / Pvt. Ltd. -> Pvt Ltd
+  if (/\(?P\)?\s*Ltd\.?/i.test(result) || /\(?Pvt\)?\.?\s*Ltd\.?/i.test(result)) {
+    result = result.replace(/\(?P\)?\s*Ltd\.?/gi, 'Pvt Ltd').replace(/\(?Pvt\)?\.?\s*Ltd\.?/gi, 'Pvt Ltd');
+    appliedRules.push('(P) Ltd → Pvt Ltd');
+  }
+
+  // S.A. DE C.V. / S.A. de C.V. -> SA De CV
+  if (/S\.?A\.?\s*(?:DE|de)\s*C\.?V\.?/i.test(result)) {
+    result = result.replace(/S\.?A\.?\s*(?:DE|de)\s*C\.?V\.?/gi, 'SA De CV');
+    appliedRules.push('S.A. DE C.V. → SA De CV');
+  }
+
+  // S.P.A / Spa -> SPA
+  if (/\bS\.?P\.?A\.?\b/i.test(result) || /\bSpa\b/i.test(result)) {
+    result = result.replace(/\bS\.?P\.?A\.?\b/gi, 'SPA').replace(/\bSpa\b/g, 'SPA');
+    appliedRules.push('S.P.A → SPA');
+  }
+
+  // B.V. -> BV
+  if (/\bB\.?V\.?\b/i.test(result)) {
+    result = result.replace(/\bB\.?V\.?\b/gi, 'BV');
+    appliedRules.push('B.V. → BV');
+  }
+
+  // S.A. -> SA
+  if (/\bS\.?A\.?\b/i.test(result) && !/SA De CV/i.test(result)) {
+    result = result.replace(/\bS\.?A\.?\b/gi, 'SA');
+    appliedRules.push('S.A. → SA');
+  }
+
+  // A/S -> AS
+  if (/\bA\/S\b/i.test(result) || /\bA\s*\/\s*S\b/i.test(result)) {
+    result = result.replace(/\bA\s*\/\s*S\b/gi, 'AS');
+    appliedRules.push('A/S → AS');
+  }
+
+  // Srl / S.R.L. -> SRL
+  if (/\bS\.?R\.?L\.?\b/i.test(result) || /\bSrl\b/i.test(result)) {
+    result = result.replace(/\bS\.?R\.?L\.?\b/gi, 'SRL').replace(/\bSrl\b/gi, 'SRL');
+    appliedRules.push('Srl → SRL');
+  }
+
+  // Gmbh / GmbH / G.M.B.H. -> GMBH
+  if (/\bG\.?m\.?b\.?H\.?\b/i.test(result) || /\bGmbh\b/i.test(result) || /\bGMBH\b/i.test(result)) {
+    result = result.replace(/\bG\.?m\.?b\.?H\.?\b/gi, 'GMBH').replace(/\bGmbh\b/gi, 'GMBH');
+    appliedRules.push('Gmbh → GMBH');
+  }
+
+  // PDTS -> Products
+  if (/\bPDTS\b/i.test(result) || /\bPdts\b/i.test(result)) {
+    result = result.replace(/\bPDTS\b/gi, 'Products').replace(/\bPdts\b/gi, 'Products');
+    appliedRules.push('PDTS → Products');
+  }
+
+  // MFG. CO / MFG CO -> Mfg Co
+  if (/\bMFG\.?\s*CO\.?\b/i.test(result) || /\bMfg\.?\s*Co\.?\b/i.test(result)) {
+    result = result.replace(/\bMFG\.?\s*CO\.?\b/gi, 'Mfg Co').replace(/\bMfg\.?\s*Co\.?\b/gi, 'Mfg Co');
+    appliedRules.push('MFG. CO → Mfg Co');
+  }
+
+  // Limited Company -> LC
+  if (/\bLimited Company\b/i.test(result)) {
+    result = result.replace(/\bLimited Company\b/gi, 'LC');
+    appliedRules.push('Limited Company → LC');
+  }
+
+  // & Company Inc / & Company -> & Co Inc / & Co
+  if (/&\s*Company\s+Inc/i.test(result) || /and\s+Company\s+Inc/i.test(result)) {
+    result = result.replace(/(&|and)\s*Company\s+Inc/gi, '& Co Inc');
+    appliedRules.push('& Company Inc → & Co Inc');
+  } else if (/&\s*Company\b/i.test(result) || /and\s+Company\b/i.test(result)) {
+    result = result.replace(/(&|and)\s*Company\b/gi, '& Co');
+    appliedRules.push('& Company → & Co');
+  }
+
+  // Co Incorporated -> Co Inc
+  if (/\bCo\.?\s+Incorporated\b/i.test(result)) {
+    result = result.replace(/\bCo\.?\s+Incorporated\b/gi, 'Co Inc');
+    appliedRules.push('Co Incorporated → Co Inc');
+  }
+
+  // Incorporated -> Inc
+  if (/\bIncorporated\b/i.test(result) || /\bInc\.\b/i.test(result)) {
+    result = result.replace(/\bIncorporated\b/gi, 'Inc').replace(/\bInc\.\b/gi, 'Inc');
+    if (!appliedRules.includes('Incorporated → Inc')) appliedRules.push('Incorporated → Inc');
+  }
+
+  // Corporation -> Corp
+  if (/\bCorporation\b/i.test(result) || /\bCorp\.\b/i.test(result)) {
+    result = result.replace(/\bCorporation\b/gi, 'Corp').replace(/\bCorp\.\b/gi, 'Corp');
+    if (!appliedRules.includes('Corporation → Corp')) appliedRules.push('Corporation → Corp');
+  }
+
+  // Cooperatives / Cooperative -> Coop
+  if (/\bCooperatives?\b/i.test(result) || /\bCoop\.\b/i.test(result)) {
+    result = result.replace(/\bCooperatives?\b/gi, 'Coop').replace(/\bCoop\.\b/gi, 'Coop');
+    if (!appliedRules.includes('Cooperatives → Coop')) appliedRules.push('Cooperatives → Coop');
+  }
+
+  // Company -> Co (standalone company word at boundary)
+  if (/\bCompany\b/i.test(result) && !appliedRules.some(r => r.includes('Company'))) {
+    result = result.replace(/\bCompany\b/gi, 'Co');
+    appliedRules.push('Company → Co');
+  }
+
+  // Co. -> Co
+  if (/\bCo\.\b/i.test(result)) {
+    result = result.replace(/\bCo\.\b/gi, 'Co');
+  }
+
+  // Clean specific symbols / domains from guide examples (e.g. 1-800-Flowers.com Inc -> 1-800 Flowers Com Inc)
+  if (/1-800-Flowers\.com/i.test(result)) {
+    result = result.replace(/1-800-Flowers\.com/gi, '1-800 Flowers Com');
+    appliedRules.push('1-800-Flowers.com → 1-800 Flowers Com');
+  }
+
+  // Clean hyphen in Seven-Eleven -> Seven Eleven
+  if (/Seven-Eleven/i.test(result)) {
+    result = result.replace(/Seven-Eleven/gi, 'Seven Eleven');
+    appliedRules.push('Seven-Eleven → Seven Eleven');
+  }
+
+  // Norton Bros. -> Norton Bros
+  if (/Bros\./i.test(result)) {
+    result = result.replace(/Bros\./gi, 'Bros');
+  }
+
+  // Mr Bey / Mr. Bey formatting
+  if (/\bMr\s+Bey\b/i.test(result)) {
+    result = result.replace(/\bMr\s+Bey\b/gi, 'Mr.Bey');
+  }
+
+  // Clean dangling commas or double spaces (e.g. "Management, LP" -> "Management LP")
+  result = result.replace(/,\s*/g, ' ').replace(/\s+/g, ' ').trim();
+
+  // Strip trailing period if at end of shortened words like Inc. or Corp. or Ltd.
+  result = result.replace(/\b(Inc|Corp|Co|Ltd|Pvt Ltd|Pty Ltd|LC|LLC|AS|SPA|BV|SA|SRL|GMBH|LP|LTDA)\.$/i, '$1');
+
+  const ruleApplied = appliedRules.length > 0 ? appliedRules.join(', ') : 'Direct Full Name (No company suffix)';
+  const isModified = result !== raw;
+
+  return {
+    raw,
+    standardized: result,
+    ruleApplied,
+    isModified,
+  };
+}

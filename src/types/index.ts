@@ -52,3 +52,23 @@ export interface ExtractionProgress {
   extractedFiles: number;
   currentFileName: string;
 }
+
+export interface BrandManufacturerInfo {
+  id: string;
+  brandName: string;
+  rawManufacturerName: string;
+  standardizedManufacturerName: string;
+  clarificationRuleApplied?: string;
+  logoUrl?: string;
+  logoDownloadPageUrl?: string;
+  brandWebsite?: string;
+  manufacturerWebsite?: string;
+  country?: string;
+  industry?: string;
+  parentCompany?: string;
+  description?: string;
+  confidenceScore?: number;
+  notes?: string;
+  searchedAt: number;
+}
+

@@ -1,6 +1,7 @@
 import { CONTAINER_TYPES } from '../constants/containerTypes';
-import { ProductAttributes } from '../types';
-import { assembleStandardName, normalizeMeasurementUnit, cleanPackAndSize } from './validator';
+import { ProductAttributes, BrandManufacturerInfo } from '../types';
+import { assembleStandardName, normalizeMeasurementUnit, cleanPackAndSize, standardizeManufacturerName } from './validator';
+
 
 const SYSTEM_PROMPT = `You are an expert AI Operational Data Analyst (ODA) specialized in standardized Fast-Moving Consumer Goods (FMCG) and retail product cataloguing for GSS.
 
@@ -380,3 +381,209 @@ export async function testGeminiApiKey(
 
   return { success: true, activeModel: targetModel, availableModels: models };
 }
+
+const BRAND_MANUFACTURER_PROMPT = `You are a world-class Global FMCG, Retail, and Brand Intelligence expert for GSS Operational Data Analysts (ODA).
+
+Analyze the requested Brand Name and identify its exact legal Manufacturer / Parent Corporate Entity, official Brand website, corporate Manufacturer website, and official high-resolution Logo download resources.
+
+### GSS Manufacturer Clarification (Step 01 Short Form) Rules:
+- "Incorporated" -> "Inc"
+- "Limited Liability Company" -> "LLC"
+- "Limited Company" -> "LC"
+- "Company" -> "Co"
+- "Corporation" -> "Corp"
+- "Cooperatives" / "Cooperative" -> "Coop"
+- "Proprietary Limited" -> "Pty Ltd"
+- "(P) Ltd" -> "Pvt Ltd"
+- "S.P.A" / "Spa" -> "SPA"
+- "B.V." -> "BV"
+- "S.A." -> "SA"
+- "S.A. DE C.V." -> "SA De CV"
+- "A/S" -> "AS"
+- "Srl" -> "SRL"
+- "Gmbh" -> "GMBH"
+- "PDTS" -> "Products"
+- "MFG. CO" -> "Mfg Co"
+- "L.P(Limited Partnership)" -> "LP"
+- "Licensed Taxi Drivers' Association" -> "LTDA"
+- If no company suffix exists (e.g. "Pets' Kitchen", "Norton Bros Fruit Farm"), keep the clean full original name.
+
+### Logo & Download Website Requirements:
+- "logoUrl": Direct high-resolution image URL (SVG or transparent PNG vector logo) of this brand. Prefer reliable SVG or high-res PNG links from official CDN, Wikimedia Commons, or brand site.
+- "logoDownloadPageUrl": Direct website link where the logo or brand can be downloaded or viewed (e.g. Wikimedia Commons file page, WorldVectorLogo, Brands of the World, or official brand press/media kit).
+- "brandWebsite": Official brand homepage URL (e.g. https://www.coca-cola.com, https://www.monsterenergy.com).
+- "manufacturerWebsite": Official corporate parent manufacturer homepage URL (e.g. https://www.unilever.com).
+
+You MUST return ONLY a valid JSON object with this exact format:
+{
+  "brandName": "Brand Name",
+  "rawManufacturerName": "Full unshortened legal manufacturer entity name (e.g. Monster Beverage Corporation)",
+  "standardizedManufacturerName": "Standardized GSS name applying Step 01 rules (e.g. Monster Beverage Corp)",
+  "logoUrl": "Direct high quality SVG or PNG logo image URL",
+  "logoDownloadPageUrl": "Website link to download or view the logo",
+  "brandWebsite": "https://...",
+  "manufacturerWebsite": "https://...",
+  "country": "Country of origin or headquarters",
+  "industry": "Industry or FMCG category (e.g. Beverages, Confectionery, Personal Care)",
+  "parentCompany": "Ultimate parent group if different from direct manufacturer",
+  "description": "1 concise sentence about the brand and products",
+  "confidenceScore": 95,
+  "notes": "Context on manufacturer and entity"
+}`;
+
+/**
+ * Extracts the primary domain name from a URL (e.g. https://www.monsterenergy.com/en-us -> monsterenergy.com)
+ */
+export function extractDomainFromUrl(url?: string): string {
+  if (!url) return '';
+  try {
+    const parsed = new URL(url.startsWith('http') ? url : `https://${url}`);
+    return parsed.hostname.replace(/^www\./i, '');
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Searches for a brand's manufacturer and logo resources with automatic Google Search grounding and GSS clarification validation.
+ */
+export async function lookupBrandManufacturerAndLogo(
+  brandName: string,
+  apiKey: string,
+  modelName: string = 'gemini-3.6-flash'
+): Promise<BrandManufacturerInfo> {
+  const cleanBrand = brandName.trim();
+  if (!cleanBrand) {
+    throw new Error('Please enter a Brand Name to search.');
+  }
+
+  if (!apiKey) {
+    // Return offline mock/standardized result if API key is not configured
+    const localClarification = standardizeManufacturerName(cleanBrand);
+    const domainGuess = `${cleanBrand.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`;
+    return {
+      id: `brand_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      brandName: cleanBrand,
+      rawManufacturerName: cleanBrand,
+      standardizedManufacturerName: localClarification.standardized,
+      clarificationRuleApplied: localClarification.ruleApplied,
+      logoUrl: `https://logo.clearbit.com/${domainGuess}`,
+      logoDownloadPageUrl: `https://commons.wikimedia.org/w/index.php?search=${encodeURIComponent(cleanBrand + ' logo')}`,
+      brandWebsite: `https://www.${domainGuess}`,
+      manufacturerWebsite: `https://www.${domainGuess}`,
+      country: 'Global',
+      industry: 'Consumer Goods',
+      description: `Brand record for ${cleanBrand}`,
+      confidenceScore: 70,
+      notes: 'Generated offline. Configure Gemini API Key in Settings for live AI intelligence & direct logo downloads.',
+      searchedAt: Date.now(),
+    };
+  }
+
+  const buildRequestBody = (includeTools: boolean) => ({
+    contents: [
+      {
+        role: 'user',
+        parts: [
+          {
+            text: `${BRAND_MANUFACTURER_PROMPT}\n\nSearch and identify manufacturer and logo resources for Brand: "${cleanBrand}"\nReturn JSON now:`,
+          },
+        ],
+      },
+    ],
+    ...(includeTools ? { tools: [{ google_search: {} }] } : {}),
+    generationConfig: {
+      temperature: 0.1,
+      responseMimeType: 'application/json',
+    },
+  });
+
+  let requestBody = buildRequestBody(true);
+  let response = await callWithRetry(modelName, apiKey, requestBody);
+
+  if (!response.ok && (response.status === 400 || response.status === 429)) {
+    requestBody = buildRequestBody(false);
+    response = await callWithRetry(modelName, apiKey, requestBody);
+  }
+
+  // Auto-discover model if 404
+  if (!response.ok && response.status === 404) {
+    const available = await fetchAvailableModels(apiKey);
+    const fallbackModel =
+      available.find(m => m.id.includes('3.6') || m.id.includes('flash') || m.id.includes('gemini'))?.id ||
+      (available.length > 0 ? available[0].id : null);
+
+    if (fallbackModel && fallbackModel !== modelName.trim().replace(/^models\//, '')) {
+      response = await callWithRetry(fallbackModel, apiKey, requestBody);
+    }
+  }
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    const message = errorData?.error?.message || `API error (${response.status}: ${response.statusText})`;
+    throw new Error(`Gemini Brand Intelligence Error: ${message}`);
+  }
+
+  const data = await response.json();
+  const textOutput = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+  if (!textOutput) {
+    throw new Error('No brand intelligence received from Gemini API.');
+  }
+
+  let parsed: any = {};
+  try {
+    const cleanJson = textOutput.replace(/```json/gi, '').replace(/```/g, '').trim();
+    parsed = JSON.parse(cleanJson);
+  } catch (err) {
+    throw new Error('Failed to parse Brand AI output into structured format.');
+  }
+
+  const rawManufacturerName = (parsed.rawManufacturerName || parsed.manufacturer || cleanBrand).trim();
+
+  // Run through our strict local GSS Manufacturer Clarification validator
+  const validationResult = standardizeManufacturerName(rawManufacturerName);
+  const standardizedManufacturerName =
+    validationResult.standardized || (parsed.standardizedManufacturerName || rawManufacturerName).trim();
+  const clarificationRuleApplied = validationResult.ruleApplied;
+
+  // Domain resolution for logo fallback
+  const brandWebsite = parsed.brandWebsite || '';
+  const manufacturerWebsite = parsed.manufacturerWebsite || '';
+  const domainFromBrand = extractDomainFromUrl(brandWebsite);
+  const domainFromMfg = extractDomainFromUrl(manufacturerWebsite);
+  const primaryDomain = domainFromBrand || domainFromMfg || `${cleanBrand.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`;
+
+  // Determine logo URL with multi-source fallback
+  let logoUrl = (parsed.logoUrl || '').trim();
+  if (!logoUrl || !/^https?:\/\//i.test(logoUrl)) {
+    // Clearbit logo fallback using verified domain
+    logoUrl = `https://logo.clearbit.com/${primaryDomain}`;
+  }
+
+  // Determine logo download page URL
+  let logoDownloadPageUrl = (parsed.logoDownloadPageUrl || '').trim();
+  if (!logoDownloadPageUrl || !/^https?:\/\//i.test(logoDownloadPageUrl)) {
+    logoDownloadPageUrl = `https://commons.wikimedia.org/w/index.php?search=${encodeURIComponent(cleanBrand + ' logo')}`;
+  }
+
+  return {
+    id: `brand_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    brandName: cleanBrand,
+    rawManufacturerName,
+    standardizedManufacturerName,
+    clarificationRuleApplied,
+    logoUrl,
+    logoDownloadPageUrl,
+    brandWebsite: brandWebsite || undefined,
+    manufacturerWebsite: manufacturerWebsite || undefined,
+    country: parsed.country || 'Global',
+    industry: parsed.industry || 'Consumer Goods',
+    parentCompany: parsed.parentCompany || undefined,
+    description: parsed.description || undefined,
+    confidenceScore: parsed.confidenceScore ?? 94,
+    notes: parsed.notes || undefined,
+    searchedAt: Date.now(),
+  };
+}
+

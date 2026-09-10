@@ -7,6 +7,7 @@ import { ProductDetailModal } from './components/ProductDetailModal';
 import { RulesGuideModal } from './components/RulesGuideModal';
 import { HistoryModal } from './components/HistoryModal';
 import { SettingsModal } from './components/SettingsModal';
+import { BrandManufacturerStudio } from './components/BrandManufacturerStudio';
 
 import { ProcessedProduct, AppSettings } from './types';
 import { ExtractedImageFile } from './services/archiveExtractor';
@@ -27,9 +28,14 @@ import {
   CheckCircle2,
   AlertTriangle,
   History,
+  Building2,
 } from 'lucide-react';
 
 export const App: React.FC = () => {
+  // Navigation View State
+  const [activeView, setActiveView] = useState<'products' | 'brands'>('products');
+  const [brandQueryToOpen, setBrandQueryToOpen] = useState<string>('');
+
   // State
   const [settings, setSettings] = useState<AppSettings>({
     geminiApiKey: localStorage.getItem('gss_gemini_key') || '',
@@ -42,6 +48,7 @@ export const App: React.FC = () => {
   const [products, setProducts] = useState<ProcessedProduct[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [totalSavedCount, setTotalSavedCount] = useState(0);
+
 
   // Modals
   const [isRulesOpen, setIsRulesOpen] = useState(false);
@@ -260,8 +267,16 @@ export const App: React.FC = () => {
   };
 
   // Retry failed item
+  // Retry failed item
   const handleRetry = (item: ProcessedProduct) => {
     handleReanalyze(item);
+  };
+
+  // Switch to Brand Studio and auto search brand
+  const handleLookupBrand = (brandName: string) => {
+    if (!brandName) return;
+    setBrandQueryToOpen(brandName);
+    setActiveView('brands');
   };
 
   // Active queue calculation
@@ -273,10 +288,12 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col antialiased">
-      {/* Top Navbar */}
+      {/* Top Navbar with Tab Switcher */}
       <Navbar
         settings={settings}
         totalSavedCount={totalSavedCount}
+        activeView={activeView}
+        onSelectView={setActiveView}
         onOpenRules={() => setIsRulesOpen(true)}
         onOpenHistory={() => setIsHistoryOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
@@ -284,108 +301,130 @@ export const App: React.FC = () => {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* Welcome & Analytics Banner */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="md:col-span-2 p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-700/80 shadow-xl relative overflow-hidden flex flex-col justify-between">
-            <div className="relative z-10 space-y-1.5">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-bold border border-cyan-500/30 uppercase tracking-wider">
-                  GSS Production Ready
-                </span>
-                <span className="text-slate-400 text-xs">ODA Data Standardization Hub</span>
-              </div>
-              <h1 className="text-xl font-extrabold text-white tracking-tight">
-                Operational Data Product Standardizer
-              </h1>
-              <p className="text-xs text-slate-300 max-w-md">
-                Automating English naming formulas, multi-format archive extraction, and 49-container type classification.
-              </p>
-            </div>
-            <div className="relative z-10 flex items-center gap-4 pt-4 text-xs text-slate-400 border-t border-slate-700/60 mt-3">
-              <span className="flex items-center gap-1 text-slate-300 font-medium">
-                <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
-                7-Day Local Retention
-              </span>
-              <span className="flex items-center gap-1 text-slate-300 font-medium">
-                <Layers className="w-3.5 h-3.5 text-purple-400" />
-                49 GSS Containers
-              </span>
-            </div>
-          </div>
-
-          {/* Stat 1: Total Active */}
-          <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-lg flex flex-col justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Total Current Products
-            </span>
-            <div className="flex items-baseline justify-between mt-2">
-              <span className="text-3xl font-extrabold text-white font-mono">{products.length}</span>
-              <span className="text-xs text-slate-500 font-medium">Items Loaded</span>
-            </div>
-            <div className="text-[11px] text-slate-400 mt-2 flex items-center gap-1">
-              <History className="w-3 h-3 text-purple-400" />
-              <span>{totalSavedCount} in 7-day vault</span>
-            </div>
-          </div>
-
-          {/* Stat 2: Compliance Rate */}
-          <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-lg flex flex-col justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              GSS Rule Compliance
-            </span>
-            <div className="flex items-baseline justify-between mt-2">
-              <span className="text-3xl font-extrabold text-emerald-400 font-mono">
-                {products.length > 0 ? Math.round((validCount / products.length) * 100) : 100}%
-              </span>
-              <span className="text-xs text-emerald-400 font-medium">{validCount} Perfect</span>
-            </div>
-            <div className="text-[11px] text-slate-400 mt-2 flex items-center gap-1">
-              {warningCount > 0 ? (
-                <span className="text-amber-400 flex items-center gap-1">
-                  <AlertTriangle className="w-3 h-3" />
-                  {warningCount} need attention
-                </span>
-              ) : (
-                <span className="text-slate-500 flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                  All rules compliant
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Upload Zone */}
-        <FileUploader
-          onFilesExtracted={handleFilesExtracted}
-          isProcessing={isProcessing}
-        />
-
-        {/* Real-time Queue Progress if active */}
-        {activeQueue.length > 0 && (
-          <ProcessingQueue
-            queue={activeQueue}
-            isProcessing={isProcessing}
-            onRetry={handleRetry}
-            onCancelAll={() => setIsProcessing(false)}
+        {activeView === 'brands' ? (
+          /* Brand Manufacturer & Logo Studio View */
+          <BrandManufacturerStudio
+            settings={settings}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+            onOpenRules={() => setIsRulesOpen(true)}
+            initialBrandQuery={brandQueryToOpen}
           />
-        )}
+        ) : (
+          /* Product Name Standardizer View */
+          <>
+            {/* Welcome & Analytics Banner */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="md:col-span-2 p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-700/80 shadow-xl relative overflow-hidden flex flex-col justify-between">
+                <div className="relative z-10 space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-bold border border-cyan-500/30 uppercase tracking-wider">
+                      GSS Production Ready
+                    </span>
+                    <span className="text-slate-400 text-xs">ODA Data Standardization Hub</span>
+                  </div>
+                  <h1 className="text-xl font-extrabold text-white tracking-tight">
+                    Operational Data Product Standardizer
+                  </h1>
+                  <p className="text-xs text-slate-300 max-w-md">
+                    Automating English naming formulas, multi-format archive extraction, and 49-container type classification.
+                  </p>
+                </div>
+                <div className="relative z-10 flex items-center gap-4 pt-4 text-xs text-slate-400 border-t border-slate-700/60 mt-3">
+                  <span className="flex items-center gap-1 text-slate-300 font-medium">
+                    <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
+                    7-Day Local Retention
+                  </span>
+                  <span className="flex items-center gap-1 text-slate-300 font-medium">
+                    <Layers className="w-3.5 h-3.5 text-purple-400" />
+                    49 GSS Containers
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setActiveView('brands')}
+                    className="flex items-center gap-1 text-cyan-400 hover:text-cyan-300 font-medium ml-auto"
+                  >
+                    <Building2 className="w-3.5 h-3.5" />
+                    Brand & Logo Studio &rarr;
+                  </button>
+                </div>
+              </div>
 
-        {/* Main Product Table */}
-        <ProductTable
-          products={products}
-          onUpdateProduct={handleUpdateProduct}
-          onDeleteProduct={handleDeleteProduct}
-          onDeleteMultiple={handleDeleteMultiple}
-          onReanalyze={handleReanalyze}
-          onReanalyzeMultiple={handleReanalyzeMultiple}
-          onInspect={p => setInspectingProduct(p)}
-        />
+              {/* Stat 1: Total Active */}
+              <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-lg flex flex-col justify-between">
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                  Total Current Products
+                </span>
+                <div className="flex items-baseline justify-between mt-2">
+                  <span className="text-3xl font-extrabold text-white font-mono">{products.length}</span>
+                  <span className="text-xs text-slate-500 font-medium">Items Loaded</span>
+                </div>
+                <div className="text-[11px] text-slate-400 mt-2 flex items-center gap-1">
+                  <History className="w-3 h-3 text-purple-400" />
+                  <span>{totalSavedCount} in 7-day vault</span>
+                </div>
+              </div>
+
+              {/* Stat 2: Compliance Rate */}
+              <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-lg flex flex-col justify-between">
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                  GSS Rule Compliance
+                </span>
+                <div className="flex items-baseline justify-between mt-2">
+                  <span className="text-3xl font-extrabold text-emerald-400 font-mono">
+                    {products.length > 0 ? Math.round((validCount / products.length) * 100) : 100}%
+                  </span>
+                  <span className="text-xs text-emerald-400 font-medium">{validCount} Perfect</span>
+                </div>
+                <div className="text-[11px] text-slate-400 mt-2 flex items-center gap-1">
+                  {warningCount > 0 ? (
+                    <span className="text-amber-400 flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3" />
+                      {warningCount} need attention
+                    </span>
+                  ) : (
+                    <span className="text-slate-500 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-400" />
+                      All rules compliant
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Upload Zone */}
+            <FileUploader
+              onFilesExtracted={handleFilesExtracted}
+              isProcessing={isProcessing}
+            />
+
+            {/* Real-time Queue Progress if active */}
+            {activeQueue.length > 0 && (
+              <ProcessingQueue
+                queue={activeQueue}
+                isProcessing={isProcessing}
+                onRetry={handleRetry}
+                onCancelAll={() => setIsProcessing(false)}
+              />
+            )}
+
+            {/* Main Product Table */}
+            <ProductTable
+              products={products}
+              onUpdateProduct={handleUpdateProduct}
+              onDeleteProduct={handleDeleteProduct}
+              onDeleteMultiple={handleDeleteMultiple}
+              onReanalyze={handleReanalyze}
+              onReanalyzeMultiple={handleReanalyzeMultiple}
+              onInspect={p => setInspectingProduct(p)}
+              onLookupBrand={handleLookupBrand}
+            />
+          </>
+        )}
       </main>
 
       {/* Footer */}
       <footer className="border-t border-slate-800/80 bg-slate-950 py-4 mt-8 text-center text-xs text-slate-500">
-        <p>GSS Operational Data Analyst (ODA) Standardizer • Free Vercel & GitHub Deployable • Client-side Security</p>
+        <p>GSS Operational Data Analyst (ODA) Standardizer • Brand Intelligence Studio • Free Vercel & GitHub Deployable</p>
       </footer>
 
       {/* Modals */}
@@ -418,7 +457,9 @@ export const App: React.FC = () => {
         onClose={() => setInspectingProduct(null)}
         onUpdateProduct={handleUpdateProduct}
         onReanalyze={handleReanalyze}
+        onLookupBrand={handleLookupBrand}
       />
     </div>
   );
 };
+

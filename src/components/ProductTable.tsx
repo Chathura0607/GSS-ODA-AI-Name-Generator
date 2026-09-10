@@ -14,6 +14,7 @@ import {
   Square,
   ExternalLink,
   Link2,
+  Building2,
 } from 'lucide-react';
 import { ProcessedProduct, ProductAttributes } from '../types';
 import { ContainerTypeSelect } from './ContainerTypeSelect';
@@ -33,6 +34,7 @@ interface ProductTableProps {
   onReanalyze: (product: ProcessedProduct) => void;
   onReanalyzeMultiple?: (products: ProcessedProduct[]) => void;
   onInspect: (product: ProcessedProduct) => void;
+  onLookupBrand?: (brand: string) => void;
 }
 
 export const ProductTable: React.FC<ProductTableProps> = ({
@@ -43,7 +45,9 @@ export const ProductTable: React.FC<ProductTableProps> = ({
   onReanalyze,
   onReanalyzeMultiple,
   onInspect,
+  onLookupBrand,
 }) => {
+
   const [search, setSearch] = useState('');
   const [filterValid, setFilterValid] = useState<'all' | 'valid' | 'warning' | 'error'>('all');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -477,13 +481,27 @@ export const ProductTable: React.FC<ProductTableProps> = ({
 
                       {/* Brand */}
                       <td className="p-3">
-                        <input
-                          type="text"
-                          value={p.attributes.brand}
-                          onChange={e => handleFieldChange(p, 'brand', e.target.value)}
-                          className="w-full px-2 py-1 bg-slate-800/80 border border-slate-700 rounded text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
-                        />
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="text"
+                            value={p.attributes.brand}
+                            onChange={e => handleFieldChange(p, 'brand', e.target.value)}
+                            className="w-full px-2 py-1 bg-slate-800/80 border border-slate-700 rounded text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
+                            placeholder="Brand"
+                          />
+                          {p.attributes.brand && onLookupBrand && (
+                            <button
+                              type="button"
+                              onClick={() => onLookupBrand(p.attributes.brand)}
+                              className="p-1 rounded bg-slate-800 hover:bg-cyan-500/20 text-slate-400 hover:text-cyan-300 border border-slate-700 hover:border-cyan-500/40 transition-colors shrink-0"
+                              title={`Lookup manufacturer & logo for "${p.attributes.brand}"`}
+                            >
+                              <Building2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
                       </td>
+
 
                       {/* Item */}
                       <td className="p-3">
