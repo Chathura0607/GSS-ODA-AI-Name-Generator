@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Key,
@@ -11,6 +11,8 @@ import {
   AlertCircle,
   ExternalLink,
   Save,
+  Languages,
+  Zap,
 } from 'lucide-react';
 import { AppSettings } from '../types';
 import { testGeminiApiKey, fetchAvailableModels, ModelOption } from '../services/gemini';
@@ -30,7 +32,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onSaveSettings,
 }) => {
   const [apiKey, setApiKey] = useState(settings.geminiApiKey || '');
-  const [model, setModel] = useState(settings.geminiModel || 'gemini-3.6-flash');
+  const [model, setModel] = useState(settings.geminiModel || 'gemini-2.5-flash');
   const [retentionDays, setRetentionDays] = useState(settings.retentionDays || 7);
   const [autoProcess, setAutoProcess] = useState(settings.autoProcessOnUpload ?? true);
   const [strictContainer, setStrictContainer] = useState(settings.strictContainerCheck ?? true);
@@ -113,7 +115,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
             <div>
               <h2 className="text-lg font-bold text-white tracking-tight">System & AI Settings</h2>
-              <p className="text-xs text-slate-400">Configure your Gemini Vision credentials and data policies</p>
+              <p className="text-xs text-slate-400">Configure your Gemini Vision credentials, models & policies</p>
             </div>
           </div>
           <button
@@ -126,6 +128,21 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {/* Form Body */}
         <div className="p-6 space-y-5 overflow-y-auto max-h-[75vh] text-xs">
+          {/* Pro / High Rate Limit & Multilingual Feature Callout */}
+          <div className="p-3.5 rounded-xl bg-gradient-to-r from-purple-950/40 via-cyan-950/30 to-slate-900 border border-cyan-500/20 space-y-2">
+            <div className="flex items-center gap-2 text-cyan-300 font-semibold text-xs">
+              <Zap className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>Google AI Pro / AI Studio Key & Rate Limits</span>
+            </div>
+            <p className="text-[11px] text-slate-300 leading-relaxed">
+              If you have a Google AI Pro / Google One account or Google AI Studio key, enter it below. To avoid the free-tier rate limit (15 requests/min), create an API key in <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-cyan-400 underline hover:text-cyan-300">Google AI Studio</a> with billing/Pay-as-you-go enabled to get up to 2,000 requests/minute.
+            </p>
+            <div className="flex items-center gap-2 pt-1 border-t border-slate-800/80 text-[11px] text-slate-300">
+              <Languages className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span><strong>Multilingual Translation:</strong> Russian, Chinese, Japanese, Korean, Arabic, French, German, Spanish, etc. are automatically translated to 100% English.</span>
+            </div>
+          </div>
+
           {/* API Key */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -139,7 +156,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 rel="noreferrer"
                 className="text-[11px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1 hover:underline"
               >
-                Get Free Key <ExternalLink className="w-3 h-3" />
+                Get Key on Google AI Studio <ExternalLink className="w-3 h-3" />
               </a>
             </div>
 
@@ -212,8 +229,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <select
               value={
                 availableModels.length > 0
-                  ? (availableModels.some(m => m.id === model) ? model : 'custom')
-                  : (['gemini-3.6-flash', 'gemini-3.6-flash-latest', 'gemini-1.5-flash-latest', 'gemini-1.5-flash-002', 'gemini-1.5-flash', 'gemini-1.5-pro-latest', 'gemini-1.5-pro'].includes(model) ? model : 'custom')
+                  ? (availableModels.some((m: ModelOption) => m.id === model) ? model : 'custom')
+                  : (['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-pro', 'gemini-1.5-pro-latest', 'gemini-3.6-flash'].includes(model) ? model : 'custom')
               }
               onChange={e => {
                 if (e.target.value !== 'custom') {
@@ -224,7 +241,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             >
               {availableModels.length > 0 ? (
                 <>
-                  {availableModels.map(m => (
+                  {availableModels.map((m: ModelOption) => (
                     <option key={m.id} value={m.id}>
                       {m.name} ({m.id})
                     </option>
@@ -233,25 +250,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </>
               ) : (
                 <>
-                  <option value="gemini-3.6-flash">Gemini 3.6 Flash (Recommended - Free Tier & High Precision)</option>
-                  <option value="gemini-3.6-flash-latest">Gemini 3.6 Flash Latest</option>
+                  <option value="gemini-2.5-flash">Gemini 2.5 Flash (Recommended - Fastest & High Precision)</option>
+                  <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                  <option value="gemini-1.5-flash">Gemini 1.5 Flash (Ultra Fast & Free Tier Compatible)</option>
                   <option value="gemini-1.5-flash-latest">Gemini 1.5 Flash Latest</option>
-                  <option value="gemini-1.5-flash-002">Gemini 1.5 Flash 002</option>
-                  <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-                  <option value="gemini-1.5-pro-latest">Gemini 1.5 Pro Latest</option>
+                  <option value="gemini-1.5-pro">Gemini 1.5 Pro (Highest Reasoning Depth)</option>
+                  <option value="gemini-3.6-flash">Gemini 3.6 Flash</option>
                   <option value="custom">Custom Model Name...</option>
                 </>
               )}
             </select>
 
-            {((availableModels.length > 0 && !availableModels.some(m => m.id === model)) ||
-              (availableModels.length === 0 && !['gemini-1.5-flash-latest', 'gemini-1.5-flash', 'gemini-1.5-flash-002', 'gemini-2.5-flash', 'gemini-3.6-flash', 'gemini-1.5-pro-latest', 'gemini-1.5-pro'].includes(model)) ||
+            {((availableModels.length > 0 && !availableModels.some((m: ModelOption) => m.id === model)) ||
+              (availableModels.length === 0 && !['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash-002', 'gemini-3.6-flash', 'gemini-1.5-pro-latest', 'gemini-1.5-pro'].includes(model)) ||
               model === 'custom') && (
               <input
                 type="text"
                 value={model === 'custom' ? '' : model}
                 onChange={e => setModel(e.target.value)}
-                placeholder="e.g. gemini-1.5-flash-latest or gemini-3.6-flash"
+                placeholder="e.g. gemini-2.5-flash or gemini-1.5-flash"
                 className="w-full px-3 py-2 bg-slate-800/80 border border-purple-500/50 rounded-lg text-slate-200 font-mono text-xs focus:outline-none focus:border-purple-400"
               />
             )}
