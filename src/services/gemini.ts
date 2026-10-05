@@ -12,23 +12,33 @@ Analyze the uploaded product image and extract attributes with highest precision
 
 ### Critical Business Rules:
 1. Sub-Brand Duplication: If the Sub-Brand contains the Brand Name, do not duplicate the Brand in the final name.
-2. Item (Product Type): Primary category (e.g. Hand Wash, Creaming Soda, Dry Ginger Ale, Chocolate, Biscuits, Toothpaste, Fruit Cordial, Gum, Strips, Single Malt Scotch Whisky).
-3. Flavor / Variant / Scent: (e.g. Cucumber and Green Tea Scent, Wild Cherry Flavoured, Peppermint, Orange, Mint, Vanilla, Lemon, Original).
-4. Additional Wordings: Functional packaging claims (e.g. "Flexible Fabric Breathable Water Repellent", "Sugarfree", "Refill", "No Sugar", "Antibacterial", "Zero Calories").
-5. Characters: English letters and numbers (Alphanumeric) only. Do NOT use special symbols like #, $, %, @, &, -, /, +.
-6. Length limit: Maximum 150 characters total.
-7. Container Type: MUST be chosen STRICTLY from this exact list of 49 official GSS container types:
+2. Item (Product Type): Primary category (e.g. Hand Wash, Creaming Soda, Dry Ginger Ale, Chocolate, Biscuits, Toothpaste, Fruit Cordial, Gum, Strips, Single Malt Scotch Whisky, Carbonated Soft Drink, Shower Gel, Instant Noodles, Mineral Water).
+3. Flavor / Variant / Scent: (e.g. Cucumber and Green Tea Scent, Wild Cherry Flavoured, Peppermint, Orange, Mint, Vanilla, Lemon, Original, Strawberry, White Peach, Salted Caramel).
+4. Additional Wordings: Functional packaging claims (e.g. "Flexible Fabric Breathable Water Repellent", "Sugarfree", "Refill", "No Sugar", "Antibacterial", "Zero Calories", "Still", "Sparkling", "Moisturising").
+5. Characters & Language (STRICT MANDATE - 100% ENGLISH):
+   - All extracted fields and the standard name MUST be in 100% English Latin alphanumeric characters and numbers only.
+   - Do NOT use special symbols like #, $, %, @, &, -, /, +.
+   - NEVER output non-Latin scripts (No Cyrillic, Chinese Hanzi, Japanese Kanji/Kana, Korean Hangul, Arabic, Thai, Hindi, etc.).
+6. Multilingual Packaging Automatic Translation & Romanization (CRITICAL):
+   - If the product packaging contains foreign language text (e.g. Russian, Cyrillic, Chinese, Japanese, Korean, Arabic, French, German, Spanish, Italian, Dutch, Vietnamese, Thai, Turkish, Polish, etc.):
+     * BRAND / SUB-BRAND: Translate or Romanize foreign brand names into their official global English name (e.g. "Святой Источник" -> "Saint Spring", "Черный Жемчуг" -> "Black Pearl", "农夫山泉" -> "Nongfu Spring", "日清" -> "Nissin", "好欢螺" -> "Hao Huan Luo", "Бабаевский" -> "Babaevsky", "Лента" -> "Lenta", "Балтика" -> "Baltika", "Аленка" -> "Alenka", "康师傅" -> "Master Kong").
+     * ITEM / PRODUCT TYPE: Translate 100% into standard English FMCG category names (e.g. "Шампунь" -> "Shampoo", "Печенье" -> "Biscuits", "Газированный напиток" -> "Carbonated Soft Drink", "Зубная паста" -> "Toothpaste", "Крекер" -> "Crackers", "Гель для душа" -> "Shower Gel", "Зеленый чай" -> "Green Tea", "Конфеты" -> "Candies", "Шоколад" -> "Chocolate").
+     * FLAVOR / VARIANT / SCENT: Translate 100% into standard English FMCG flavors (e.g. "Малина" -> "Raspberry", "Земляника" -> "Wild Strawberry", "Зеленый Чай" -> "Green Tea", "Белый Персик" -> "White Peach", "Лимон" -> "Lemon", "Ваниль" -> "Vanilla", "Мята" -> "Mint", "Лесные ягоды" -> "Forest Berries", "白桃" -> "White Peach", "草莓" -> "Strawberry", "Schokolade" -> "Chocolate", "Fraise" -> "Strawberry", "Caramel au Beurre Salé" -> "Salted Butter Caramel").
+     * ADDITIONAL WORDINGS: Translate functional claims into standard English (e.g. "Негазированная" -> "Still", "Газированная" -> "Sparkling", "Без Сахара" -> "No Sugar", "Увлажняющий" -> "Moisturising", "Освежающий" -> "Refreshing", "無糖" -> "Sugar Free", "Refill", "Antibacterial").
+     * IN NOTES: Provide the detected source language and translation details (e.g. "Translated from Russian: 'Святой Источник' -> 'Saint Spring', 'Малина' -> 'Raspberry', 'Негазированная' -> 'Still'").
+7. Length limit: Maximum 150 characters total.
+8. Container Type: MUST be chosen STRICTLY from this exact list of 49 official GSS container types:
 ${CONTAINER_TYPES.join(', ')}
 If none matches or it's unidentifiable, use "None" or the closest match like "Bottle", "Can", "Pack", "Pack Plastic", "Pack Carton", "Plastic Container", or "Cardboard Box".
-8. Measurement Units (CRITICAL):
+9. Measurement Units (CRITICAL):
    - Metric volume & weight: Standardize to "ml", "l", "g", "kg", "cl", "oz".
    - Count-based items (pieces, strips, tablets, capsules, wipes, sheets, bags, pods, count): STRICTLY use "Units" (e.g. "60 Units", "21 Units", "100 Units", "50 Units").
-9. Multi-Packs: If the product is a multi-pack (e.g. 6 cans of 250ml, 10 bottles of 375ml), set subPackages to "6 Pack" or "10 Pack", size to "250" or "375", and measurementUnit to "ml". The standard name will automatically format as "6 Pack x 250 ml", "10 Pack x 375 ml".
-10. Value Packs & Limited Editions (MUST BE AT THE VERY END):
+10. Multi-Packs: If the product is a multi-pack (e.g. 6 cans of 250ml, 10 bottles of 375ml), set subPackages to "6 Pack" or "10 Pack", size to "250" or "375", and measurementUnit to "ml". The standard name will automatically format as "6 Pack x 250 ml", "10 Pack x 375 ml".
+11. Value Packs & Limited Editions (MUST BE AT THE VERY END):
    - Any age statements, edition descriptors, or value pack claims (e.g. "18 Year Old Limited Edition", "Limited Edition", "Special Edition", "Collector Edition", "Value Pack", "3x Eco Refill", "Bonus Pack", "Buy 1 Get 1 Free") MUST be placed in "valuePacksDescription".
    - Example output: "Glenfiddich Single Malt Scotch Whisky Cardboard Box 700 ml 18 Year Old Limited Edition".
-11. Cleanliness: Remove trailing packaging punctuation, marketing slogans, and ensure words are properly capitalized.
-12. Exact Direct Product Web URL (CRITICAL REQUIREMENT):
+12. Cleanliness: Remove trailing packaging punctuation, marketing slogans, and ensure words are properly capitalized.
+13. Exact Direct Product Web URL (CRITICAL REQUIREMENT):
    - Search the web for this exact product image (matching brand, variant, flavor, size, and packaging).
    - You MUST return the real, direct product listing web page URL where this exact product is hosted or sold online (e.g., https://snackje.com/products/monster-energy-ultra-vice-guava-500ml, https://onlinekade.lk/product/monster-energy-nas-ultra-fantasy-ruby-red-500ml/, https://www.liquorland.co.nz/smirnoff-vodka-crush-lemon-lime-57-4-pack-cans-440ml-857476, https://toongabbie.shop.supercellars.com.au/lines/cruiser-vanilla-cola-4-6-bottles, https://www.amazon.com.au/Coca-Cola-Drink-Multipack-Bottles-1-25L/dp/B07D8FP1YY, https://www.woolworths.com.au/shop/productdetails/938941/fanta-grape-zero-sugar-bottle, https://www.amazon.co.uk/Bic-Flex-3-Sensit-Blister-Unit/dp/B0B4WHHV8D, https://www.walmart.com/ip/Bic-Soleil-Bella-Disposable-Shavers-3-ea-Pack-of-6/378927583, https://www.tommy.hr/en-GB/proizvodi/pampers-sensitive-baby-wipes-80-pcs, https://gshop.lv/product/latviesu-lenor-professional-purple-bloom-velas-mikstinatajs-4-l/, or official brand/retailer shop link).
    - Place the full URL directly in "exactProductUrl".
@@ -36,11 +46,11 @@ If none matches or it's unidentifiable, use "None" or the closest match like "Bo
 
 You MUST return ONLY a valid JSON object with this exact structure:
 {
-  "brand": "Brand name, e.g. Dove, Cascade, Fanta, Mentos, Anchor, Stimorol, Elastoplast, Glenfiddich, Monster Energy, Vodka Cruiser, Coca-Cola",
-  "subBrand": "Sub-brand if applicable, e.g. Moisturising, Ceda, Waves, Ultra",
-  "item": "Product type, e.g. Hand Wash, Creaming Soda, Gum, Strips, Soft Drink, Energy Drink, Flavoured Vodka, Single Malt Scotch Whisky",
-  "flavorOrVariant": "Flavor or scent, e.g. Vice Guava, Vanilla Cola, Wild Cherry Flavoured, Peppermint, Lemon Lime And Bitters",
-  "additionalWordings": "Functional words, e.g. Sugarfree, Flexible Fabric Breathable Water Repellent, Refill, No Sugar",
+  "brand": "Standard English Brand name (e.g. Dove, Cascade, Fanta, Mentos, Anchor, Saint Spring, Nongfu Spring, Monster Energy, Coca-Cola)",
+  "subBrand": "Sub-brand in English if applicable, e.g. Moisturising, Ceda, Waves, Ultra",
+  "item": "Product type in English, e.g. Hand Wash, Creaming Soda, Gum, Strips, Soft Drink, Energy Drink, Shampoo, Biscuits, Toothpaste",
+  "flavorOrVariant": "Flavor or scent in English, e.g. Vice Guava, Vanilla Cola, Wild Cherry, Peppermint, Raspberry, White Peach, Green Tea",
+  "additionalWordings": "Functional words in English, e.g. Sugarfree, Flexible Fabric Breathable Water Repellent, Refill, No Sugar, Still, Sparkling",
   "containerType": "EXACT match from the 49 allowed GSS container types e.g. Plastic Container, Cardboard Box, Bottle, Can",
   "subPackages": "Pack count e.g. 6 Pack, 10 Pack, 12 Pack, 4 Pack, or empty",
   "size": "Number only e.g. 60, 21, 100, 250, 375, 500, 700, 1.5",
@@ -48,7 +58,7 @@ You MUST return ONLY a valid JSON object with this exact structure:
   "valuePacksDescription": "e.g. 18 Year Old Limited Edition, Value Pack, Special Edition, 3x eco-refill, or empty",
   "exactProductUrl": "Direct URL to the exact matching product page on the web (e.g. https://snackje.com/products/monster-energy-ultra-vice-guava-500ml or https://toongabbie.shop.supercellars.com.au/lines/cruiser-vanilla-cola-4-6-bottles)",
   "confidenceScore": integer between 0 and 100,
-  "notes": "Brief reason for chosen container type and extracted fields"
+  "notes": "Language detected (e.g. 'Translated from Russian/Chinese/etc.') and brief reason for attributes"
 }`;
 
 export interface AnalysisResult {
@@ -67,15 +77,17 @@ export interface ModelOption {
 
 // Fallback priority order of Gemini models
 export const CANDIDATE_MODELS = [
-  'gemini-3.6-flash',
-  'gemini-3.6-flash-latest',
+  'gemini-2.5-flash',
+  'gemini-2.0-flash',
+  'gemini-1.5-flash',
   'gemini-1.5-flash-latest',
   'gemini-1.5-flash-002',
   'gemini-1.5-flash-001',
-  'gemini-1.5-flash',
-  'gemini-1.5-flash-8b',
-  'gemini-1.5-pro-latest',
   'gemini-1.5-pro',
+  'gemini-1.5-pro-latest',
+  'gemini-3.6-flash',
+  'gemini-3.6-flash-latest',
+  'gemini-1.5-flash-8b',
   'gemini-2.0-flash-exp',
 ];
 
@@ -130,17 +142,18 @@ async function callWithRetry(
   model: string,
   apiKey: string,
   requestBody: any,
-  maxRetries: number = 3
+  maxRetries: number = 4
 ): Promise<Response> {
-  let delay = 2500;
+  let delay = 2000;
   for (let i = 0; i <= maxRetries; i++) {
     const res = await callGeminiVision(model, apiKey, requestBody);
     if (res.status !== 429 || i === maxRetries) {
       return res;
     }
-    console.warn(`Hit Gemini 429 (Rate Limit / Quota). Waiting ${delay}ms before retry ${i + 1}/${maxRetries}...`);
-    await sleep(delay);
-    delay = Math.min(delay * 2, 8000);
+    const jitter = Math.floor(Math.random() * 500);
+    console.warn(`Hit Gemini 429 (Rate Limit / Quota). Waiting ${delay + jitter}ms before retry ${i + 1}/${maxRetries}...`);
+    await sleep(delay + jitter);
+    delay = Math.min(delay * 2, 10000);
   }
   return callGeminiVision(model, apiKey, requestBody);
 }
@@ -384,7 +397,12 @@ export async function testGeminiApiKey(
 
 const BRAND_MANUFACTURER_PROMPT = `You are a world-class Global FMCG, Retail, and Brand Intelligence expert for GSS Operational Data Analysts (ODA).
 
-Analyze the requested Brand Name and identify its **Ultimate Parent Corporation / Parent Manufacturing Entity**, official Brand website, corporate Manufacturer website, and official high-resolution Logo download resources.
+Analyze the requested Brand Name (which may be in English, Cyrillic, Chinese, Japanese, Korean, Arabic, French, German, Spanish, Italian, Dutch, Vietnamese, etc.) and identify its **Ultimate Parent Corporation / Parent Manufacturing Entity**, official Brand website, corporate Manufacturer website, and official high-resolution Logo download resources.
+
+### MULTILINGUAL BRAND TRANSLATION:
+- If the requested brand name is in a non-English language or foreign script (e.g. "Святой Источник", "Черный Жемчуг", "农夫山泉", "日清", "Лента", "好欢螺", "Бабаевский", "Балтика"):
+  * Identify both the official Romanized / English brand name and its global parent corporation in standard English.
+  * Always return brandName and parent company in 100% standard English Latin alphanumeric characters.
 
 ### CRITICAL RULE - ULTIMATE PARENT COMPANY:
 - Always identify and return the **Ultimate Parent Company / Corporate Owner** as the primary Manufacturer entity.
