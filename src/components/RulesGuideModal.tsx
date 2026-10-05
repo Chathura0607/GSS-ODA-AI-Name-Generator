@@ -384,7 +384,20 @@ export const RulesGuideModal: React.FC<RulesGuideModalProps> = ({ isOpen, onClos
                   <div>
                     <h5 className="font-semibold text-white text-xs">Consistent Measurement Units</h5>
                     <p className="text-xs text-slate-400 mt-0.5">
-                      Measurement units should be standard lowercase and consistent across all records (e.g. ml, l, kg, g, oz, cl).
+                      Measurement units should be standard lowercase and consistent across all records (e.g. ml, l, kg, g, oz, cl, or "Units" for count-based items).
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-800/60 border border-emerald-500/30 bg-emerald-950/10 flex gap-3">
+                  <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center font-bold text-xs shrink-0">7</div>
+                  <div>
+                    <h5 className="font-semibold text-white text-xs flex items-center gap-1.5">
+                      <span>Multilingual Packaging & 100% English Standardization</span>
+                      <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-500/30">Auto AI</span>
+                    </h5>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Non-English packaging (Russian, Chinese, Japanese, Korean, Arabic, French, German, Spanish, etc.) is automatically translated. All attributes (Item, Flavor, Brand, Functional claims) are converted into 100% standard FMCG English without requiring manual translation tools.
                     </p>
                   </div>
                 </div>
