@@ -12,6 +12,11 @@ function prepareProductRows(products: ProcessedProduct[]) {
     return {
       'No.': index + 1,
       'Standard Product Name': p.standardName,
+      'Trax Category (Col 2)': p.traxCategory || p.attributes.traxCategory || '',
+      'Client Category (Col 3)': p.clientCategory || p.attributes.clientCategory || '',
+      'Smart L1 (Col 4)': p.smartL1 || p.attributes.smartL1 || '',
+      'Scope Category (Col 1)': p.scopeCategory || p.attributes.scopeCategory || '',
+      'Project Scope Name': p.projectScopeName || p.attributes.projectScopeName || '',
       'Character Count': p.characterCount,
       'Length Valid (<=150)': p.isLengthValid ? 'YES' : 'NO',
       'Container Valid': p.isContainerValid ? 'YES' : 'NO',
@@ -53,6 +58,11 @@ export function exportToExcel(products: ProcessedProduct[], fileNamePrefix: stri
   const colWidths = [
     { wch: 6 },  // No.
     { wch: 45 }, // Standard Product Name
+    { wch: 22 }, // Trax Category
+    { wch: 22 }, // Client Category
+    { wch: 30 }, // Smart L1
+    { wch: 32 }, // Scope Category
+    { wch: 28 }, // Project Scope Name
     { wch: 14 }, // Char Count
     { wch: 18 }, // Length Valid
     { wch: 16 }, // Container Valid
