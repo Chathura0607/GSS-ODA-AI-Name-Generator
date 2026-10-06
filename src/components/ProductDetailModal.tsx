@@ -13,10 +13,18 @@ import {
   ExternalLink,
   Link2,
   Building2,
+  Target,
+  Layers,
 } from 'lucide-react';
 import { ProcessedProduct, ProductAttributes } from '../types';
 import { ContainerTypeSelect } from './ContainerTypeSelect';
 import { MEASUREMENT_UNITS } from '../constants/containerTypes';
+import {
+  ProjectScope,
+  getUniqueTraxCategories,
+  getClientCategoriesForTrax,
+  getSmartL1Options,
+} from '../constants/projectScopes';
 import {
   assembleStandardName,
   validateStandardName,
@@ -31,6 +39,7 @@ interface ProductDetailModalProps {
   onUpdateProduct: (updated: ProcessedProduct) => void;
   onReanalyze: (product: ProcessedProduct) => void;
   onLookupBrand?: (brand: string) => void;
+  activeScope?: ProjectScope | null;
 }
 
 export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
@@ -40,14 +49,20 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   onUpdateProduct,
   onReanalyze,
   onLookupBrand,
+  activeScope,
 }) => {
-
   if (!isOpen || !product) return null;
 
   const [attributes, setAttributes] = useState<ProductAttributes>({
     ...product.attributes,
     exactProductUrl: product.attributes.exactProductUrl || product.exactProductUrl || '',
+    projectScopeName: product.attributes.projectScopeName || product.projectScopeName || activeScope?.name || '',
+    scopeCategory: product.attributes.scopeCategory || product.scopeCategory || '',
+    traxCategory: product.attributes.traxCategory || product.traxCategory || '',
+    clientCategory: product.attributes.clientCategory || product.clientCategory || '',
+    smartL1: product.attributes.smartL1 || product.smartL1 || '',
   });
+
   const [zoom, setZoom] = useState(1);
   const [copied, setCopied] = useState(false);
   const [copiedSku, setCopiedSku] = useState(false);
@@ -70,6 +85,11 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
       isLengthValid: validation.isLengthValid,
       isContainerValid: validation.isContainerValid,
       isAlphanumericValid: validation.isAlphanumericValid,
+      projectScopeName: attributes.projectScopeName,
+      scopeCategory: attributes.scopeCategory,
+      traxCategory: attributes.traxCategory,
+      clientCategory: attributes.clientCategory,
+      smartL1: attributes.smartL1,
       googleSkuUrl: skuInfo.url || undefined,
       exactProductUrl: attributes.exactProductUrl || undefined,
       updatedAt: Date.now(),
@@ -90,6 +110,13 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
     setCopiedSku(true);
     setTimeout(() => setCopiedSku(false), 2000);
   };
+
+  // Scope category options
+  const traxOptions = activeScope ? getUniqueTraxCategories(activeScope) : [];
+  const clientOptions = activeScope ? getClientCategoriesForTrax(activeScope, attributes.traxCategory) : [];
+  const smartL1Options = activeScope
+    ? getSmartL1Options(activeScope, attributes.traxCategory, attributes.clientCategory)
+    : [];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
@@ -199,6 +226,129 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* Project Scope Classification Section (Col 2: Trax, Col 3: Client, Col 4: Smart L1) */}
+            <div className="p-4 rounded-xl bg-gradient-to-br from-slate-900 via-slate-800/80 to-slate-900 border border-cyan-500/30 space-y-3 shadow-lg">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="p-1 rounded-md bg-cyan-500/20 text-cyan-300">
+                    <Target className="w-3.5 h-3.5" />
+                  </div>
+                  <span className="text-xs uppercase font-bold text-white tracking-wider">
+                    Project Scope Auto-Classification
+                  </span>
+                </div>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
+                  {attributes.projectScopeName || activeScope?.name || 'Kraft Heinz Germany Project Scope'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                {/* Trax Category (2nd Column) */}
+                <div>
+                  <label className="block text-[11px] font-semibold text-cyan-300 mb-1">
+                    2nd Col: Trax Category
+                  </label>
+                  {traxOptions.length > 0 ? (
+                    <select
+                      value={attributes.traxCategory || ''}
+                      onChange={e => handleAttributeChange('traxCategory', e.target.value)}
+                      className="w-full px-2.5 py-1.5 bg-slate-900 border border-cyan-500/40 rounded-lg text-slate-200 focus:outline-none focus:border-cyan-400"
+                    >
+                      <option value="">Select Trax Category...</option>
+                      {traxOptions.map(t => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      placeholder="e.g. Sauces & Condiment"
+                      value={attributes.traxCategory || ''}
+                      onChange={e => handleAttributeChange('traxCategory', e.target.value)}
+                      className="w-full px-2.5 py-1.5 bg-slate-900 border border-cyan-500/40 rounded-lg text-slate-200 focus:outline-none focus:border-cyan-400"
+                    />
+                  )}
+                </div>
+
+                {/* Client Category (3rd Column) */}
+                <div>
+                  <label className="block text-[11px] font-semibold text-purple-300 mb-1">
+                    3rd Col: Client Category
+                  </label>
+                  {clientOptions.length > 0 ? (
+                    <select
+                      value={attributes.clientCategory || ''}
+                      onChange={e => handleAttributeChange('clientCategory', e.target.value)}
+                      className="w-full px-2.5 py-1.5 bg-slate-900 border border-purple-500/40 rounded-lg text-slate-200 focus:outline-none focus:border-purple-400"
+                    >
+                      <option value="">Select Client Category...</option>
+                      {clientOptions.map(c => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      placeholder="e.g. Sauces & Ketchup"
+                      value={attributes.clientCategory || ''}
+                      onChange={e => handleAttributeChange('clientCategory', e.target.value)}
+                      className="w-full px-2.5 py-1.5 bg-slate-900 border border-purple-500/40 rounded-lg text-slate-200 focus:outline-none focus:border-purple-400"
+                    />
+                  )}
+                </div>
+
+                {/* Scope Category / Group (1st Column) */}
+                <div>
+                  <label className="block text-[11px] font-medium text-slate-400 mb-1">
+                    1st Col: Scope Group
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Feinkost & Ketchup"
+                    value={attributes.scopeCategory || ''}
+                    onChange={e => handleAttributeChange('scopeCategory', e.target.value)}
+                    className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-200 focus:outline-none focus:border-cyan-500"
+                  />
+                </div>
+              </div>
+
+              {/* Smart L1 (Last Column) */}
+              <div>
+                <label className="block text-[11px] font-semibold text-emerald-300 mb-1">
+                  Last Col: Smart L1 (Classification)
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="e.g. Ketchup, BBQ Sauce, Curry Sauce, Mayonnaise"
+                    value={attributes.smartL1 || ''}
+                    onChange={e => handleAttributeChange('smartL1', e.target.value)}
+                    className="flex-1 px-3 py-1.5 bg-slate-900 border border-emerald-500/40 rounded-lg text-slate-200 font-medium focus:outline-none focus:border-emerald-400"
+                  />
+                  {smartL1Options.length > 0 && (
+                    <select
+                      value=""
+                      onChange={e => {
+                        if (e.target.value) handleAttributeChange('smartL1', e.target.value);
+                      }}
+                      className="px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-300 text-xs focus:outline-none focus:border-emerald-400 max-w-[180px]"
+                    >
+                      <option value="">Quick Pick...</option>
+                      {smartL1Options.map(opt => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Exact Product SKU / Web Link Reference Section */}
@@ -323,11 +473,10 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     type="text"
                     value={attributes.brand}
                     onChange={e => handleAttributeChange('brand', e.target.value)}
-                    placeholder="e.g. Dove, Cascade, Fanta"
+                    placeholder="e.g. Heinz, Dove, Cascade, Fanta"
                     className="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 focus:border-cyan-500 focus:outline-none"
                   />
                 </div>
-
 
                 {/* Sub-Brand */}
                 <div>
@@ -348,7 +497,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     type="text"
                     value={attributes.item}
                     onChange={e => handleAttributeChange('item', e.target.value)}
-                    placeholder="e.g. Hand Wash, Soda, Ginger Ale"
+                    placeholder="e.g. Ketchup, Tomato Sauce, Mayonnaise"
                     className="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 focus:border-cyan-500 focus:outline-none"
                   />
                 </div>
@@ -360,7 +509,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     type="text"
                     value={attributes.flavorOrVariant}
                     onChange={e => handleAttributeChange('flavorOrVariant', e.target.value)}
-                    placeholder="e.g. Cucumber and Green Tea, Orange"
+                    placeholder="e.g. Curry, Garlic, BBQ, Original"
                     className="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 focus:border-cyan-500 focus:outline-none"
                   />
                 </div>
@@ -372,7 +521,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     type="text"
                     value={attributes.additionalWordings}
                     onChange={e => handleAttributeChange('additionalWordings', e.target.value)}
-                    placeholder="e.g. Refill, No Sugar"
+                    placeholder="e.g. Refill, No Sugar, Bio"
                     className="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 focus:border-cyan-500 focus:outline-none"
                   />
                 </div>
@@ -449,7 +598,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-700/50 text-xs">
                 <span className="font-semibold text-slate-400 flex items-center gap-1 mb-1">
                   <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-                  AI Vision Reasoning
+                  AI Vision Reasoning & Classification Notes
                 </span>
                 <p className="text-slate-300 italic">{product.notes}</p>
               </div>

@@ -13,16 +13,19 @@ import {
   Save,
   Languages,
   Zap,
+  Target,
 } from 'lucide-react';
 import { AppSettings } from '../types';
+import { ProjectScope } from '../constants/projectScopes';
 import { testGeminiApiKey, fetchAvailableModels, ModelOption } from '../services/gemini';
-import { saveSettings } from '../services/db';
+import { saveSettings, getAllProjectScopes } from '../services/db';
 
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   settings: AppSettings;
   onSaveSettings: (newSettings: AppSettings) => void;
+  onOpenProjectScopes?: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -30,26 +33,34 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onClose,
   settings,
   onSaveSettings,
+  onOpenProjectScopes,
 }) => {
   const [apiKey, setApiKey] = useState(settings.geminiApiKey || '');
   const [model, setModel] = useState(settings.geminiModel || 'gemini-2.5-flash');
   const [retentionDays, setRetentionDays] = useState(settings.retentionDays || 7);
   const [autoProcess, setAutoProcess] = useState(settings.autoProcessOnUpload ?? true);
   const [strictContainer, setStrictContainer] = useState(settings.strictContainerCheck ?? true);
+  const [activeScopeId, setActiveScopeId] = useState(settings.activeProjectScopeId || 'kraft-heinz-germany');
 
   const [availableModels, setAvailableModels] = useState<ModelOption[]>([]);
+  const [availableScopes, setAvailableScopes] = useState<ProjectScope[]>([]);
   const [showKey, setShowKey] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
-  // Auto-fetch available models when modal is open and API Key is provided
-  React.useEffect(() => {
-    if (isOpen && apiKey.trim()) {
-      fetchAvailableModels(apiKey.trim()).then(models => {
-        if (models.length > 0) {
-          setAvailableModels(models);
-        }
+  // Auto-fetch available models and scopes when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      if (apiKey.trim()) {
+        fetchAvailableModels(apiKey.trim()).then(models => {
+          if (models.length > 0) {
+            setAvailableModels(models);
+          }
+        });
+      }
+      getAllProjectScopes().then(scopes => {
+        setAvailableScopes(scopes);
       });
     }
   }, [isOpen, apiKey]);
@@ -92,6 +103,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       retentionDays: Number(retentionDays),
       autoProcessOnUpload: autoProcess,
       strictContainerCheck: strictContainer,
+      activeProjectScopeId: activeScopeId,
     };
 
     localStorage.setItem('gss_gemini_key', apiKey.trim());
@@ -115,7 +127,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
             <div>
               <h2 className="text-lg font-bold text-white tracking-tight">System & AI Settings</h2>
-              <p className="text-xs text-slate-400">Configure your Gemini Vision credentials, models & policies</p>
+              <p className="text-xs text-slate-400">Configure your Gemini Vision credentials, project scope & policies</p>
             </div>
           </div>
           <button
@@ -128,19 +140,52 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {/* Form Body */}
         <div className="p-6 space-y-5 overflow-y-auto max-h-[75vh] text-xs">
+          {/* Active Project Scope Setting */}
+          <div className="p-3.5 rounded-xl bg-gradient-to-r from-slate-900 via-cyan-950/20 to-slate-900 border border-cyan-500/30 space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="font-semibold text-white flex items-center gap-1.5">
+                <Target className="w-3.5 h-3.5 text-cyan-400" />
+                Active Project Scope (Category Auto-Classification)
+              </label>
+              {onOpenProjectScopes && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenProjectScopes();
+                  }}
+                  className="text-[11px] text-cyan-400 hover:text-cyan-300 font-medium underline"
+                >
+                  Edit Matrix Rules &rarr;
+                </button>
+              )}
+            </div>
+
+            <select
+              value={activeScopeId}
+              onChange={e => setActiveScopeId(e.target.value)}
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 focus:outline-none focus:border-cyan-500"
+            >
+              {availableScopes.map(s => (
+                <option key={s.id} value={s.id}>
+                  {s.name} ({s.clientName} - {s.country})
+                </option>
+              ))}
+            </select>
+            <p className="text-[11px] text-slate-400">
+              Images will automatically classify Trax Category (2nd Col), Client Category (3rd Col), and Smart L1 (4th Col) based on this scope.
+            </p>
+          </div>
+
           {/* Pro / High Rate Limit & Multilingual Feature Callout */}
           <div className="p-3.5 rounded-xl bg-gradient-to-r from-purple-950/40 via-cyan-950/30 to-slate-900 border border-cyan-500/20 space-y-2">
             <div className="flex items-center gap-2 text-cyan-300 font-semibold text-xs">
               <Zap className="w-4 h-4 text-amber-400 shrink-0" />
-              <span>Google AI Pro / AI Studio Key & Rate Limits</span>
+              <span>Google AI Studio Key & Multilingual Vision</span>
             </div>
             <p className="text-[11px] text-slate-300 leading-relaxed">
-              If you have a Google AI Pro / Google One account or Google AI Studio key, enter it below. To avoid the free-tier rate limit (15 requests/min), create an API key in <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-cyan-400 underline hover:text-cyan-300">Google AI Studio</a> with billing/Pay-as-you-go enabled to get up to 2,000 requests/minute.
+              Enter your Google AI Studio API key below. All non-English labels (Russian, German, Chinese, Japanese, Arabic, Spanish, etc.) will be translated automatically to 100% standard English.
             </p>
-            <div className="flex items-center gap-2 pt-1 border-t border-slate-800/80 text-[11px] text-slate-300">
-              <Languages className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span><strong>Multilingual Translation:</strong> Russian, Chinese, Japanese, Korean, Arabic, French, German, Spanish, etc. are automatically translated to 100% English.</span>
-            </div>
           </div>
 
           {/* API Key */}
@@ -207,9 +252,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <span>{testResult.message}</span>
               </div>
             )}
-            <p className="text-[11px] text-slate-400">
-              Your API Key is stored securely in your browser session/localStorage and is never sent to any intermediary server.
-            </p>
           </div>
 
           {/* Model Selection */}
@@ -260,18 +302,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </>
               )}
             </select>
-
-            {((availableModels.length > 0 && !availableModels.some((m: ModelOption) => m.id === model)) ||
-              (availableModels.length === 0 && !['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-flash-002', 'gemini-3.6-flash', 'gemini-1.5-pro-latest', 'gemini-1.5-pro'].includes(model)) ||
-              model === 'custom') && (
-              <input
-                type="text"
-                value={model === 'custom' ? '' : model}
-                onChange={e => setModel(e.target.value)}
-                placeholder="e.g. gemini-2.5-flash or gemini-1.5-flash"
-                className="w-full px-3 py-2 bg-slate-800/80 border border-purple-500/50 rounded-lg text-slate-200 font-mono text-xs focus:outline-none focus:border-purple-400"
-              />
-            )}
           </div>
 
           {/* Retention Days */}

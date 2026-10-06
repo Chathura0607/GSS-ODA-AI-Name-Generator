@@ -7,9 +7,11 @@ import { ProductDetailModal } from './components/ProductDetailModal';
 import { RulesGuideModal } from './components/RulesGuideModal';
 import { HistoryModal } from './components/HistoryModal';
 import { SettingsModal } from './components/SettingsModal';
+import { ProjectScopeModal } from './components/ProjectScopeModal';
 import { BrandManufacturerStudio } from './components/BrandManufacturerStudio';
 
 import { ProcessedProduct, AppSettings } from './types';
+import { ProjectScope, KRAFT_HEINZ_GERMANY_SCOPE, DEFAULT_PROJECT_SCOPES } from './constants/projectScopes';
 import { ExtractedImageFile } from './services/archiveExtractor';
 import { analyzeProductImage } from './services/gemini';
 import { assembleStandardName, validateStandardName, generateGoogleSkuUrl } from './services/validator';
@@ -19,7 +21,9 @@ import {
   getAllProducts,
   deleteProduct,
   loadSettings,
+  saveSettings,
   purgeOldRecords,
+  getAllProjectScopes,
 } from './services/db';
 
 import {
@@ -29,6 +33,8 @@ import {
   AlertTriangle,
   History,
   Building2,
+  Target,
+  Sparkles,
 } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -43,28 +49,41 @@ export const App: React.FC = () => {
     retentionDays: 7,
     autoProcessOnUpload: true,
     strictContainerCheck: true,
+    activeProjectScopeId: 'kraft-heinz-germany',
   });
+
+  const [scopes, setScopes] = useState<ProjectScope[]>(DEFAULT_PROJECT_SCOPES);
+  const [activeScopeId, setActiveScopeId] = useState<string>('kraft-heinz-germany');
 
   const [products, setProducts] = useState<ProcessedProduct[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [totalSavedCount, setTotalSavedCount] = useState(0);
 
-
   // Modals
   const [isRulesOpen, setIsRulesOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isScopeModalOpen, setIsScopeModalOpen] = useState(false);
   const [inspectingProduct, setInspectingProduct] = useState<ProcessedProduct | null>(null);
+
+  // Active Scope object
+  const activeScope = scopes.find(s => s.id === activeScopeId) || scopes[0] || KRAFT_HEINZ_GERMANY_SCOPE;
 
   // Initial load
   useEffect(() => {
     async function init() {
       try {
-        const loaded = await loadSettings();
-        setSettings(loaded);
+        const loadedSettings = await loadSettings();
+        setSettings(loadedSettings);
+        if (loadedSettings.activeProjectScopeId) {
+          setActiveScopeId(loadedSettings.activeProjectScopeId);
+        }
+
+        const loadedScopes = await getAllProjectScopes();
+        setScopes(loadedScopes);
 
         // Purge records older than retention period (default 7 days)
-        await purgeOldRecords(loaded.retentionDays || 7);
+        await purgeOldRecords(loadedSettings.retentionDays || 7);
 
         // Load existing products from DB
         const storedProducts = await getAllProducts();
@@ -76,6 +95,22 @@ export const App: React.FC = () => {
     }
     init();
   }, []);
+
+  const refreshScopes = async () => {
+    try {
+      const loaded = await getAllProjectScopes();
+      setScopes(loaded);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleSelectActiveScope = async (scopeId: string) => {
+    setActiveScopeId(scopeId);
+    const updatedSettings = { ...settings, activeProjectScopeId: scopeId };
+    setSettings(updatedSettings);
+    await saveSettings(updatedSettings);
+  };
 
   // Update total count
   const refreshStats = async () => {
@@ -98,8 +133,8 @@ export const App: React.FC = () => {
       const inProgress: ProcessedProduct = { ...item, status: 'analyzing' };
       setProducts(prev => prev.map(p => (p.id === item.id ? inProgress : p)));
 
-      // Call Gemini API
-      const result = await analyzeProductImage(item.thumbnailUrl, currentApiKey, currentModel);
+      // Call Gemini API with active project scope
+      const result = await analyzeProductImage(item.thumbnailUrl, currentApiKey, currentModel, activeScope);
       const validation = validateStandardName(result.standardName, result.attributes.containerType);
       const googleSkuUrl = generateGoogleSkuUrl(result.attributes) || undefined;
 
@@ -114,6 +149,11 @@ export const App: React.FC = () => {
         confidenceScore: result.confidenceScore,
         googleSkuUrl,
         exactProductUrl: result.exactProductUrl || result.attributes.exactProductUrl || undefined,
+        projectScopeName: result.projectScopeName || result.attributes.projectScopeName || activeScope.name,
+        scopeCategory: result.scopeCategory || result.attributes.scopeCategory || undefined,
+        traxCategory: result.traxCategory || result.attributes.traxCategory || undefined,
+        clientCategory: result.clientCategory || result.attributes.clientCategory || undefined,
+        smartL1: result.smartL1 || result.attributes.smartL1 || undefined,
         notes: result.notes,
         status: 'completed',
         updatedAt: Date.now(),
@@ -134,6 +174,7 @@ export const App: React.FC = () => {
         isLengthValid: fallbackName.length <= 150,
         isContainerValid: true,
         isAlphanumericValid: true,
+        projectScopeName: activeScope.name,
         status: 'error',
         errorMessage: err?.message || 'Vision analysis failed.',
         updatedAt: Date.now(),
@@ -161,6 +202,7 @@ export const App: React.FC = () => {
         size: '',
         measurementUnit: 'ml',
         valuePacksDescription: '',
+        projectScopeName: activeScope.name,
       };
       const initialName = assembleStandardName(defaultAttributes);
 
@@ -177,6 +219,7 @@ export const App: React.FC = () => {
         isContainerValid: true,
         isAlphanumericValid: true,
         confidenceScore: 0,
+        projectScopeName: activeScope.name,
         status: 'queued',
         createdAt: Date.now(),
         updatedAt: Date.now(),
@@ -267,7 +310,6 @@ export const App: React.FC = () => {
   };
 
   // Retry failed item
-  // Retry failed item
   const handleRetry = (item: ProcessedProduct) => {
     handleReanalyze(item);
   };
@@ -288,7 +330,7 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col antialiased">
-      {/* Top Navbar with Tab Switcher */}
+      {/* Top Navbar with Tab Switcher & Active Project Scope Pill */}
       <Navbar
         settings={settings}
         totalSavedCount={totalSavedCount}
@@ -297,6 +339,8 @@ export const App: React.FC = () => {
         onOpenRules={() => setIsRulesOpen(true)}
         onOpenHistory={() => setIsHistoryOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        activeScopeName={activeScope.name}
+        onOpenProjectScopes={() => setIsScopeModalOpen(true)}
       />
 
       {/* Main Container */}
@@ -326,17 +370,17 @@ export const App: React.FC = () => {
                     Operational Data Product Standardizer
                   </h1>
                   <p className="text-xs text-slate-300 max-w-md">
-                    Automating English naming formulas, multi-format archive extraction, and 49-container type classification.
+                    Automating English naming formulas, multi-format archive extraction, 49-container classification, and Trax/Client category auto-selection.
                   </p>
                 </div>
                 <div className="relative z-10 flex items-center gap-4 pt-4 text-xs text-slate-400 border-t border-slate-700/60 mt-3">
                   <span className="flex items-center gap-1 text-slate-300 font-medium">
                     <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
-                    7-Day Local Retention
+                    7-Day Retention
                   </span>
                   <span className="flex items-center gap-1 text-slate-300 font-medium">
                     <Layers className="w-3.5 h-3.5 text-purple-400" />
-                    49 GSS Containers
+                    49 Containers
                   </span>
                   <button
                     type="button"
@@ -391,6 +435,52 @@ export const App: React.FC = () => {
               </div>
             </div>
 
+            {/* Active Project Scope Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-gradient-to-r from-slate-900 via-cyan-950/30 to-slate-900 border border-cyan-500/30 rounded-2xl shadow-lg">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                  <Target className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                      Active Project Scope Matrix
+                    </span>
+                    <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+                      Auto-Classifying
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <select
+                      value={activeScopeId}
+                      onChange={e => handleSelectActiveScope(e.target.value)}
+                      className="bg-slate-900 border border-cyan-500/50 rounded-lg px-2.5 py-1 text-xs font-bold text-white focus:outline-none focus:border-cyan-400 cursor-pointer"
+                    >
+                      {scopes.map(s => (
+                        <option key={s.id} value={s.id}>
+                          {s.name} ({s.clientName} - {s.country})
+                        </option>
+                      ))}
+                    </select>
+                    <span className="text-[11px] text-slate-400 hidden sm:inline">
+                      • {activeScope.rules.length} scope rule categories loaded
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsScopeModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/40 transition-colors shadow-sm"
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>View Scope Matrix & Manage Scopes</span>
+                </button>
+              </div>
+            </div>
+
             {/* Upload Zone */}
             <FileUploader
               onFilesExtracted={handleFilesExtracted}
@@ -417,6 +507,8 @@ export const App: React.FC = () => {
               onReanalyzeMultiple={handleReanalyzeMultiple}
               onInspect={p => setInspectingProduct(p)}
               onLookupBrand={handleLookupBrand}
+              activeScope={activeScope}
+              onOpenScopeModal={() => setIsScopeModalOpen(true)}
             />
           </>
         )}
@@ -449,6 +541,19 @@ export const App: React.FC = () => {
         onClose={() => setIsSettingsOpen(false)}
         settings={settings}
         onSaveSettings={newSettings => setSettings(newSettings)}
+        onOpenProjectScopes={() => {
+          setIsSettingsOpen(false);
+          setIsScopeModalOpen(true);
+        }}
+      />
+
+      <ProjectScopeModal
+        isOpen={isScopeModalOpen}
+        onClose={() => setIsScopeModalOpen(false)}
+        scopes={scopes}
+        activeScopeId={activeScopeId}
+        onSelectActiveScope={handleSelectActiveScope}
+        onScopesUpdated={refreshScopes}
       />
 
       <ProductDetailModal
@@ -458,8 +563,8 @@ export const App: React.FC = () => {
         onUpdateProduct={handleUpdateProduct}
         onReanalyze={handleReanalyze}
         onLookupBrand={handleLookupBrand}
+        activeScope={activeScope}
       />
     </div>
   );
 };
-

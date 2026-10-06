@@ -15,9 +15,18 @@ import {
   ExternalLink,
   Link2,
   Building2,
+  Target,
+  Layers,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { ProcessedProduct, ProductAttributes } from '../types';
 import { ContainerTypeSelect } from './ContainerTypeSelect';
+import {
+  ProjectScope,
+  getUniqueTraxCategories,
+  getClientCategoriesForTrax,
+  getSmartL1Options,
+} from '../constants/projectScopes';
 import {
   assembleStandardName,
   validateStandardName,
@@ -35,6 +44,8 @@ interface ProductTableProps {
   onReanalyzeMultiple?: (products: ProcessedProduct[]) => void;
   onInspect: (product: ProcessedProduct) => void;
   onLookupBrand?: (brand: string) => void;
+  activeScope?: ProjectScope | null;
+  onOpenScopeModal?: () => void;
 }
 
 export const ProductTable: React.FC<ProductTableProps> = ({
@@ -46,32 +57,44 @@ export const ProductTable: React.FC<ProductTableProps> = ({
   onReanalyzeMultiple,
   onInspect,
   onLookupBrand,
+  activeScope,
+  onOpenScopeModal,
 }) => {
-
   const [search, setSearch] = useState('');
-  const [filterValid, setFilterValid] = useState<'all' | 'valid' | 'warning' | 'error'>('all');
+  const [filterValid, setFilterValid] = useState<'all' | 'valid' | 'warning' | 'error' | 'scoped'>('all');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [copiedSkuId, setCopiedSkuId] = useState<string | null>(null);
   const [bulkCopied, setBulkCopied] = useState(false);
+  const [columnView, setColumnView] = useState<'all' | 'scope_matrix' | 'formula'>('all');
 
   const failedProducts = products.filter(p => p.status === 'error');
 
   // Filter products
   const filteredProducts = products.filter(p => {
     const term = search.toLowerCase();
+    const trax = (p.traxCategory || p.attributes.traxCategory || '').toLowerCase();
+    const client = (p.clientCategory || p.attributes.clientCategory || '').toLowerCase();
+    const smart = (p.smartL1 || p.attributes.smartL1 || '').toLowerCase();
+    const scope = (p.scopeCategory || p.attributes.scopeCategory || '').toLowerCase();
+
     const matchesSearch =
       p.standardName.toLowerCase().includes(term) ||
       p.attributes.brand.toLowerCase().includes(term) ||
       p.attributes.item.toLowerCase().includes(term) ||
       p.attributes.flavorOrVariant.toLowerCase().includes(term) ||
-      p.sourceFileName.toLowerCase().includes(term);
+      p.sourceFileName.toLowerCase().includes(term) ||
+      trax.includes(term) ||
+      client.includes(term) ||
+      smart.includes(term) ||
+      scope.includes(term);
 
     if (!matchesSearch) return false;
 
     if (filterValid === 'valid') return p.status === 'completed' && p.isLengthValid && p.isContainerValid && p.isAlphanumericValid;
     if (filterValid === 'warning') return !p.isLengthValid || !p.isContainerValid || !p.isAlphanumericValid;
     if (filterValid === 'error') return p.status === 'error';
+    if (filterValid === 'scoped') return Boolean(p.traxCategory || p.attributes.traxCategory || p.clientCategory || p.attributes.clientCategory);
     return true;
   });
 
@@ -128,11 +151,18 @@ export const ProductTable: React.FC<ProductTableProps> = ({
       isContainerValid: validation.isContainerValid,
       isAlphanumericValid: validation.isAlphanumericValid,
       googleSkuUrl,
+      projectScopeName: updatedAttributes.projectScopeName,
+      scopeCategory: updatedAttributes.scopeCategory,
+      traxCategory: updatedAttributes.traxCategory,
+      clientCategory: updatedAttributes.clientCategory,
+      smartL1: updatedAttributes.smartL1,
       updatedAt: Date.now(),
     };
 
     onUpdateProduct(updated);
   };
+
+  const traxList = activeScope ? getUniqueTraxCategories(activeScope) : [];
 
   return (
     <div className="space-y-4">
@@ -143,7 +173,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
             <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-500" />
             <input
               type="text"
-              placeholder="Search by name, brand, item, flavor..."
+              placeholder="Search by name, brand, Trax, Client category, Smart L1..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
@@ -158,12 +188,50 @@ export const ProductTable: React.FC<ProductTableProps> = ({
               className="px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-300 text-xs focus:outline-none focus:border-cyan-500"
             >
               <option value="all">All Products ({products.length})</option>
-              <option value="valid">100% Valid Only</option>
+              <option value="scoped">🎯 With Project Scope Matrix</option>
+              <option value="valid">100% Rule Valid Only</option>
               <option value="warning">Has Rule Warnings</option>
               {failedProducts.length > 0 && (
                 <option value="error">⚠️ Failed Analysis ({failedProducts.length})</option>
               )}
             </select>
+          </div>
+
+          {/* Column View Mode Switcher */}
+          <div className="hidden lg:flex items-center bg-slate-900 p-0.5 rounded-lg border border-slate-700 text-[11px]">
+            <button
+              type="button"
+              onClick={() => setColumnView('all')}
+              className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
+                columnView === 'all'
+                  ? 'bg-cyan-600/30 text-cyan-300 font-bold'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              All Columns
+            </button>
+            <button
+              type="button"
+              onClick={() => setColumnView('scope_matrix')}
+              className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
+                columnView === 'scope_matrix'
+                  ? 'bg-purple-600/30 text-purple-300 font-bold'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              🎯 Scope Matrix (Col 2/3/4)
+            </button>
+            <button
+              type="button"
+              onClick={() => setColumnView('formula')}
+              className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
+                columnView === 'formula'
+                  ? 'bg-cyan-600/30 text-cyan-300 font-bold'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              🔤 GSS Formula Only
+            </button>
           </div>
         </div>
 
@@ -182,7 +250,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition-colors shadow-lg shadow-amber-500/10"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" />
-              ⚡ Retry Failed AI Analysis ({failedProducts.length})
+              ⚡ Retry Failed AI ({failedProducts.length})
             </button>
           )}
 
@@ -249,7 +317,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition-all disabled:opacity-50"
             >
               <FileSpreadsheet className="w-3.5 h-3.5" />
-              Export Excel
+              Export Excel (With Scope Columns)
             </button>
           </div>
         </div>
@@ -276,19 +344,44 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                 </th>
                 <th className="p-3 w-16 text-center">Image</th>
                 <th className="p-3 min-w-[280px]">Standardized English Product Name</th>
-                <th className="p-3 min-w-[120px]">Brand</th>
-                <th className="p-3 min-w-[120px]">Item (Type)</th>
-                <th className="p-3 min-w-[130px]">Flavor / Scent</th>
-                <th className="p-3 min-w-[150px]">Container (Official 49)</th>
-                <th className="p-3 min-w-[90px]">Pack</th>
-                <th className="p-3 min-w-[100px]">Size & Unit</th>
+
+                {/* Scope Matrix Columns (Col 2, Col 3, Col 4) */}
+                {(columnView === 'all' || columnView === 'scope_matrix') && (
+                  <>
+                    <th className="p-3 min-w-[150px] text-cyan-300 bg-cyan-950/20 border-l border-r border-cyan-500/20">
+                      2nd Col: Trax Category
+                    </th>
+                    <th className="p-3 min-w-[150px] text-purple-300 bg-purple-950/20 border-r border-purple-500/20">
+                      3rd Col: Client Category
+                    </th>
+                    <th className="p-3 min-w-[180px] text-emerald-300 bg-emerald-950/20 border-r border-emerald-500/20">
+                      Last Col: Smart L1
+                    </th>
+                  </>
+                )}
+
+                {/* Standard Formula Columns */}
+                {(columnView === 'all' || columnView === 'formula') && (
+                  <>
+                    <th className="p-3 min-w-[120px]">Brand</th>
+                    <th className="p-3 min-w-[120px]">Item (Type)</th>
+                    <th className="p-3 min-w-[130px]">Flavor / Scent</th>
+                    <th className="p-3 min-w-[150px]">Container</th>
+                    <th className="p-3 min-w-[90px]">Pack</th>
+                    <th className="p-3 min-w-[100px]">Size & Unit</th>
+                  </>
+                )}
+
                 <th className="p-3 w-28 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
               {filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="p-8 text-center text-slate-500">
+                  <td
+                    colSpan={columnView === 'all' ? 13 : columnView === 'scope_matrix' ? 7 : 10}
+                    className="p-8 text-center text-slate-500"
+                  >
                     No products matching current filter. Upload product images or clear search.
                   </td>
                 </tr>
@@ -297,6 +390,15 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                   const isSelected = selectedIds.includes(p.id);
                   const isNameOverLimit = p.characterCount > 150;
                   const skuInfo = getSkuLinkInfo(p);
+
+                  const currentTrax = p.traxCategory || p.attributes.traxCategory || '';
+                  const currentClient = p.clientCategory || p.attributes.clientCategory || '';
+                  const currentSmart = p.smartL1 || p.attributes.smartL1 || '';
+                  const currentScopeGroup = p.scopeCategory || p.attributes.scopeCategory || '';
+
+                  // Dynamic client and smart options based on current row selections
+                  const clientOptions = activeScope ? getClientCategoriesForTrax(activeScope, currentTrax) : [];
+                  const smartOptions = activeScope ? getSmartL1Options(activeScope, currentTrax, currentClient) : [];
 
                   return (
                     <tr
@@ -379,7 +481,22 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                           {p.status === 'analyzing' && (
                             <div className="flex items-center gap-1.5 p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-[11px] animate-pulse">
                               <Sparkles className="w-3 h-3 text-cyan-400 animate-spin shrink-0" />
-                              <span>Analyzing image with AI...</span>
+                              <span>Analyzing image with AI & mapping scope...</span>
+                            </div>
+                          )}
+
+                          {/* Scope Badges in compact mode */}
+                          {currentSmart && columnView === 'formula' && (
+                            <div className="flex items-center gap-1 flex-wrap text-[10px]">
+                              <span className="px-1.5 py-0.2 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 font-medium">
+                                Trax: {currentTrax}
+                              </span>
+                              <span className="px-1.5 py-0.2 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 font-medium">
+                                Client: {currentClient}
+                              </span>
+                              <span className="px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-semibold">
+                                {currentSmart}
+                              </span>
                             </div>
                           )}
 
@@ -409,12 +526,6 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                               <span className="text-[10px] text-amber-400 flex items-center gap-0.5" title="Contains special characters">
                                 <AlertTriangle className="w-3 h-3" />
                                 Symbols Flagged
-                              </span>
-                            )}
-
-                            {p.isContainerValid && (
-                              <span className="text-[10px] text-cyan-400 font-medium">
-                                Valid Container
                               </span>
                             )}
                           </div>
@@ -479,87 +590,183 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                         </div>
                       </td>
 
-                      {/* Brand */}
-                      <td className="p-3">
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="text"
-                            value={p.attributes.brand}
-                            onChange={e => handleFieldChange(p, 'brand', e.target.value)}
-                            className="w-full px-2 py-1 bg-slate-800/80 border border-slate-700 rounded text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
-                            placeholder="Brand"
-                          />
-                          {p.attributes.brand && onLookupBrand && (
-                            <button
-                              type="button"
-                              onClick={() => onLookupBrand(p.attributes.brand)}
-                              className="p-1 rounded bg-slate-800 hover:bg-cyan-500/20 text-slate-400 hover:text-cyan-300 border border-slate-700 hover:border-cyan-500/40 transition-colors shrink-0"
-                              title={`Lookup manufacturer & logo for "${p.attributes.brand}"`}
+                      {/* Scope Matrix: 2nd Col (Trax Category) */}
+                      {(columnView === 'all' || columnView === 'scope_matrix') && (
+                        <td className="p-3 bg-cyan-950/10 border-l border-r border-cyan-500/10">
+                          {traxList.length > 0 ? (
+                            <select
+                              value={currentTrax}
+                              onChange={e => handleFieldChange(p, 'traxCategory', e.target.value)}
+                              className="w-full px-2 py-1 bg-slate-900 border border-cyan-500/40 rounded text-xs text-cyan-300 font-semibold focus:border-cyan-400 focus:outline-none"
                             >
-                              <Building2 className="w-3.5 h-3.5" />
-                            </button>
+                              <option value="">Select Trax...</option>
+                              {traxList.map(t => (
+                                <option key={t} value={t}>
+                                  {t}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <input
+                              type="text"
+                              value={currentTrax}
+                              onChange={e => handleFieldChange(p, 'traxCategory', e.target.value)}
+                              placeholder="Trax Category"
+                              className="w-full px-2 py-1 bg-slate-900 border border-cyan-500/40 rounded text-xs text-cyan-300 font-semibold focus:border-cyan-400 focus:outline-none"
+                            />
                           )}
-                        </div>
-                      </td>
+                          {currentScopeGroup && (
+                            <span className="block text-[10px] text-slate-400 truncate mt-1">
+                              {currentScopeGroup}
+                            </span>
+                          )}
+                        </td>
+                      )}
 
+                      {/* Scope Matrix: 3rd Col (Client Category) */}
+                      {(columnView === 'all' || columnView === 'scope_matrix') && (
+                        <td className="p-3 bg-purple-950/10 border-r border-purple-500/10">
+                          {clientOptions.length > 0 ? (
+                            <select
+                              value={currentClient}
+                              onChange={e => handleFieldChange(p, 'clientCategory', e.target.value)}
+                              className="w-full px-2 py-1 bg-slate-900 border border-purple-500/40 rounded text-xs text-purple-300 font-semibold focus:border-purple-400 focus:outline-none"
+                            >
+                              <option value="">Select Client...</option>
+                              {clientOptions.map(c => (
+                                <option key={c} value={c}>
+                                  {c}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <input
+                              type="text"
+                              value={currentClient}
+                              onChange={e => handleFieldChange(p, 'clientCategory', e.target.value)}
+                              placeholder="Client Category"
+                              className="w-full px-2 py-1 bg-slate-900 border border-purple-500/40 rounded text-xs text-purple-300 font-semibold focus:border-purple-400 focus:outline-none"
+                            />
+                          )}
+                        </td>
+                      )}
 
-                      {/* Item */}
-                      <td className="p-3">
-                        <input
-                          type="text"
-                          value={p.attributes.item}
-                          onChange={e => handleFieldChange(p, 'item', e.target.value)}
-                          className="w-full px-2 py-1 bg-slate-800/80 border border-slate-700 rounded text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
-                        />
-                      </td>
+                      {/* Scope Matrix: Last Col (Smart L1) */}
+                      {(columnView === 'all' || columnView === 'scope_matrix') && (
+                        <td className="p-3 bg-emerald-950/10 border-r border-emerald-500/10">
+                          <div className="space-y-1">
+                            <input
+                              type="text"
+                              value={currentSmart}
+                              onChange={e => handleFieldChange(p, 'smartL1', e.target.value)}
+                              placeholder="e.g. Ketchup, BBQ Sauce"
+                              className="w-full px-2 py-1 bg-slate-900 border border-emerald-500/40 rounded text-xs text-emerald-300 font-medium focus:border-emerald-400 focus:outline-none"
+                            />
+                            {smartOptions.length > 0 && (
+                              <select
+                                value=""
+                                onChange={e => {
+                                  if (e.target.value) handleFieldChange(p, 'smartL1', e.target.value);
+                                }}
+                                className="w-full px-1.5 py-0.5 bg-slate-900 border border-slate-700 rounded text-[10px] text-slate-400 focus:outline-none focus:border-emerald-400"
+                              >
+                                <option value="">Pick from {smartOptions.length} template options...</option>
+                                {smartOptions.map(s => (
+                                  <option key={s} value={s}>
+                                    {s}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+                          </div>
+                        </td>
+                      )}
 
-                      {/* Flavor */}
-                      <td className="p-3">
-                        <input
-                          type="text"
-                          value={p.attributes.flavorOrVariant}
-                          onChange={e => handleFieldChange(p, 'flavorOrVariant', e.target.value)}
-                          className="w-full px-2 py-1 bg-slate-800/80 border border-slate-700 rounded text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
-                        />
-                      </td>
+                      {/* Standard Formula Columns */}
+                      {(columnView === 'all' || columnView === 'formula') && (
+                        <>
+                          {/* Brand */}
+                          <td className="p-3">
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="text"
+                                value={p.attributes.brand}
+                                onChange={e => handleFieldChange(p, 'brand', e.target.value)}
+                                className="w-full px-2 py-1 bg-slate-800/80 border border-slate-700 rounded text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
+                                placeholder="Brand"
+                              />
+                              {p.attributes.brand && onLookupBrand && (
+                                <button
+                                  type="button"
+                                  onClick={() => onLookupBrand(p.attributes.brand)}
+                                  className="p-1 rounded bg-slate-800 hover:bg-cyan-500/20 text-slate-400 hover:text-cyan-300 border border-slate-700 hover:border-cyan-500/40 transition-colors shrink-0"
+                                  title={`Lookup manufacturer & logo for "${p.attributes.brand}"`}
+                                >
+                                  <Building2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
 
-                      {/* Container Type */}
-                      <td className="p-3">
-                        <ContainerTypeSelect
-                          value={p.attributes.containerType}
-                          onChange={val => handleFieldChange(p, 'containerType', val)}
-                          className="w-full"
-                        />
-                      </td>
+                          {/* Item */}
+                          <td className="p-3">
+                            <input
+                              type="text"
+                              value={p.attributes.item}
+                              onChange={e => handleFieldChange(p, 'item', e.target.value)}
+                              className="w-full px-2 py-1 bg-slate-800/80 border border-slate-700 rounded text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
+                            />
+                          </td>
 
-                      {/* Sub Packages */}
-                      <td className="p-3">
-                        <input
-                          type="text"
-                          value={p.attributes.subPackages}
-                          onChange={e => handleFieldChange(p, 'subPackages', e.target.value)}
-                          placeholder="e.g. 12 Pack"
-                          className="w-full px-2 py-1 bg-slate-800/80 border border-slate-700 rounded text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
-                        />
-                      </td>
+                          {/* Flavor */}
+                          <td className="p-3">
+                            <input
+                              type="text"
+                              value={p.attributes.flavorOrVariant}
+                              onChange={e => handleFieldChange(p, 'flavorOrVariant', e.target.value)}
+                              className="w-full px-2 py-1 bg-slate-800/80 border border-slate-700 rounded text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
+                            />
+                          </td>
 
-                      {/* Size & Unit */}
-                      <td className="p-3">
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="text"
-                            value={p.attributes.size}
-                            onChange={e => handleFieldChange(p, 'size', e.target.value)}
-                            className="w-14 px-1.5 py-1 bg-slate-800/80 border border-slate-700 rounded text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
-                          />
-                          <input
-                            type="text"
-                            value={p.attributes.measurementUnit}
-                            onChange={e => handleFieldChange(p, 'measurementUnit', e.target.value)}
-                            className="w-12 px-1.5 py-1 bg-slate-800/80 border border-slate-700 rounded text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
-                          />
-                        </div>
-                      </td>
+                          {/* Container Type */}
+                          <td className="p-3">
+                            <ContainerTypeSelect
+                              value={p.attributes.containerType}
+                              onChange={val => handleFieldChange(p, 'containerType', val)}
+                              className="w-full"
+                            />
+                          </td>
+
+                          {/* Sub Packages */}
+                          <td className="p-3">
+                            <input
+                              type="text"
+                              value={p.attributes.subPackages}
+                              onChange={e => handleFieldChange(p, 'subPackages', e.target.value)}
+                              placeholder="e.g. 12 Pack"
+                              className="w-full px-2 py-1 bg-slate-800/80 border border-slate-700 rounded text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
+                            />
+                          </td>
+
+                          {/* Size & Unit */}
+                          <td className="p-3">
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="text"
+                                value={p.attributes.size}
+                                onChange={e => handleFieldChange(p, 'size', e.target.value)}
+                                className="w-14 px-1.5 py-1 bg-slate-800/80 border border-slate-700 rounded text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
+                              />
+                              <input
+                                type="text"
+                                value={p.attributes.measurementUnit}
+                                onChange={e => handleFieldChange(p, 'measurementUnit', e.target.value)}
+                                className="w-12 px-1.5 py-1 bg-slate-800/80 border border-slate-700 rounded text-xs text-slate-200 focus:border-cyan-500 focus:outline-none"
+                              />
+                            </div>
+                          </td>
+                        </>
+                      )}
 
                       {/* Actions */}
                       <td className="p-3 text-right">

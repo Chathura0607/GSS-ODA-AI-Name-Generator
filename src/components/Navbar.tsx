@@ -7,6 +7,7 @@ import {
   Layers,
   Building2,
   Sparkles,
+  Target,
 } from 'lucide-react';
 import { AppSettings } from '../types';
 
@@ -18,6 +19,8 @@ interface NavbarProps {
   onOpenRules: () => void;
   onOpenHistory: () => void;
   onOpenSettings: () => void;
+  activeScopeName?: string;
+  onOpenProjectScopes?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -28,6 +31,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenRules,
   onOpenHistory,
   onOpenSettings,
+  activeScopeName = 'Kraft Heinz Germany Project Scope',
+  onOpenProjectScopes,
 }) => {
   const hasKey = Boolean(settings.geminiApiKey);
 
@@ -85,9 +90,23 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </div>
 
-
         {/* Action Controls */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
+          {/* Active Project Scope Pill */}
+          {onOpenProjectScopes && (
+            <button
+              type="button"
+              onClick={onOpenProjectScopes}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-cyan-950/80 to-purple-950/80 hover:from-cyan-900/90 hover:to-purple-900/90 text-cyan-300 border border-cyan-500/40 shadow-sm transition-all"
+              title="Click to view or change Active Project Scope Matrix"
+            >
+              <Target className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span className="hidden xl:inline text-slate-400 font-medium">Scope:</span>
+              <span className="truncate max-w-[150px] sm:max-w-[200px]">{activeScopeName}</span>
+              <span className="text-[10px] text-cyan-400/70">▼</span>
+            </button>
+          )}
+
           {/* API Key Status Pill */}
           <button
             type="button"
@@ -102,7 +121,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <>
                 <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
                 <span className="hidden sm:inline">AI Active ({settings.geminiModel})</span>
-                <span className="sm:hidden">AI Connected</span>
+                <span className="sm:hidden">AI</span>
               </>
             ) : (
               <>
