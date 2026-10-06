@@ -1,5 +1,6 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 import { ProcessedProduct, AppSettings, BrandManufacturerInfo } from '../types';
+import { ProjectScope, DEFAULT_PROJECT_SCOPES, KRAFT_HEINZ_GERMANY_SCOPE } from '../constants/projectScopes';
 
 interface GssOdaDB extends DBSchema {
   products: {
@@ -18,6 +19,10 @@ interface GssOdaDB extends DBSchema {
       'by-brand': string;
     };
   };
+  scopes: {
+    key: string;
+    value: ProjectScope;
+  };
   settings: {
     key: string;
     value: any;
@@ -25,7 +30,7 @@ interface GssOdaDB extends DBSchema {
 }
 
 const DB_NAME = 'gss_oda_db';
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 let dbPromise: Promise<IDBPDatabase<GssOdaDB>> | null = null;
 
@@ -44,6 +49,10 @@ export function getDB() {
           const brandStore = db.createObjectStore('brands', { keyPath: 'id' });
           brandStore.createIndex('by-searched', 'searchedAt');
           brandStore.createIndex('by-brand', 'brandName');
+        }
+        // Scopes store
+        if (!db.objectStoreNames.contains('scopes')) {
+          db.createObjectStore('scopes', { keyPath: 'id' });
         }
         // Settings store
         if (!db.objectStoreNames.contains('settings')) {
@@ -142,6 +151,60 @@ export async function clearAllBrands(): Promise<void> {
   await db.clear('brands');
 }
 
+/**
+ * Project Scopes Management
+ */
+export async function getAllProjectScopes(): Promise<ProjectScope[]> {
+  const db = await getDB();
+  const stored = await db.getAll('scopes');
+  if (!stored || stored.length === 0) {
+    // Seed defaults
+    await saveProjectScopes(DEFAULT_PROJECT_SCOPES);
+    return DEFAULT_PROJECT_SCOPES;
+  }
+  // Ensure Kraft Heinz Germany is always present
+  const hasKraftHeinz = stored.some(s => s.id === 'kraft-heinz-germany');
+  if (!hasKraftHeinz) {
+    await saveProjectScope(KRAFT_HEINZ_GERMANY_SCOPE);
+    return [KRAFT_HEINZ_GERMANY_SCOPE, ...stored];
+  }
+  return stored;
+}
+
+export async function getProjectScopeById(id: string): Promise<ProjectScope | null> {
+  const db = await getDB();
+  const scope = await db.get('scopes', id);
+  if (!scope && id === 'kraft-heinz-germany') {
+    return KRAFT_HEINZ_GERMANY_SCOPE;
+  }
+  return scope || null;
+}
+
+export async function saveProjectScope(scope: ProjectScope): Promise<void> {
+  const db = await getDB();
+  await db.put('scopes', scope);
+}
+
+export async function saveProjectScopes(scopes: ProjectScope[]): Promise<void> {
+  const db = await getDB();
+  const tx = db.transaction('scopes', 'readwrite');
+  await Promise.all(scopes.map(s => tx.store.put(s)));
+  await tx.done;
+}
+
+export async function deleteProjectScope(id: string): Promise<void> {
+  const db = await getDB();
+  await db.delete('scopes', id);
+}
+
+export async function resetDefaultProjectScopes(): Promise<ProjectScope[]> {
+  const db = await getDB();
+  const tx = db.transaction('scopes', 'readwrite');
+  await tx.store.clear();
+  await Promise.all(DEFAULT_PROJECT_SCOPES.map(s => tx.store.put(s)));
+  await tx.done;
+  return DEFAULT_PROJECT_SCOPES;
+}
 
 /**
  * Purge records older than the retention period (default 7 days).
@@ -183,6 +246,7 @@ export async function loadSettings(): Promise<AppSettings> {
     retentionDays: 7,
     autoProcessOnUpload: true,
     strictContainerCheck: true,
+    activeProjectScopeId: 'kraft-heinz-germany',
   };
 
   try {
@@ -203,17 +267,20 @@ export async function loadSettings(): Promise<AppSettings> {
 export async function exportBackupJSON(): Promise<string> {
   const products = await getAllProducts();
   const brands = await getAllBrands();
+  const scopes = await getAllProjectScopes();
   const settings = await loadSettings();
   const backup = {
     appName: 'GSS ODA Product Name Standardizer',
-    version: '1.1.0',
+    version: '1.2.0',
     exportTimestamp: Date.now(),
     exportDateISO: new Date().toISOString(),
     totalRecords: products.length,
     totalBrands: brands.length,
+    totalScopes: scopes.length,
     retentionPolicy: `${settings.retentionDays} days`,
     products,
     brands,
+    scopes,
   };
   return JSON.stringify(backup, null, 2);
 }
@@ -223,7 +290,7 @@ export async function exportBackupJSON(): Promise<string> {
  */
 export async function importBackupJSON(jsonContent: string): Promise<number> {
   const data = JSON.parse(jsonContent);
-  if (!data || (!Array.isArray(data.products) && !Array.isArray(data.brands))) {
+  if (!data || (!Array.isArray(data.products) && !Array.isArray(data.brands) && !Array.isArray(data.scopes))) {
     throw new Error('Invalid backup file format. Expected a valid GSS ODA backup.');
   }
 
@@ -249,6 +316,9 @@ export async function importBackupJSON(jsonContent: string): Promise<number> {
     count += validBrands.length;
   }
 
+  if (Array.isArray(data.scopes) && data.scopes.length > 0) {
+    await saveProjectScopes(data.scopes);
+  }
+
   return count;
 }
-

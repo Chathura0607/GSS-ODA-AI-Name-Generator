@@ -1,5 +1,6 @@
 import { CONTAINER_TYPES } from '../constants/containerTypes';
 import { ProductAttributes, BrandManufacturerInfo } from '../types';
+import { ProjectScope, formatScopeForPrompt } from '../constants/projectScopes';
 import { assembleStandardName, normalizeMeasurementUnit, cleanPackAndSize, standardizeManufacturerName } from './validator';
 
 
@@ -12,7 +13,7 @@ Analyze the uploaded product image and extract attributes with highest precision
 
 ### Critical Business Rules:
 1. Sub-Brand Duplication: If the Sub-Brand contains the Brand Name, do not duplicate the Brand in the final name.
-2. Item (Product Type): Primary category (e.g. Hand Wash, Creaming Soda, Dry Ginger Ale, Chocolate, Biscuits, Toothpaste, Fruit Cordial, Gum, Strips, Single Malt Scotch Whisky, Carbonated Soft Drink, Shower Gel, Instant Noodles, Mineral Water).
+2. Item (Product Type): Primary category (e.g. Hand Wash, Creaming Soda, Dry Ginger Ale, Chocolate, Biscuits, Toothpaste, Fruit Cordial, Gum, Strips, Single Malt Scotch Whisky, Carbonated Soft Drink, Shower Gel, Instant Noodles, Mineral Water, Ketchup, Tomato Sauce, Mayonnaise, Spices, Baked Beans).
 3. Flavor / Variant / Scent: (e.g. Cucumber and Green Tea Scent, Wild Cherry Flavoured, Peppermint, Orange, Mint, Vanilla, Lemon, Original, Strawberry, White Peach, Salted Caramel).
 4. Additional Wordings: Functional packaging claims (e.g. "Flexible Fabric Breathable Water Repellent", "Sugarfree", "Refill", "No Sugar", "Antibacterial", "Zero Calories", "Still", "Sparkling", "Moisturising").
 5. Characters & Language (STRICT MANDATE - 100% ENGLISH):
@@ -40,25 +41,30 @@ If none matches or it's unidentifiable, use "None" or the closest match like "Bo
 12. Cleanliness: Remove trailing packaging punctuation, marketing slogans, and ensure words are properly capitalized.
 13. Exact Direct Product Web URL (CRITICAL REQUIREMENT):
    - Search the web for this exact product image (matching brand, variant, flavor, size, and packaging).
-   - You MUST return the real, direct product listing web page URL where this exact product is hosted or sold online (e.g., https://snackje.com/products/monster-energy-ultra-vice-guava-500ml, https://onlinekade.lk/product/monster-energy-nas-ultra-fantasy-ruby-red-500ml/, https://www.liquorland.co.nz/smirnoff-vodka-crush-lemon-lime-57-4-pack-cans-440ml-857476, https://toongabbie.shop.supercellars.com.au/lines/cruiser-vanilla-cola-4-6-bottles, https://www.amazon.com.au/Coca-Cola-Drink-Multipack-Bottles-1-25L/dp/B07D8FP1YY, https://www.woolworths.com.au/shop/productdetails/938941/fanta-grape-zero-sugar-bottle, https://www.amazon.co.uk/Bic-Flex-3-Sensit-Blister-Unit/dp/B0B4WHHV8D, https://www.walmart.com/ip/Bic-Soleil-Bella-Disposable-Shavers-3-ea-Pack-of-6/378927583, https://www.tommy.hr/en-GB/proizvodi/pampers-sensitive-baby-wipes-80-pcs, https://gshop.lv/product/latviesu-lenor-professional-purple-bloom-velas-mikstinatajs-4-l/, or official brand/retailer shop link).
+   - You MUST return the real, direct product listing web page URL where this exact product is hosted or sold online.
    - Place the full URL directly in "exactProductUrl".
    - Do NOT return a Google search link (such as https://www.google.com/search?q=...). Return the direct store/product page link.
 
 You MUST return ONLY a valid JSON object with this exact structure:
 {
-  "brand": "Standard English Brand name (e.g. Dove, Cascade, Fanta, Mentos, Anchor, Saint Spring, Nongfu Spring, Monster Energy, Coca-Cola)",
+  "brand": "Standard English Brand name (e.g. Dove, Heinz, Cascade, Fanta, Mentos, Anchor, Coca-Cola)",
   "subBrand": "Sub-brand in English if applicable, e.g. Moisturising, Ceda, Waves, Ultra",
-  "item": "Product type in English, e.g. Hand Wash, Creaming Soda, Gum, Strips, Soft Drink, Energy Drink, Shampoo, Biscuits, Toothpaste",
-  "flavorOrVariant": "Flavor or scent in English, e.g. Vice Guava, Vanilla Cola, Wild Cherry, Peppermint, Raspberry, White Peach, Green Tea",
-  "additionalWordings": "Functional words in English, e.g. Sugarfree, Flexible Fabric Breathable Water Repellent, Refill, No Sugar, Still, Sparkling",
-  "containerType": "EXACT match from the 49 allowed GSS container types e.g. Plastic Container, Cardboard Box, Bottle, Can",
+  "item": "Product type in English, e.g. Ketchup, Tomato Sauce, Mayonnaise, Spices, Baked Beans, Hand Wash, Soda",
+  "flavorOrVariant": "Flavor or scent in English, e.g. Curry, Garlic, BBQ, Original, Peppermint, Sweet Sour",
+  "additionalWordings": "Functional words in English, e.g. Sugarfree, Organic, Refill, No Sugar, Still, Sparkling",
+  "containerType": "EXACT match from the 49 allowed GSS container types e.g. Plastic Container, Cardboard Box, Bottle, Can, Glass Bottle, Tube",
   "subPackages": "Pack count e.g. 6 Pack, 10 Pack, 12 Pack, 4 Pack, or empty",
   "size": "Number only e.g. 60, 21, 100, 250, 375, 500, 700, 1.5",
   "measurementUnit": "ml, l, g, kg, or Units (for pieces/strips/capsules/tablets)",
   "valuePacksDescription": "e.g. 18 Year Old Limited Edition, Value Pack, Special Edition, 3x eco-refill, or empty",
-  "exactProductUrl": "Direct URL to the exact matching product page on the web (e.g. https://snackje.com/products/monster-energy-ultra-vice-guava-500ml or https://toongabbie.shop.supercellars.com.au/lines/cruiser-vanilla-cola-4-6-bottles)",
+  "exactProductUrl": "Direct URL to the exact matching product page on the web",
+  "projectScopeName": "Name of the project scope if provided",
+  "scopeCategory": "Matching Scope Group / 1st column category from the active project scope",
+  "traxCategory": "Matching 2nd column Trax Category from the active project scope",
+  "clientCategory": "Matching 3rd column Client Category from the active project scope",
+  "smartL1": "Matching 4th column Smart L1 specific item from the active project scope",
   "confidenceScore": integer between 0 and 100,
-  "notes": "Language detected (e.g. 'Translated from Russian/Chinese/etc.') and brief reason for attributes"
+  "notes": "Language detected and brief reason for category classification"
 }`;
 
 export interface AnalysisResult {
@@ -66,6 +72,11 @@ export interface AnalysisResult {
   standardName: string;
   confidenceScore: number;
   exactProductUrl?: string;
+  projectScopeName?: string;
+  scopeCategory?: string;
+  traxCategory?: string;
+  clientCategory?: string;
+  smartL1?: string;
   notes: string;
 }
 
@@ -164,7 +175,8 @@ async function callWithRetry(
 export async function analyzeProductImage(
   dataUrl: string,
   apiKey: string,
-  modelName: string = 'gemini-3.6-flash'
+  modelName: string = 'gemini-3.6-flash',
+  projectScope?: ProjectScope | null
 ): Promise<AnalysisResult> {
   if (!apiKey) {
     throw new Error(
@@ -181,6 +193,21 @@ export async function analyzeProductImage(
   const mimeType = matches[1];
   const base64Data = matches[2];
 
+  let promptText = SYSTEM_PROMPT;
+  if (projectScope && projectScope.rules && projectScope.rules.length > 0) {
+    promptText += `\n\n### MANDATORY ACTIVE PROJECT SCOPE CLASSIFICATION:
+Active Project Scope: "${projectScope.name}" (Client: ${projectScope.clientName}, Country: ${projectScope.country})
+${formatScopeForPrompt(projectScope)}
+
+CRITICAL PROJECT SCOPE INSTRUCTIONS:
+Based on this product image and FMCG classification, you MUST match and assign the exact category attributes from this project scope:
+1. "scopeCategory": Choose the matching 1st column Scope Category (e.g. "${projectScope.rules[0].scopeCategory}") or "Out of Scope" if none match.
+2. "traxCategory": EXACT match for the 2nd column Trax Category from the matching rule (e.g. "${projectScope.rules[0].traxCategory}").
+3. "clientCategory": EXACT match for the 3rd column Client Category from the matching rule (e.g. "${projectScope.rules[0].clientCategory}").
+4. "smartL1": Choose the most specific and accurate Smart L1 item from the allowed Smart L1 list for the selected category (e.g. "${projectScope.rules[0].smartL1List[0]}").
+5. "projectScopeName": "${projectScope.name}"`;
+  }
+
   const buildRequestBody = (includeTools: boolean) => ({
     contents: [
       {
@@ -188,8 +215,8 @@ export async function analyzeProductImage(
         parts: [
           {
             text:
-              SYSTEM_PROMPT +
-              '\n\nPlease search for this exact product image online, identify the exact direct product URL, and output the JSON result now:',
+              promptText +
+              '\n\nPlease search for this exact product image online, identify the exact direct product URL, classify into the active project scope categories, and output the JSON result now:',
           },
           {
             inlineData: {
@@ -318,6 +345,40 @@ export async function analyzeProductImage(
     }
   }
 
+  // Project scope fields extraction and normalization
+  let scopeCategory = (parsed.scopeCategory || '').trim();
+  let traxCategory = (parsed.traxCategory || '').trim();
+  let clientCategory = (parsed.clientCategory || '').trim();
+  let smartL1 = (parsed.smartL1 || '').trim();
+  let projectScopeName = (parsed.projectScopeName || (projectScope ? projectScope.name : '')).trim();
+
+  // Normalize categories if a project scope is active
+  if (projectScope && projectScope.rules && projectScope.rules.length > 0) {
+    projectScopeName = projectScope.name;
+    const ruleMatch = projectScope.rules.find(r => 
+      (scopeCategory && r.scopeCategory.toLowerCase() === scopeCategory.toLowerCase()) ||
+      (traxCategory && clientCategory && r.traxCategory.toLowerCase() === traxCategory.toLowerCase() && r.clientCategory.toLowerCase() === clientCategory.toLowerCase()) ||
+      (clientCategory && r.clientCategory.toLowerCase() === clientCategory.toLowerCase())
+    ) || projectScope.rules.find(r =>
+      r.smartL1List.some(s => smartL1 && (s.toLowerCase() === smartL1.toLowerCase() || smartL1.toLowerCase().includes(s.toLowerCase())))
+    );
+
+    if (ruleMatch) {
+      if (!scopeCategory || scopeCategory.toLowerCase() === 'out of scope') {
+        scopeCategory = ruleMatch.scopeCategory;
+      }
+      traxCategory = ruleMatch.traxCategory;
+      clientCategory = ruleMatch.clientCategory;
+
+      const smartL1Match = ruleMatch.smartL1List.find(s =>
+        smartL1 && (s.toLowerCase() === smartL1.toLowerCase() || smartL1.toLowerCase().includes(s.toLowerCase()) || s.toLowerCase().includes(smartL1.toLowerCase()))
+      );
+      if (smartL1Match) {
+        smartL1 = smartL1Match;
+      }
+    }
+  }
+
   const attributes: ProductAttributes = {
     brand: (parsed.brand || '').trim(),
     subBrand: (parsed.subBrand || '').trim(),
@@ -330,6 +391,11 @@ export async function analyzeProductImage(
     measurementUnit: cleanedPackSize.measurementUnit,
     valuePacksDescription: (parsed.valuePacksDescription || '').trim(),
     exactProductUrl: exactProductUrl || undefined,
+    projectScopeName: projectScopeName || undefined,
+    scopeCategory: scopeCategory || undefined,
+    traxCategory: traxCategory || undefined,
+    clientCategory: clientCategory || undefined,
+    smartL1: smartL1 || undefined,
   };
 
   const standardName = assembleStandardName(attributes);
@@ -339,6 +405,11 @@ export async function analyzeProductImage(
     standardName,
     confidenceScore: parsed.confidenceScore ?? 92,
     exactProductUrl: exactProductUrl || undefined,
+    projectScopeName: projectScopeName || undefined,
+    scopeCategory: scopeCategory || undefined,
+    traxCategory: traxCategory || undefined,
+    clientCategory: clientCategory || undefined,
+    smartL1: smartL1 || undefined,
     notes: parsed.notes || '',
   };
 }
