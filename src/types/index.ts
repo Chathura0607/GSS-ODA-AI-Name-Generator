@@ -12,6 +12,11 @@ export interface ProductAttributes {
   measurementUnit: MeasurementUnit | string; // e.g. ml, l, g
   valuePacksDescription: string; // e.g. 3x eco-refill, Special Edition
   exactProductUrl?: string; // Direct URL to the exact matching product page on the web (e.g. https://snackje.com/products/...)
+  projectScopeName?: string; // Active Project Scope (e.g. "Kraft Heinz Germany Project Scope")
+  scopeCategory?: string; // 1st Column / Scope Group (e.g. "Feinkost & Ketchup (incl Curry Gewürz Ketchup)")
+  traxCategory?: string; // 2nd Column / Trax Category (e.g. "Sauces & Condiment")
+  clientCategory?: string; // 3rd Column / Client Category (e.g. "Sauces & Ketchup")
+  smartL1?: string; // 4th Column / Smart L1 (e.g. "Ketchup", "BBQ Sauce")
 }
 
 export type ProcessingStatus = 'queued' | 'extracting' | 'analyzing' | 'completed' | 'error';
@@ -32,6 +37,11 @@ export interface ProcessedProduct {
   googleSkuUrl?: string;
   exactProductUrl?: string;
   skuSearchQuery?: string;
+  projectScopeName?: string;
+  scopeCategory?: string;
+  traxCategory?: string;
+  clientCategory?: string;
+  smartL1?: string;
   notes?: string;
   status: ProcessingStatus;
   errorMessage?: string;
@@ -45,6 +55,7 @@ export interface AppSettings {
   retentionDays: number; // default 7
   autoProcessOnUpload: boolean;
   strictContainerCheck: boolean;
+  activeProjectScopeId?: string; // e.g. 'kraft-heinz-germany'
 }
 
 export interface ExtractionProgress {
