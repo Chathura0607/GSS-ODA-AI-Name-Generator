@@ -52,6 +52,8 @@ export interface ProcessedProduct {
 export interface AppSettings {
   geminiApiKey: string;
   geminiModel: string;
+  tinyFishApiKey?: string;
+  useTinyFishForSearch?: boolean;
   retentionDays: number; // default 7
   autoProcessOnUpload: boolean;
   strictContainerCheck: boolean;

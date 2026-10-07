@@ -243,6 +243,8 @@ export async function loadSettings(): Promise<AppSettings> {
   const defaultSettings: AppSettings = {
     geminiApiKey: localStorage.getItem('gss_gemini_key') || '',
     geminiModel: 'gemini-3.6-flash',
+    tinyFishApiKey: localStorage.getItem('gss_tinyfish_key') || '',
+    useTinyFishForSearch: true,
     retentionDays: 7,
     autoProcessOnUpload: true,
     strictContainerCheck: true,
