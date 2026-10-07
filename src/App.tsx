@@ -14,6 +14,7 @@ import { ProcessedProduct, AppSettings } from './types';
 import { ProjectScope, KRAFT_HEINZ_GERMANY_SCOPE, DEFAULT_PROJECT_SCOPES } from './constants/projectScopes';
 import { ExtractedImageFile } from './services/archiveExtractor';
 import { analyzeProductImage } from './services/gemini';
+import { analyzeProductWithTinyFish } from './services/tinyfish';
 import { assembleStandardName, validateStandardName, generateGoogleSkuUrl } from './services/validator';
 import {
   saveProduct,
@@ -46,6 +47,8 @@ export const App: React.FC = () => {
   const [settings, setSettings] = useState<AppSettings>({
     geminiApiKey: localStorage.getItem('gss_gemini_key') || '',
     geminiModel: 'gemini-3.6-flash',
+    tinyFishApiKey: localStorage.getItem('gss_tinyfish_key') || '',
+    useTinyFishForSearch: true,
     retentionDays: 7,
     autoProcessOnUpload: true,
     strictContainerCheck: true,
@@ -133,8 +136,15 @@ export const App: React.FC = () => {
       const inProgress: ProcessedProduct = { ...item, status: 'analyzing' };
       setProducts(prev => prev.map(p => (p.id === item.id ? inProgress : p)));
 
-      // Call Gemini API with active project scope
-      const result = await analyzeProductImage(item.thumbnailUrl, currentApiKey, currentModel, activeScope);
+      // Call Gemini API with active project scope, or fallback to TinyFish Web Intelligence
+      let result;
+      if (currentApiKey && currentApiKey.trim()) {
+        result = await analyzeProductImage(item.thumbnailUrl, currentApiKey, currentModel, activeScope);
+      } else if (settings.tinyFishApiKey && settings.tinyFishApiKey.trim()) {
+        result = await analyzeProductWithTinyFish(item.sourceFileName, settings.tinyFishApiKey, activeScope);
+      } else {
+        result = await analyzeProductImage(item.thumbnailUrl, currentApiKey, currentModel, activeScope);
+      }
       const validation = validateStandardName(result.standardName, result.attributes.containerType);
       const googleSkuUrl = generateGoogleSkuUrl(result.attributes) || undefined;
 
@@ -564,6 +574,7 @@ export const App: React.FC = () => {
         onReanalyze={handleReanalyze}
         onLookupBrand={handleLookupBrand}
         activeScope={activeScope}
+        settings={settings}
       />
     </div>
   );
