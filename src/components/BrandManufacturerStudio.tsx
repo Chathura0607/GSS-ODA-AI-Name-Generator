@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { BrandManufacturerInfo, AppSettings } from '../types';
-import { dispatchLookupBrand, getActiveAiDisplayName } from '../services/aiDispatcher';
+import { lookupBrandManufacturerAndLogo } from '../services/gemini';
 import { standardizeManufacturerName, MANUFACTURER_RULE_MAPPINGS } from '../services/validator';
 import {
   saveBrandInfo,
@@ -203,7 +203,11 @@ export const BrandManufacturerStudio: React.FC<BrandManufacturerStudioProps> = (
     setErrorMessage(null);
 
     try {
-      const result: BrandManufacturerInfo = await dispatchLookupBrand(brand, settings);
+      const result: BrandManufacturerInfo = await lookupBrandManufacturerAndLogo(
+        brand,
+        settings.geminiApiKey,
+        settings.geminiModel
+      );
 
       setActiveBrand(result);
       setBrandHistory(prev => [result, ...prev.filter(b => b.brandName.toLowerCase() !== brand.toLowerCase())]);
@@ -264,7 +268,11 @@ export const BrandManufacturerStudio: React.FC<BrandManufacturerStudioProps> = (
           await new Promise(r => setTimeout(r, 800));
         }
 
-        const result: BrandManufacturerInfo = await dispatchLookupBrand(brand, settings);
+        const result: BrandManufacturerInfo = await lookupBrandManufacturerAndLogo(
+          brand,
+          settings.geminiApiKey,
+          settings.geminiModel
+        );
 
         newResults.push(result);
         setActiveBrand(result);

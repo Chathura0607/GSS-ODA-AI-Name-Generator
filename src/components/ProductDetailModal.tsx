@@ -15,6 +15,7 @@ import {
   Building2,
   Target,
   Layers,
+  Search,
 } from 'lucide-react';
 import { ProcessedProduct, ProductAttributes, AppSettings } from '../types';
 import { ContainerTypeSelect } from './ContainerTypeSelect';
@@ -31,7 +32,6 @@ import {
   generateGoogleSkuUrl,
   getSkuLinkInfo,
 } from '../services/validator';
-import { findExactProductUrlWithTinyFish } from '../services/tinyfish';
 
 interface ProductDetailModalProps {
   product: ProcessedProduct | null;
@@ -69,7 +69,6 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   const [zoom, setZoom] = useState(1);
   const [copied, setCopied] = useState(false);
   const [copiedSku, setCopiedSku] = useState(false);
-  const [isSearchingUrl, setIsSearchingUrl] = useState(false);
 
   const currentStandardName = assembleStandardName(attributes);
   const validation = validateStandardName(currentStandardName, attributes.containerType);
@@ -78,26 +77,6 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   const handleAttributeChange = (field: keyof ProductAttributes, value: string) => {
     const updated = { ...attributes, [field]: value };
     setAttributes(updated);
-  };
-
-  const handleTinyFishUrlSearch = async () => {
-    const tfKey = settings?.tinyFishApiKey || localStorage.getItem('gss_tinyfish_key');
-    if (!tfKey) return;
-    setIsSearchingUrl(true);
-    try {
-      const res = await findExactProductUrlWithTinyFish(
-        currentStandardName || attributes.item,
-        attributes.brand,
-        tfKey
-      );
-      if (res.url) {
-        handleAttributeChange('exactProductUrl', res.url);
-      }
-    } catch (err) {
-      console.error('TinyFish URL search error', err);
-    } finally {
-      setIsSearchingUrl(false);
-    }
   };
 
   const handleSave = () => {
@@ -433,17 +412,17 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   <label className="block text-[11px] text-slate-400 font-medium">
                     Direct Retail / Brand Website URL (or auto-detected product link)
                   </label>
-                  {(settings?.tinyFishApiKey || localStorage.getItem('gss_tinyfish_key')) && (
-                    <button
-                      type="button"
-                      onClick={handleTinyFishUrlSearch}
-                      disabled={isSearchingUrl || (!attributes.brand && !attributes.item)}
-                      className="text-[10px] text-orange-400 hover:text-orange-300 flex items-center gap-1 font-semibold disabled:opacity-50 transition-colors"
-                    >
-                      <Globe className={`w-3 h-3 ${isSearchingUrl ? 'animate-spin' : ''}`} />
-                      <span>{isSearchingUrl ? 'Searching Stores...' : 'TinyFish Auto-Find URL'}</span>
-                    </button>
-                  )}
+                  <a
+                    href={`https://www.google.com/search?q=${encodeURIComponent(
+                      `${attributes.brand} ${attributes.item} ${attributes.flavorOrVariant} ${attributes.size} ${attributes.measurementUnit}`.trim()
+                    )}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[10px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-semibold hover:underline transition-colors"
+                  >
+                    <Search className="w-3 h-3" />
+                    <span>Search Google Stores &rarr;</span>
+                  </a>
                 </div>
                 <div className="flex items-center gap-2">
                   <input
