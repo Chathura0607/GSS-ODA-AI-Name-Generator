@@ -13,8 +13,7 @@ import { BrandManufacturerStudio } from './components/BrandManufacturerStudio';
 import { ProcessedProduct, AppSettings } from './types';
 import { ProjectScope, KRAFT_HEINZ_GERMANY_SCOPE, DEFAULT_PROJECT_SCOPES } from './constants/projectScopes';
 import { ExtractedImageFile } from './services/archiveExtractor';
-import { analyzeProductImage } from './services/gemini';
-import { analyzeProductWithTinyFish } from './services/tinyfish';
+import { dispatchAnalyzeProductImage } from './services/aiDispatcher';
 import { assembleStandardName, validateStandardName, generateGoogleSkuUrl } from './services/validator';
 import {
   saveProduct,
@@ -45,8 +44,12 @@ export const App: React.FC = () => {
 
   // State
   const [settings, setSettings] = useState<AppSettings>({
+    aiProvider: (localStorage.getItem('gss_ai_provider') as any) || 'auto',
     geminiApiKey: localStorage.getItem('gss_gemini_key') || '',
     geminiModel: 'gemini-3.6-flash',
+    kieApiKey: localStorage.getItem('gss_kie_key') || '',
+    kieModel: localStorage.getItem('gss_kie_model') || 'gpt-4o',
+    kieBaseUrl: localStorage.getItem('gss_kie_base_url') || 'https://api.kie.ai/openai/v1',
     tinyFishApiKey: localStorage.getItem('gss_tinyfish_key') || '',
     useTinyFishForSearch: true,
     retentionDays: 7,
@@ -125,26 +128,23 @@ export const App: React.FC = () => {
     }
   };
 
-  // Analyze a single product item with Gemini Vision
+  // Analyze a single product item with active AI Engine (Gemini / KIE AI)
   const analyzeSingle = async (
     item: ProcessedProduct,
-    currentApiKey: string,
-    currentModel: string
+    currentSettings: AppSettings = settings
   ): Promise<ProcessedProduct> => {
     try {
       // Set status to analyzing
       const inProgress: ProcessedProduct = { ...item, status: 'analyzing' };
       setProducts(prev => prev.map(p => (p.id === item.id ? inProgress : p)));
 
-      // Call Gemini API with active project scope, or fallback to TinyFish Web Intelligence
-      let result;
-      if (currentApiKey && currentApiKey.trim()) {
-        result = await analyzeProductImage(item.thumbnailUrl, currentApiKey, currentModel, activeScope);
-      } else if (settings.tinyFishApiKey && settings.tinyFishApiKey.trim()) {
-        result = await analyzeProductWithTinyFish(item.sourceFileName, settings.tinyFishApiKey, activeScope);
-      } else {
-        result = await analyzeProductImage(item.thumbnailUrl, currentApiKey, currentModel, activeScope);
-      }
+      // Dispatch to active AI provider (Gemini or KIE AI) with active project scope
+      const result = await dispatchAnalyzeProductImage(
+        item.thumbnailUrl,
+        item.sourceFileName,
+        currentSettings,
+        activeScope
+      );
       const validation = validateStandardName(result.standardName, result.attributes.containerType);
       const googleSkuUrl = generateGoogleSkuUrl(result.attributes) || undefined;
 
@@ -242,7 +242,7 @@ export const App: React.FC = () => {
     await refreshStats();
 
     // If API key is missing, prompt settings modal
-    if (!settings.geminiApiKey) {
+    if (!settings.geminiApiKey && !settings.kieApiKey && !settings.tinyFishApiKey) {
       setIsSettingsOpen(true);
       return;
     }
@@ -254,7 +254,7 @@ export const App: React.FC = () => {
       if (i > 0) {
         await new Promise(res => setTimeout(res, 1200));
       }
-      const finished = await analyzeSingle(item, settings.geminiApiKey, settings.geminiModel);
+      const finished = await analyzeSingle(item, settings);
       setProducts(prev => prev.map(p => (p.id === finished.id ? finished : p)));
     }
     setIsProcessing(false);
@@ -263,12 +263,12 @@ export const App: React.FC = () => {
 
   // Reanalyze an existing item
   const handleReanalyze = async (product: ProcessedProduct) => {
-    if (!settings.geminiApiKey) {
+    if (!settings.geminiApiKey && !settings.kieApiKey && !settings.tinyFishApiKey) {
       setIsSettingsOpen(true);
       return;
     }
     setIsProcessing(true);
-    const updated = await analyzeSingle(product, settings.geminiApiKey, settings.geminiModel);
+    const updated = await analyzeSingle(product, settings);
     setProducts(prev => prev.map(p => (p.id === updated.id ? updated : p)));
     setIsProcessing(false);
     await refreshStats();
@@ -276,7 +276,7 @@ export const App: React.FC = () => {
 
   // Reanalyze multiple items (e.g. all failed or selected items)
   const handleReanalyzeMultiple = async (items: ProcessedProduct[]) => {
-    if (!settings.geminiApiKey) {
+    if (!settings.geminiApiKey && !settings.kieApiKey && !settings.tinyFishApiKey) {
       setIsSettingsOpen(true);
       return;
     }
@@ -286,7 +286,7 @@ export const App: React.FC = () => {
       if (i > 0) {
         await new Promise(res => setTimeout(res, 1200));
       }
-      const updated = await analyzeSingle(item, settings.geminiApiKey, settings.geminiModel);
+      const updated = await analyzeSingle(item, settings);
       setProducts(prev => prev.map(p => (p.id === updated.id ? updated : p)));
     }
     setIsProcessing(false);

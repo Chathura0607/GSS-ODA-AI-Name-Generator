@@ -25,8 +25,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { BrandManufacturerInfo, AppSettings } from '../types';
-import { lookupBrandManufacturerAndLogo } from '../services/gemini';
-import { lookupBrandWithTinyFish } from '../services/tinyfish';
+import { dispatchLookupBrand, getActiveAiDisplayName } from '../services/aiDispatcher';
 import { standardizeManufacturerName, MANUFACTURER_RULE_MAPPINGS } from '../services/validator';
 import {
   saveBrandInfo,
@@ -204,19 +203,7 @@ export const BrandManufacturerStudio: React.FC<BrandManufacturerStudioProps> = (
     setErrorMessage(null);
 
     try {
-      let result: BrandManufacturerInfo;
-
-      if (settings.tinyFishApiKey && (!settings.geminiApiKey || settings.useTinyFishForSearch)) {
-        // Use TinyFish Web Search Intelligence
-        result = await lookupBrandWithTinyFish(brand, settings.tinyFishApiKey);
-      } else {
-        // Use Gemini Intelligence with search grounding
-        result = await lookupBrandManufacturerAndLogo(
-          brand,
-          settings.geminiApiKey,
-          settings.geminiModel
-        );
-      }
+      const result: BrandManufacturerInfo = await dispatchLookupBrand(brand, settings);
 
       setActiveBrand(result);
       setBrandHistory(prev => [result, ...prev.filter(b => b.brandName.toLowerCase() !== brand.toLowerCase())]);
@@ -277,16 +264,7 @@ export const BrandManufacturerStudio: React.FC<BrandManufacturerStudioProps> = (
           await new Promise(r => setTimeout(r, 800));
         }
 
-        let result: BrandManufacturerInfo;
-        if (settings.tinyFishApiKey && (!settings.geminiApiKey || settings.useTinyFishForSearch)) {
-          result = await lookupBrandWithTinyFish(brand, settings.tinyFishApiKey);
-        } else {
-          result = await lookupBrandManufacturerAndLogo(
-            brand,
-            settings.geminiApiKey,
-            settings.geminiModel
-          );
-        }
+        const result: BrandManufacturerInfo = await dispatchLookupBrand(brand, settings);
 
         newResults.push(result);
         setActiveBrand(result);
