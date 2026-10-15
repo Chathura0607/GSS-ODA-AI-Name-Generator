@@ -241,8 +241,12 @@ export async function saveSettings(settings: AppSettings): Promise<void> {
  */
 export async function loadSettings(): Promise<AppSettings> {
   const defaultSettings: AppSettings = {
+    aiProvider: (localStorage.getItem('gss_ai_provider') as any) || 'auto',
     geminiApiKey: localStorage.getItem('gss_gemini_key') || '',
     geminiModel: 'gemini-3.6-flash',
+    kieApiKey: localStorage.getItem('gss_kie_key') || '',
+    kieModel: localStorage.getItem('gss_kie_model') || 'gpt-4o',
+    kieBaseUrl: localStorage.getItem('gss_kie_base_url') || 'https://api.kie.ai/openai/v1',
     tinyFishApiKey: localStorage.getItem('gss_tinyfish_key') || '',
     useTinyFishForSearch: true,
     retentionDays: 7,
