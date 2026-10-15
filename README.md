@@ -18,11 +18,11 @@ A modern, high-performance web platform purpose-built for the **Operational Data
    - **PDF Documents**: High-resolution page extraction so product catalog sheets can be ingested directly.
    - **ZIP Archives**: Extracts all images inside compressed archives in the browser.
    - **Clipboard**: Direct paste support via `Ctrl + V`.
-4. **Dual AI Multimodal Vision (KIE AI & Google Gemini)**:
-   - **KIE AI (`kie.ai`)**: Unified access to 100+ models including `gpt-4o`, `gpt-4o-mini`, `gemini-1.5-flash`, `claude-3-5-sonnet`, and `deepseek-chat` via an OpenAI-compatible endpoint (`https://api.kie.ai/openai/v1`).
-   - **Google Gemini**: Direct integration with Google AI Studio (`gemini-2.5-flash`, `gemini-2.0-flash`, `gemini-1.5-flash`, etc.).
-   - **Smart Auto-Routing**: Switch between KIE AI and Gemini seamlessly or let the suite auto-detect based on configured credentials.
-   - Zero server leakage: API keys are securely kept in client-side storage only.
+4. **Google Gemini Vision AI Engine with Simple Google Search AI**:
+   - **Google AI Studio Free Tier Optimized**: Direct integration with Google Gemini (`gemini-2.5-flash`, `gemini-2.0-flash`, `gemini-1.5-flash`).
+   - **Simple Google Search AI**: Zero tool quota exhaustion! Extracts GSS attributes and generates precision Google Search & Google Shopping SKU links for instant 1-click web verification.
+   - **Live Knowledge Grounding**: Integrated with live Wikipedia brand intelligence API and direct corporate parent search.
+   - **Zero server leakage**: API keys are securely kept in client-side storage only.
 5. **7-Day Retention Vault & Backup**:
    - Automatic local persistence using browser `IndexedDB`.
    - Guaranteed minimum 7-day retention (configurable up to 30 days) with automated cleanup.
@@ -81,7 +81,7 @@ npm run build
 ## 📖 Sinhala Quick Guide (සිංහල මාර්ගෝපදේශය)
 
 ### භාවිතා කරන්නේ කෙසේද:
-1. **API Key ඇතුලත් කිරීම**: ඉහළ දකුණු කෙලවරේ ඇති Settings (⚙️) icon එක click කර ඔබගේ **KIE AI API Key** (kie.ai/api-key) හෝ **Google Gemini API Key** එක ඇතුලත් කරන්න. KIE AI හරහා GPT-4o, Gemini, Claude සහ DeepSeek මාදිලි 100+ ක් භාවිතා කළ හැක.
+1. **API Key ඇතුලත් කිරීම**: ඉහළ දකුණු කෙලවරේ ඇති Settings (⚙️) icon එක click කර ඔබගේ **Google Gemini API Key** එක ඇතුලත් කරන්න (Google AI Studio වෙතින් නොමිලේ ලබාගත හැක). Simple Google Search AI තාක්ෂණය මඟින් නොමිලේ ලබාගත් Gemini key එකකින් කිසිදු rate limit හෝ tool quota ගැටලුවකින් තොරව ක්‍රියාත්මක වේ.
 2. **Images / Files Upload කිරීම**:
    - තනි image එකක් හෝ images ගොඩක් එකවර drag & drop කරන්න.
    - ZIP file හෝ PDF file එකක් upload කළ විට, app එක විසින් ස්වයංක්‍රීයව images extract කර එකින් එක AI හරහා analyze කර සම්මත English නම සාදයි.
