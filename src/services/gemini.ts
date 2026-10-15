@@ -1,7 +1,13 @@
 import { CONTAINER_TYPES } from '../constants/containerTypes';
 import { ProductAttributes, BrandManufacturerInfo } from '../types';
 import { ProjectScope, formatScopeForPrompt } from '../constants/projectScopes';
-import { assembleStandardName, normalizeMeasurementUnit, cleanPackAndSize, standardizeManufacturerName } from './validator';
+import {
+  assembleStandardName,
+  normalizeMeasurementUnit,
+  cleanPackAndSize,
+  standardizeManufacturerName,
+  generateGoogleSkuUrl,
+} from './validator';
 
 
 export const SYSTEM_PROMPT = `You are an expert AI Operational Data Analyst (ODA) specialized in standardized Fast-Moving Consumer Goods (FMCG) and retail product cataloguing for GSS.
@@ -72,6 +78,8 @@ export interface AnalysisResult {
   standardName: string;
   confidenceScore: number;
   exactProductUrl?: string;
+  googleSkuUrl?: string;
+  skuSearchQuery?: string;
   projectScopeName?: string;
   scopeCategory?: string;
   traxCategory?: string;
@@ -208,7 +216,7 @@ Based on this product image and FMCG classification, you MUST match and assign t
 5. "projectScopeName": "${projectScope.name}"`;
   }
 
-  const buildRequestBody = (includeTools: boolean) => ({
+  const requestBody = {
     contents: [
       {
         role: 'user',
@@ -216,7 +224,7 @@ Based on this product image and FMCG classification, you MUST match and assign t
           {
             text:
               promptText +
-              '\n\nPlease search for this exact product image online, identify the exact direct product URL, classify into the active project scope categories, and output the JSON result now:',
+              '\n\nAnalyze this product image with FMCG precision, extract standardized GSS attributes, classify project scope categories, identify optimal Google Search SKU query, and output valid JSON now:',
           },
           {
             inlineData: {
@@ -227,22 +235,13 @@ Based on this product image and FMCG classification, you MUST match and assign t
         ],
       },
     ],
-    ...(includeTools ? { tools: [{ google_search: {} }] } : {}),
     generationConfig: {
       temperature: 0.1,
       responseMimeType: 'application/json',
     },
-  });
+  };
 
-  // Primary attempt with Google Search grounding and retry on 429
-  let requestBody = buildRequestBody(true);
   let response = await callWithRetry(modelName, apiKey, requestBody);
-
-  // If tools or grounding returned an error (e.g. 400 or 429 grounding quota limit), retry without tools
-  if (!response.ok && (response.status === 400 || response.status === 429)) {
-    requestBody = buildRequestBody(false);
-    response = await callWithRetry(modelName, apiKey, requestBody);
-  }
 
   // If model is not found or deprecated, auto-discover working models from Google API
   if (!response.ok) {
@@ -399,18 +398,25 @@ Based on this product image and FMCG classification, you MUST match and assign t
   };
 
   const standardName = assembleStandardName(attributes);
+  const skuQuery = (parsed.skuSearchQuery || standardName).trim();
+  const googleSkuUrl = generateGoogleSkuUrl(attributes, skuQuery) || `https://www.google.com/search?q=${encodeURIComponent(standardName)}`;
 
   return {
-    attributes,
+    attributes: {
+      ...attributes,
+      exactProductUrl: exactProductUrl || undefined,
+    },
     standardName,
     confidenceScore: parsed.confidenceScore ?? 92,
     exactProductUrl: exactProductUrl || undefined,
+    googleSkuUrl,
+    skuSearchQuery: skuQuery,
     projectScopeName: projectScopeName || undefined,
     scopeCategory: scopeCategory || undefined,
     traxCategory: traxCategory || undefined,
     clientCategory: clientCategory || undefined,
     smartL1: smartL1 || undefined,
-    notes: parsed.notes || '',
+    notes: parsed.notes || 'Analyzed via Google Gemini Vision with Simple Google Search AI.',
   };
 }
 
@@ -681,7 +687,7 @@ export async function lookupBrandManufacturerAndLogo(
   const wikiData = await wikiPromise;
   const wikiContext = wikiData?.extract ? `\n[Live Web Reference from Wikipedia for "${cleanBrand}"]: ${wikiData.extract}` : '';
 
-  const buildRequestBody = (includeTools: boolean) => ({
+  const requestBody = {
     contents: [
       {
         role: 'user',
@@ -692,20 +698,13 @@ export async function lookupBrandManufacturerAndLogo(
         ],
       },
     ],
-    ...(includeTools ? { tools: [{ googleSearch: {} }] } : {}),
     generationConfig: {
       temperature: 0.1,
       responseMimeType: 'application/json',
     },
-  });
+  };
 
-  let requestBody = buildRequestBody(true);
   let response = await callWithRetry(modelName, apiKey, requestBody);
-
-  if (!response.ok && (response.status === 400 || response.status === 429)) {
-    requestBody = buildRequestBody(false);
-    response = await callWithRetry(modelName, apiKey, requestBody);
-  }
 
   // Auto-discover model if 404
   if (!response.ok && response.status === 404) {
