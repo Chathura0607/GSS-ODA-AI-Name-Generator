@@ -49,17 +49,9 @@ export interface ProcessedProduct {
   updatedAt: number;
 }
 
-export type AiProvider = 'auto' | 'gemini' | 'kie';
-
 export interface AppSettings {
-  aiProvider?: AiProvider;
   geminiApiKey: string;
   geminiModel: string;
-  kieApiKey?: string;
-  kieModel?: string;
-  kieBaseUrl?: string;
-  tinyFishApiKey?: string;
-  useTinyFishForSearch?: boolean;
   retentionDays: number; // default 7
   autoProcessOnUpload: boolean;
   strictContainerCheck: boolean;
