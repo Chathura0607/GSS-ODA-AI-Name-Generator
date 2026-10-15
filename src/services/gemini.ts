@@ -4,7 +4,7 @@ import { ProjectScope, formatScopeForPrompt } from '../constants/projectScopes';
 import { assembleStandardName, normalizeMeasurementUnit, cleanPackAndSize, standardizeManufacturerName } from './validator';
 
 
-const SYSTEM_PROMPT = `You are an expert AI Operational Data Analyst (ODA) specialized in standardized Fast-Moving Consumer Goods (FMCG) and retail product cataloguing for GSS.
+export const SYSTEM_PROMPT = `You are an expert AI Operational Data Analyst (ODA) specialized in standardized Fast-Moving Consumer Goods (FMCG) and retail product cataloguing for GSS.
 
 Analyze the uploaded product image and extract attributes with highest precision to generate the official Standard English Product Name according to the GSS ODA formula:
 
@@ -466,7 +466,7 @@ export async function testGeminiApiKey(
   return { success: true, activeModel: targetModel, availableModels: models };
 }
 
-const BRAND_MANUFACTURER_PROMPT = `You are a world-class Global FMCG, Retail, and Brand Intelligence expert for GSS Operational Data Analysts (ODA).
+export const BRAND_MANUFACTURER_PROMPT = `You are a world-class Global FMCG, Retail, and Brand Intelligence expert for GSS Operational Data Analysts (ODA).
 
 Analyze the requested Brand Name (which may be in English, Cyrillic, Chinese, Japanese, Korean, Arabic, French, German, Spanish, Italian, Dutch, Vietnamese, etc.) and identify its **Ultimate Parent Corporation / Parent Manufacturing Entity**, official Brand website, corporate Manufacturer website, and official high-resolution Logo download resources.
 
