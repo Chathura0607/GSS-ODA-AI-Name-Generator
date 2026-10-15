@@ -10,7 +10,6 @@ import {
   Target,
 } from 'lucide-react';
 import { AppSettings } from '../types';
-import { getActiveAiDisplayName } from '../services/aiDispatcher';
 
 interface NavbarProps {
   settings: AppSettings;
@@ -35,7 +34,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   activeScopeName = 'Kraft Heinz Germany Project Scope',
   onOpenProjectScopes,
 }) => {
-  const aiStatus = getActiveAiDisplayName(settings);
+  const hasKey = Boolean(settings.geminiApiKey);
 
   return (
     <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-40">
@@ -108,34 +107,26 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
-          {/* API Key Status Pill */}
+          {/* Gemini API Key Status Pill */}
           <button
             type="button"
             onClick={onOpenSettings}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-              aiStatus.isActive
-                ? aiStatus.providerType === 'kie'
-                  ? 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30 hover:bg-cyan-500/20'
-                  : 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20'
+              hasKey
+                ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20'
                 : 'bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20 animate-pulse'
             }`}
           >
-            {aiStatus.isActive ? (
+            {hasKey ? (
               <>
-                <span
-                  className={`w-2 h-2 rounded-full ${
-                    aiStatus.providerType === 'kie' ? 'bg-cyan-400' : 'bg-emerald-400'
-                  }`}
-                ></span>
-                <span className="hidden sm:inline">
-                  {aiStatus.providerName} Active ({aiStatus.modelName})
-                </span>
-                <span className="sm:hidden">{aiStatus.providerName}</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span className="hidden sm:inline">Gemini Active ({settings.geminiModel})</span>
+                <span className="sm:hidden">Gemini</span>
               </>
             ) : (
               <>
                 <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
-                <span>Configure API Key</span>
+                <span>Configure Gemini Key</span>
               </>
             )}
           </button>
