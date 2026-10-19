@@ -121,7 +121,64 @@ export const KRAFT_HEINZ_GERMANY_SCOPE: ProjectScope = {
   ],
 };
 
+export const DIAGEO_IE_SCOPE: ProjectScope = {
+  id: 'diageo-ie',
+  name: 'Diageo IE Project Scope',
+  clientName: 'Diageo IE',
+  country: 'Ireland',
+  description: 'Official Project Scope Matrix for Diageo IE (Spirits, Beer & Cider, and Alcoholic Ready to Drink / RTD).',
+  isDefault: true,
+  rules: [
+    {
+      id: 'diageo-ie-spirits',
+      scopeCategory: 'Spirits',
+      traxCategory: 'Spirits',
+      clientCategory: 'Spirits',
+      smartL1List: [
+        'Spirits',
+        'Brandy',
+        'Gin',
+        'Liqueurs',
+        'Rum',
+        'Tequila',
+        'Vodka',
+        'Whisky',
+        'Non-Alcoholic Spirits',
+        'Cocktail Mixers',
+      ],
+      notes: 'In Scope Products: Brandy, Gin, Liqueurs, Rum, Tequila, Vodka, Whisky, Non-Alcoholic Spirits, Cocktail Mixers.',
+    },
+    {
+      id: 'diageo-ie-beer',
+      scopeCategory: 'Beer',
+      traxCategory: 'Beer & Cider',
+      clientCategory: 'Beer',
+      smartL1List: [
+        'Beer & Cider',
+        'Beer',
+        'Cider',
+        'Non-Alcoholic Beers',
+      ],
+      notes: 'In Scope Products: Beer, Cider, Non-Alcoholic Beers.',
+    },
+    {
+      id: 'diageo-ie-rtd',
+      scopeCategory: 'RTD',
+      traxCategory: 'Alcoholic Ready to Drink',
+      clientCategory: 'RTD',
+      smartL1List: [
+        'RTD',
+        'Alcoholic Ready to Drink',
+        'Alcoholic Pre-Mix Drink',
+        'Non-Alcoholic RTDs',
+      ],
+      notes: 'In Scope Products: Alcoholic Pre-Mix Drink, RTD, Non-Alcoholic RTDs.',
+    },
+  ],
+};
+
 export const DEFAULT_PROJECT_SCOPES: ProjectScope[] = [
+  DIAGEO_IE_SCOPE,
   KRAFT_HEINZ_GERMANY_SCOPE,
   {
     id: 'general-fmcg-global',

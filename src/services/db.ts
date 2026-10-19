@@ -162,20 +162,25 @@ export async function getAllProjectScopes(): Promise<ProjectScope[]> {
     await saveProjectScopes(DEFAULT_PROJECT_SCOPES);
     return DEFAULT_PROJECT_SCOPES;
   }
-  // Ensure Kraft Heinz Germany is always present
-  const hasKraftHeinz = stored.some(s => s.id === 'kraft-heinz-germany');
-  if (!hasKraftHeinz) {
-    await saveProjectScope(KRAFT_HEINZ_GERMANY_SCOPE);
-    return [KRAFT_HEINZ_GERMANY_SCOPE, ...stored];
+  
+  // Ensure all built-in default scopes are present in DB
+  let updated = [...stored];
+  for (const defScope of DEFAULT_PROJECT_SCOPES) {
+    const exists = updated.some(s => s.id === defScope.id);
+    if (!exists) {
+      await saveProjectScope(defScope);
+      updated.push(defScope);
+    }
   }
-  return stored;
+  return updated;
 }
 
 export async function getProjectScopeById(id: string): Promise<ProjectScope | null> {
   const db = await getDB();
   const scope = await db.get('scopes', id);
-  if (!scope && id === 'kraft-heinz-germany') {
-    return KRAFT_HEINZ_GERMANY_SCOPE;
+  if (!scope) {
+    const defaultMatch = DEFAULT_PROJECT_SCOPES.find(s => s.id === id);
+    if (defaultMatch) return defaultMatch;
   }
   return scope || null;
 }
@@ -242,7 +247,7 @@ export async function saveSettings(settings: AppSettings): Promise<void> {
 export async function loadSettings(): Promise<AppSettings> {
   const defaultSettings: AppSettings = {
     geminiApiKey: localStorage.getItem('gss_gemini_key') || '',
-    geminiModel: 'gemini-2.5-flash',
+    geminiModel: 'gemini-3.5-flash',
     retentionDays: 7,
     autoProcessOnUpload: true,
     strictContainerCheck: true,

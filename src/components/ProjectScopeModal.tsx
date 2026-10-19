@@ -128,14 +128,14 @@ export const ProjectScopeModal: React.FC<ProjectScopeModalProps> = ({
   };
 
   const handleDeleteScope = async (scopeId: string) => {
-    if (scopeId === 'kraft-heinz-germany') {
-      alert('The default Kraft Heinz Germany scope cannot be deleted, but you can edit its rules or add your own scopes.');
+    if (scopeId === 'kraft-heinz-germany' || scopeId === 'diageo-ie') {
+      alert('Built-in project scopes (Kraft Heinz Germany, Diageo IE) cannot be deleted, but you can edit their rules or add your own scopes.');
       return;
     }
     if (confirm(`Delete project scope "${currentScope.name}"?`)) {
       await deleteProjectScope(scopeId);
       onScopesUpdated();
-      setSelectedScopeId('kraft-heinz-germany');
+      setSelectedScopeId('diageo-ie');
     }
   };
 
@@ -305,7 +305,7 @@ export const ProjectScopeModal: React.FC<ProjectScopeModalProps> = ({
                       <div>
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="font-bold text-xs text-white">{s.name}</span>
-                          {s.id === 'kraft-heinz-germany' && (
+                          {(s.id === 'kraft-heinz-germany' || s.id === 'diageo-ie') && (
                             <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
                               TEMPLATE
                             </span>
@@ -400,7 +400,7 @@ export const ProjectScopeModal: React.FC<ProjectScopeModalProps> = ({
                   </button>
                 )}
 
-                {currentScope.id !== 'kraft-heinz-germany' && (
+                {currentScope.id !== 'kraft-heinz-germany' && currentScope.id !== 'diageo-ie' && (
                   <button
                     type="button"
                     onClick={() => handleDeleteScope(currentScope.id)}
