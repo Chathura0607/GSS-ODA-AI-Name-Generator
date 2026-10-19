@@ -40,7 +40,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [apiKey, setApiKey] = useState(
     settings.geminiApiKey || localStorage.getItem('gss_gemini_key') || ''
   );
-  const [model, setModel] = useState(settings.geminiModel || 'gemini-2.5-flash');
+  const [model, setModel] = useState(settings.geminiModel || 'gemini-3.5-flash');
   const [availableModels, setAvailableModels] = useState<ModelOption[]>([]);
   const [showKey, setShowKey] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
@@ -60,7 +60,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       if (apiKey.trim()) {
         fetchAvailableModels(apiKey.trim()).then(models => {
           if (models.length > 0) {
-            setAvailableModels(models);
+            const sorted = [...models].sort((a, b) => {
+              const score = (id: string) => {
+                if (id === 'gemini-3.5-flash') return 100;
+                if (id === 'gemini-3.6-flash') return 95;
+                if (id.includes('3.5-flash')) return 90;
+                if (id.includes('2.5-flash')) return 80;
+                if (id.includes('2.0-flash')) return 70;
+                if (id.includes('flash')) return 60;
+                return 10;
+              };
+              return score(b.id) - score(a.id);
+            });
+            setAvailableModels(sorted);
           }
         });
       }
@@ -82,7 +94,19 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     try {
       const res = await testGeminiApiKey(apiKey.trim(), model);
       if (res.availableModels.length > 0) {
-        setAvailableModels(res.availableModels);
+        const sorted = [...res.availableModels].sort((a, b) => {
+          const score = (id: string) => {
+            if (id === 'gemini-3.5-flash') return 100;
+            if (id === 'gemini-3.6-flash') return 95;
+            if (id.includes('3.5-flash')) return 90;
+            if (id.includes('2.5-flash')) return 80;
+            if (id.includes('2.0-flash')) return 70;
+            if (id.includes('flash')) return 60;
+            return 10;
+          };
+          return score(b.id) - score(a.id);
+        });
+        setAvailableModels(sorted);
       }
       if (res.activeModel && res.activeModel !== model) {
         setModel(res.activeModel);
@@ -291,13 +315,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     ? model
                     : 'custom'
                   : [
+                      'gemini-3.5-flash',
+                      'gemini-3.6-flash',
                       'gemini-2.5-flash',
                       'gemini-2.0-flash',
                       'gemini-1.5-flash',
-                      'gemini-1.5-flash-latest',
                       'gemini-1.5-pro',
-                      'gemini-1.5-pro-latest',
-                      'gemini-3.6-flash',
                     ].includes(model)
                   ? model
                   : 'custom'
@@ -320,12 +343,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </>
               ) : (
                 <>
-                  <option value="gemini-2.5-flash">Gemini 2.5 Flash (Recommended - Fastest & High Precision)</option>
-                  <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-                  <option value="gemini-1.5-flash">Gemini 1.5 Flash (Ultra Fast & 1,500 RPD Free Quota)</option>
-                  <option value="gemini-1.5-flash-latest">Gemini 1.5 Flash Latest</option>
-                  <option value="gemini-1.5-pro">Gemini 1.5 Pro (Highest Reasoning Depth)</option>
+                  <option value="gemini-3.5-flash">Gemini 3.5 Flash (Recommended - Fastest & Overload Immune)</option>
                   <option value="gemini-3.6-flash">Gemini 3.6 Flash</option>
+                  <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                  <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                  <option value="gemini-1.5-flash">Gemini 1.5 Flash (Ultra Fast & High Quota)</option>
+                  <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
                   <option value="custom">Custom Model Name...</option>
                 </>
               )}

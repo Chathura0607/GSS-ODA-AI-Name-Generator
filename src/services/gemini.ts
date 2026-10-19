@@ -96,17 +96,17 @@ export interface ModelOption {
 
 // Fallback priority order of Gemini models
 export const CANDIDATE_MODELS = [
+  'gemini-3.5-flash',
+  'gemini-3.6-flash',
   'gemini-2.5-flash',
   'gemini-2.0-flash',
   'gemini-1.5-flash',
   'gemini-1.5-flash-latest',
+  'gemini-3.7-flash',
+  'gemini-1.5-pro',
+  'gemini-2.5-pro',
   'gemini-1.5-flash-002',
   'gemini-1.5-flash-001',
-  'gemini-1.5-pro',
-  'gemini-1.5-pro-latest',
-  'gemini-3.6-flash',
-  'gemini-3.6-flash-latest',
-  'gemini-1.5-flash-8b',
   'gemini-2.0-flash-exp',
 ];
 
@@ -116,9 +116,13 @@ export const CANDIDATE_MODELS = [
 export async function fetchAvailableModels(apiKey: string): Promise<ModelOption[]> {
   if (!apiKey.trim()) return [];
   try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey.trim()}`
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey.trim()}`,
+      { signal: controller.signal }
     );
+    clearTimeout(timer);
     if (!res.ok) return [];
     const data = await res.json();
     const models = data.models || [];
@@ -155,24 +159,33 @@ async function callGeminiVision(
 }
 
 /**
- * Executes callGeminiVision with automatic exponential backoff on 429 Rate Limits
+ * Executes callGeminiVision with automatic exponential backoff on 429 Rate Limits, 503 Overload, 500 Server Errors, and Network Timeouts
  */
 async function callWithRetry(
   model: string,
   apiKey: string,
   requestBody: any,
-  maxRetries: number = 4
+  maxRetries: number = 3
 ): Promise<Response> {
-  let delay = 2000;
+  let delay = 1500;
   for (let i = 0; i <= maxRetries; i++) {
-    const res = await callGeminiVision(model, apiKey, requestBody);
-    if (res.status !== 429 || i === maxRetries) {
-      return res;
+    try {
+      const res = await callGeminiVision(model, apiKey, requestBody);
+      // Retry on 429 (Rate Limit / Quota), 503 (Model Overloaded / Unavailable), 500, 502, 504
+      const isTransient = res.status === 429 || res.status === 503 || res.status === 500 || res.status === 502 || res.status === 504;
+      if (!isTransient || i === maxRetries) {
+        return res;
+      }
+      const jitter = Math.floor(Math.random() * 400);
+      console.warn(`Gemini API HTTP ${res.status} on model ${model}. Waiting ${delay + jitter}ms before retry ${i + 1}/${maxRetries}...`);
+      await sleep(delay + jitter);
+      delay = Math.min(delay * 1.8, 6000);
+    } catch (netErr: any) {
+      if (i === maxRetries) throw netErr;
+      console.warn(`Network error calling Gemini API (${model}): ${netErr.message}. Retrying ${i + 1}/${maxRetries}...`);
+      await sleep(delay);
+      delay = Math.min(delay * 1.8, 6000);
     }
-    const jitter = Math.floor(Math.random() * 500);
-    console.warn(`Hit Gemini 429 (Rate Limit / Quota). Waiting ${delay + jitter}ms before retry ${i + 1}/${maxRetries}...`);
-    await sleep(delay + jitter);
-    delay = Math.min(delay * 2, 10000);
   }
   return callGeminiVision(model, apiKey, requestBody);
 }
@@ -183,7 +196,7 @@ async function callWithRetry(
 export async function analyzeProductImage(
   dataUrl: string,
   apiKey: string,
-  modelName: string = 'gemini-3.6-flash',
+  modelName: string = 'gemini-3.5-flash',
   projectScope?: ProjectScope | null
 ): Promise<AnalysisResult> {
   if (!apiKey) {
@@ -243,36 +256,65 @@ Based on this product image and FMCG classification, you MUST match and assign t
 
   let response = await callWithRetry(modelName, apiKey, requestBody);
 
-  // If model is not found or deprecated, auto-discover working models from Google API
+  // If model fails with 503 (overloaded), 404 (not found), or server error, auto-discover and fallback
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    const message = errorData?.error?.message || '';
+    const message = (errorData?.error?.message || '').toLowerCase();
 
-    if (
+    const isRecoverable =
+      response.status === 503 ||
       response.status === 404 ||
+      response.status === 500 ||
+      response.status === 502 ||
+      response.status === 504 ||
+      message.includes('overloaded') ||
+      message.includes('unavailable') ||
       message.includes('not found') ||
       message.includes('no longer available') ||
-      message.includes('ListModels') ||
-      message.includes('not supported')
-    ) {
+      message.includes('not supported') ||
+      message.includes('resource has been exhausted');
+
+    if (isRecoverable) {
+      console.warn(`Model ${modelName} returned HTTP ${response.status}. Attempting automatic model fallback...`);
+
       // Auto-fetch models available for this API Key
       const available = await fetchAvailableModels(apiKey);
-      const fallbackModel =
-        available.find(m => m.id.includes('3.6') || m.id.includes('flash') || m.id.includes('gemini'))?.id ||
-        (available.length > 0 ? available[0].id : null);
+      const candidatesToTry: string[] = [];
 
-      if (fallbackModel && fallbackModel !== modelName.trim().replace(/^models\//, '')) {
-        console.info(`Switching from ${modelName} to available model: ${fallbackModel}`);
-        response = await callWithRetry(fallbackModel, apiKey, requestBody);
-      } else {
-        // Try candidate models in sequence
-        for (const candidate of CANDIDATE_MODELS) {
-          if (candidate === modelName.trim().replace(/^models\//, '')) continue;
-          const retryRes = await callWithRetry(candidate, apiKey, requestBody);
-          if (retryRes.ok) {
-            response = retryRes;
+      // Add models from Google API list first (prioritizing 3.5, 3.6, flash, etc.)
+      if (available.length > 0) {
+        const sortedAvailable = [...available].sort((a, b) => {
+          const score = (id: string) => {
+            if (id === 'gemini-3.5-flash') return 100;
+            if (id === 'gemini-3.6-flash') return 95;
+            if (id.includes('3.5-flash')) return 90;
+            if (id.includes('2.5-flash')) return 80;
+            if (id.includes('2.0-flash')) return 70;
+            if (id.includes('flash')) return 60;
+            return 10;
+          };
+          return score(b.id) - score(a.id);
+        });
+        candidatesToTry.push(...sortedAvailable.map(m => m.id));
+      }
+
+      // Also append candidate models
+      candidatesToTry.push(...CANDIDATE_MODELS);
+
+      const cleanCurrent = modelName.trim().replace(/^models\//, '');
+      const uniqueCandidates = Array.from(new Set(candidatesToTry)).filter(c => c !== cleanCurrent);
+
+      for (const fallback of uniqueCandidates) {
+        try {
+          console.info(`Switching from ${modelName} to fallback model: ${fallback}`);
+          const fallbackRes = await callWithRetry(fallback, apiKey, requestBody, 2);
+          if (fallbackRes.ok) {
+            response = fallbackRes;
+            console.info(`Fallback succeeded with model: ${fallback}`);
             break;
           }
+        } catch (err) {
+          console.warn(`Fallback attempt to ${fallback} failed:`, err);
         }
       }
     }
@@ -280,12 +322,15 @@ Based on this product image and FMCG classification, you MUST match and assign t
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    const message = errorData?.error?.message || `API error (${response.status}: ${response.statusText})`;
-    if (response.status === 400 && message.includes('API_KEY_INVALID')) {
+    const message = errorData?.error?.message || `API error (${response.status}: ${response.statusText || (response.status === 503 ? 'Service Unavailable / Model Overloaded' : '')})`;
+    if (response.status === 400 && (message.includes('API_KEY_INVALID') || message.includes('key not valid'))) {
       throw new Error('Invalid Gemini API Key. Please verify your key in Settings.');
     }
     if (response.status === 429) {
-      throw new Error('Google Free Tier rate limit reached (Too Many Requests). Please wait 5 seconds and click Retry.');
+      throw new Error('Google Free Tier rate limit reached (Too Many Requests). Please wait a few seconds and click Retry.');
+    }
+    if (response.status === 503 || message.toLowerCase().includes('overloaded') || message.toLowerCase().includes('unavailable')) {
+      throw new Error('Google Gemini AI is temporarily overloaded (503 Service Unavailable). Please click Retry or select "Gemini 3.5 Flash" in Settings.');
     }
     throw new Error(`Gemini API Error: ${message}`);
   }
@@ -425,16 +470,19 @@ Based on this product image and FMCG classification, you MUST match and assign t
  */
 export async function testGeminiApiKey(
   apiKey: string,
-  model: string = 'gemini-3.6-flash'
+  model: string = 'gemini-3.5-flash'
 ): Promise<{ success: boolean; activeModel: string; availableModels: ModelOption[] }> {
   const models = await fetchAvailableModels(apiKey);
   const cleanModel = model.trim().replace(/^models\//, '');
 
   let targetModel = cleanModel;
   if (models.length > 0 && !models.some(m => m.id === cleanModel)) {
-    // Pick the best match from available models
+    // Pick the best match from available models prioritizing 3.5-flash, 3.6-flash, 2.5-flash
     targetModel =
-      models.find(m => m.id.includes('3.6') || m.id.includes('flash'))?.id || models[0].id;
+      models.find(m => m.id === 'gemini-3.5-flash')?.id ||
+      models.find(m => m.id === 'gemini-3.6-flash')?.id ||
+      models.find(m => m.id.includes('3.5') || m.id.includes('3.6') || m.id.includes('flash'))?.id ||
+      models[0].id;
   }
 
   const tryTest = async (modelToTest: string) => {
@@ -451,22 +499,40 @@ export async function testGeminiApiKey(
 
   let response = await tryTest(targetModel);
 
-  // If failed with 404 or not found, try other candidate models
+  // If failed with 404, 503, or other error, try other candidate models
   if (!response.ok) {
-    for (const candidate of CANDIDATE_MODELS) {
-      if (candidate === targetModel) continue;
-      const res = await tryTest(candidate);
-      if (res.ok) {
-        response = res;
-        targetModel = candidate;
-        break;
+    const testCandidates = [
+      'gemini-3.5-flash',
+      'gemini-3.6-flash',
+      'gemini-2.5-flash',
+      'gemini-2.0-flash',
+      'gemini-1.5-flash',
+      ...CANDIDATE_MODELS,
+      ...models.map(m => m.id),
+    ];
+    const uniqueTestCandidates = Array.from(new Set(testCandidates)).filter(c => c !== targetModel);
+
+    for (const candidate of uniqueTestCandidates) {
+      try {
+        const res = await tryTest(candidate);
+        if (res.ok) {
+          response = res;
+          targetModel = candidate;
+          break;
+        }
+      } catch (err) {
+        // try next
       }
     }
   }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData?.error?.message || `Validation failed (${response.status})`);
+    const message = errorData?.error?.message || `Validation failed (${response.status})`;
+    if (response.status === 503) {
+      throw new Error('Google Gemini AI is temporarily overloaded (503 Service Unavailable). Please retry in a few moments.');
+    }
+    throw new Error(message);
   }
 
   return { success: true, activeModel: targetModel, availableModels: models };
@@ -629,7 +695,7 @@ export async function fetchWikipediaBrandData(brandName: string): Promise<{
 export async function lookupBrandManufacturerAndLogo(
   brandName: string,
   apiKey: string,
-  modelName: string = 'gemini-3.6-flash'
+  modelName: string = 'gemini-3.5-flash'
 ): Promise<BrandManufacturerInfo> {
   const cleanBrand = brandName.trim();
   if (!cleanBrand) {
@@ -706,21 +772,51 @@ export async function lookupBrandManufacturerAndLogo(
 
   let response = await callWithRetry(modelName, apiKey, requestBody);
 
-  // Auto-discover model if 404
-  if (!response.ok && response.status === 404) {
-    const available = await fetchAvailableModels(apiKey);
-    const fallbackModel =
-      available.find(m => m.id.includes('3.6') || m.id.includes('flash') || m.id.includes('gemini'))?.id ||
-      (available.length > 0 ? available[0].id : null);
+  // Auto-discover model if 404, 503, or failure
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    const message = (errorData?.error?.message || '').toLowerCase();
+    const isRecoverable =
+      response.status === 503 ||
+      response.status === 404 ||
+      response.status === 500 ||
+      message.includes('overloaded') ||
+      message.includes('unavailable') ||
+      message.includes('not found');
 
-    if (fallbackModel && fallbackModel !== modelName.trim().replace(/^models\//, '')) {
-      response = await callWithRetry(fallbackModel, apiKey, requestBody);
+    if (isRecoverable) {
+      const available = await fetchAvailableModels(apiKey);
+      const candidatesToTry = [
+        ...available.map(m => m.id),
+        'gemini-3.5-flash',
+        'gemini-3.6-flash',
+        'gemini-2.5-flash',
+        'gemini-2.0-flash',
+        'gemini-1.5-flash',
+      ];
+      const cleanCurrent = modelName.trim().replace(/^models\//, '');
+      const uniqueCandidates = Array.from(new Set(candidatesToTry)).filter(c => c !== cleanCurrent);
+
+      for (const fallback of uniqueCandidates) {
+        try {
+          const fallbackRes = await callWithRetry(fallback, apiKey, requestBody, 2);
+          if (fallbackRes.ok) {
+            response = fallbackRes;
+            break;
+          }
+        } catch (err) {
+          // continue
+        }
+      }
     }
   }
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    const message = errorData?.error?.message || `API error (${response.status}: ${response.statusText})`;
+    const message = errorData?.error?.message || `API error (${response.status}: ${response.statusText || (response.status === 503 ? 'Service Unavailable' : '')})`;
+    if (response.status === 503) {
+      throw new Error('Google Gemini AI is temporarily overloaded (503 Service Unavailable). Please click Retry in a moment.');
+    }
     throw new Error(`Gemini Brand Intelligence Error: ${message}`);
   }
 
