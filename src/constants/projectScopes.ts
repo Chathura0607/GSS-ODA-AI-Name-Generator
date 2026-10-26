@@ -26,12 +26,14 @@ export const DIAGEO_GR_SCOPE: ProjectScope = {
   name: 'Diageo GR Project Scope',
   clientName: 'Diageo GR',
   country: 'Greece',
-  description: 'Official Project Scope Matrix for Diageo GR / Greece (Spirits, Non-Alcoholic Spirits, Alcoholic Ready to Drink / RTD, and Champagne). Beer, Cider, Food, Energy & Soft Drinks are strictly Out of Scope.',
+  description: 'Official Project Scope Matrix for Diageo GR / Greece (Spirits, Non-Alcoholic Spirits, Alcoholic Ready to Drink / RTD, and Champagne). Beer & Cider, Energy Items, Food, Tea, Soft Drinks, Juice, and Medicines are strictly Out of Scope.',
   isDefault: true,
   specialNotes: [
-    'Special Note : "Non-alcoholic spirits" & "MENU" products should be added under "Spirit" client category.',
-    'SMART PALETTE: There are only 04 Smart Level1 choices in Trax: 1. Spirits, 2. Alcoholic Ready to Drink, 3. Champagne, 4. MENU.',
-    'Out of Scope Products: Beer & Cider, Energy Items, All food Items, Tea Products, Soft Drinks, Juice Products, Medicines and Treatments.',
+    'Special Note : “Non-alcoholic spirits” & “MENU” products should be added under “Spirits” client category.',
+    'Special Note : Only “Seedlip” brand should exists as non-alcoholic spirits (all other non-alcoholic spirit brands are strictly Out of Scope).',
+    'SMART PALETTE : There are only 04 Smart Level1 ; 1. Spirits, 2. Alcoholic Ready to Drink, 3. Champagne, 4. MENU.',
+    'Out of Scope Products: 1. Beer & Cider products, 2. Energy Items, 3. All food Items, 4. Tea Products, 5. Soft Drinks, 6. Juice Products, 7. Medicines and Treatments.',
+    'Project Page Link regarding non-alcoholic spirits: https://confluence.trax-cloud.com/display/OPS/Diageo+Non-Alcoholic+Products',
   ],
   smartPaletteChoices: [
     'Spirits',
@@ -40,63 +42,42 @@ export const DIAGEO_GR_SCOPE: ProjectScope = {
     'MENU',
   ],
   inScopeList: [
-    'All types of Spirits: Whisky / Whiskey (Scotch, Single Malt, Blended, Bourbon, Irish), Vodka, Gin, Rum, Tequila, Mezcal, Brandy, Cognac, Liqueurs, Greek local specialties (Ouzo, Tsipouro, Tsikoudia, Metaxa), Cocktail Mixers',
-    'Non-Alcoholic Spirits: Alcohol-free 0.0% spirits (Tanqueray 0.0%, Gordon\'s 0.0%, Captain Morgan 0.0%, Seedlip range, alcohol-free botanicals)',
-    'All types of Alcoholic Ready to Drink (RTD) / Pre-Mix Products: Pre-mixed spirit drinks, canned cocktails, hard seltzers, Smirnoff Ice, Gordon\'s & Tonic, Captain Morgan & Cola',
-    'All types of Champagne products: Champagne (Moët & Chandon, Veuve Clicquot, Dom Pérignon, Ruinart, Krug), Champagne/Spirits, Sparkling Wine, Prosecco, Cava',
-    'MENU Products: Bar cocktail menus, spirit lists, tasting menu packs (Client Category: Spirit, Smart L1: MENU)',
+    'All type of spirits (Vodka / Tequila / Rum / Whiskey / Gin..etc) -> Client Category: Spirits, Smart L1: Spirits',
+    'Non-alcoholic spirits: Special Note: Only “Seedlip” brand should exists as non-alcoholic spirits -> Client Category: Spirits, Smart L1: Spirits',
+    'Alcoholic Ready to Drink: All type of RTD products (Smirnoff Ice, Gordon\'s Sin Alcohol RTD, Tanqueray Gin & Tonic, canned/bottled cocktails) -> Client Category: Alcoholic Pre-Mix Drink, Smart L1: Alcoholic Ready to Drink',
+    'Champagne: All type of champagne products (Veuve Clicquot, Moët & Chandon, Dom Pérignon, etc.) -> Client Category: Champagne, Smart L1: Champagne',
+    'MENU products: Bar cocktail menus and spirit lists -> Client Category: Spirits, Smart L1: MENU',
   ],
   outOfScopeList: [
-    'Beer & Cider products (e.g. Heineken, Mythos, Fix, Alfa, Amstel, Guinness, Somersby, Strongbow)',
-    'Energy Items (e.g. Red Bull, Monster, Hell, Rockstar)',
-    'All food Items (e.g. Snacks, chips, nuts, chocolates, confectionery, biscuits, meals, sauces, condiments)',
-    'Tea Products (e.g. Hot tea bags, iced tea, Nestea, Lipton, herbal teas)',
-    'Soft Drinks (e.g. Coca-Cola, Pepsi, Sprite, Fanta, standalone soda water, tonic water sold as soft drinks)',
-    'Juice Products (e.g. Orange juice, apple juice, fruit juices, nectars, purees)',
-    'Medicines and Treatments (e.g. Pharmaceuticals, medicinal remedies, health treatments)',
+    '1. Beer & Cider products (All beer and cider products: Heineken, Bedele, Sofi malt, Walia, Fix, Alfa, Amstel, Guinness, Somersby, Strongbow, etc.)',
+    '2. Energy Items (Energy Drinks: Red Bull, Monster, Rockstar, Hell, etc.)',
+    '3. All food Items (Snacks, chips, nuts, chocolates, confectionery, biscuits, meals, sauces, condiments, etc.)',
+    '4. Tea Products (Tea Items: Hot tea, iced tea, Nestea, Lipton, herbal teas, etc.)',
+    '5. Soft Drinks (Soft Drinks: Coca-Cola, Pepsi, Sprite, Fanta, standalone soda & tonic waters, etc.)',
+    '6. Juice Products (Juice Products: Orange juice, apple juice, fruit juices, nectars, purees, Lucozade, etc.)',
+    '7. Medicines and Treatments (Pharmaceuticals, medicinal remedies, health treatments)',
+    '8. Non-alcoholic spirits of any brand OTHER than "Seedlip" (e.g. Tanqueray 0.0%, Gordon\'s 0.0%, Captain Morgan 0.0% - Only Seedlip is permitted in Diageo GR scope)',
   ],
   rules: [
     {
       id: 'diageo-gr-spirits',
       scopeCategory: 'Spirits',
       traxCategory: 'Spirits',
-      clientCategory: 'Spirit',
+      clientCategory: 'Spirits',
       smartL1List: [
         'Spirits',
-        'MENU',
-        'Whisky',
-        'Scotch Whisky',
-        'Single Malt Scotch Whisky',
-        'Blended Scotch Whisky',
-        'Bourbon',
-        'Irish Whiskey',
-        'Vodka',
-        'Gin',
-        'Rum',
-        'Tequila',
-        'Mezcal',
-        'Liqueurs',
-        'Brandy',
-        'Cognac',
-        'Ouzo',
-        'Tsipouro',
-        'Metaxa',
-        'Non-Alcoholic Spirits',
-        'Cocktail Mixers',
       ],
-      notes: 'In Scope: All spirit types. Trax Category: Spirits. Client Category: Spirit. Smart Level1 in Trax: Spirits (or MENU for menus).',
+      notes: 'In-Scope: All type of spirits (Vodka / Tequila / Rum / Whiskey / Gin..etc). Trax Category: Spirits. Client Category: Spirits. Smart L1: Spirits.',
     },
     {
       id: 'diageo-gr-non-alcoholic-spirits',
       scopeCategory: 'Non-Alcoholic Spirits',
       traxCategory: 'Spirits',
-      clientCategory: 'Spirit',
+      clientCategory: 'Spirits',
       smartL1List: [
         'Spirits',
-        'Non-Alcoholic Spirits',
-        '0.0% Spirits',
       ],
-      notes: 'Special Note: "Non-alcoholic spirits" products must be added under "Spirit" client category and "Spirits" Trax Category.',
+      notes: 'Special Note: Only “Seedlip” brand should exists as non-alcoholic spirits. Added under “Spirits” client category. Trax Category: Spirits. Smart L1: Spirits. Confluence: https://confluence.trax-cloud.com/display/OPS/Diageo+Non-Alcoholic+Products',
     },
     {
       id: 'diageo-gr-rtd',
@@ -105,48 +86,28 @@ export const DIAGEO_GR_SCOPE: ProjectScope = {
       clientCategory: 'Alcoholic Pre-Mix Drink',
       smartL1List: [
         'Alcoholic Ready to Drink',
-        'Alcoholic Pre-Mix Drink',
-        'RTD',
-        'Hard Seltzer',
-        'Canned Cocktail',
       ],
-      notes: 'In Scope: All RTD and pre-mix drinks. Trax Category: Alcoholic Ready to Drink. Client Category: Alcoholic Pre-Mix Drink. Smart Level1: Alcoholic Ready to Drink.',
+      notes: 'In-Scope: All type of RTD products (Smirnoff Ice, Gordon\'s Sin Alcohol RTD, Tanqueray Gin & Tonic). Trax Category: Alcoholic Ready to Drink. Client Category: Alcoholic Pre-Mix Drink. Smart L1: Alcoholic Ready to Drink.',
     },
     {
       id: 'diageo-gr-champagne',
       scopeCategory: 'Champagne',
-      traxCategory: 'Champagne/Spirits',
+      traxCategory: 'Champagne',
       clientCategory: 'Champagne',
       smartL1List: [
         'Champagne',
-        'Champagne/Spirits',
-        'Sparkling Wine',
-        'Prosecco',
-        'Cava',
       ],
-      notes: 'In Scope: All champagne and sparkling wine products. Trax Category: Champagne/Spirits. Client Category: Champagne. Smart Level1: Champagne.',
+      notes: 'In-Scope: All type of champagne products (Veuve Clicquot, etc.). Trax Category: Champagne. Client Category: Champagne. Smart L1: Champagne.',
     },
     {
-      id: 'diageo-gr-menu-spirits',
+      id: 'diageo-gr-menu',
       scopeCategory: 'MENU',
       traxCategory: 'Spirits',
-      clientCategory: 'Spirit',
+      clientCategory: 'Spirits',
       smartL1List: [
         'MENU',
-        'Spirits',
       ],
-      notes: 'Special Note: MENU products should be added under "Spirit" client category with Smart Level1 "MENU".',
-    },
-    {
-      id: 'diageo-gr-general',
-      scopeCategory: 'General',
-      traxCategory: 'General',
-      clientCategory: 'General',
-      smartL1List: [
-        'General',
-        'MENU',
-      ],
-      notes: 'General products and auxiliary bar items. Trax Category: General. Client Category: General.',
+      notes: 'Special Note: “MENU” products should be added under “Spirits” client category with Smart L1 “MENU”. Trax Category: Spirits. Client Category: Spirits. Smart L1: MENU.',
     },
   ],
 };
@@ -424,14 +385,14 @@ export function getClientCategoriesForTrax(scope: ProjectScope, traxCategory?: s
   );
 }
 
-/**
- * Helper to get Smart L1 options corresponding to Trax and Client Categories
- */
 export function getSmartL1Options(
   scope: ProjectScope,
   traxCategory?: string,
   clientCategory?: string
 ): string[] {
+  if (traxCategory?.toLowerCase() === 'out of scope' || clientCategory?.toLowerCase() === 'out of scope') {
+    return ['Out of Scope'];
+  }
   let matchedRules = scope.rules;
   if (traxCategory) {
     matchedRules = matchedRules.filter(
@@ -445,5 +406,10 @@ export function getSmartL1Options(
   }
 
   const allSmartL1s = matchedRules.flatMap(r => r.smartL1List);
-  return Array.from(new Set(allSmartL1s));
+  const unique = Array.from(new Set(allSmartL1s));
+  if (unique.length > 0) return unique;
+  if (scope.smartPaletteChoices && scope.smartPaletteChoices.length > 0) {
+    return scope.smartPaletteChoices;
+  }
+  return [];
 }

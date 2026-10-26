@@ -170,15 +170,11 @@ export async function getAllProjectScopes(): Promise<ProjectScope[]> {
     if (existingIndex === -1) {
       await saveProjectScope(defScope);
       updated.push(defScope);
-    } else if (defScope.isDefault && (!updated[existingIndex].outOfScopeList || !updated[existingIndex].rules.length)) {
-      // Refresh default template with enriched in-scope/out-of-scope metadata
+    } else if (defScope.isDefault) {
+      // Refresh default template with latest verified in-scope/out-of-scope metadata & rules
       updated[existingIndex] = {
-        ...defScope,
         ...updated[existingIndex],
-        inScopeList: defScope.inScopeList,
-        outOfScopeList: defScope.outOfScopeList,
-        specialNotes: defScope.specialNotes,
-        smartPaletteChoices: defScope.smartPaletteChoices,
+        ...defScope,
       };
       await saveProjectScope(updated[existingIndex]);
     }
