@@ -13,8 +13,10 @@ import {
   Layers,
   Sparkles,
   Info,
+  AlertTriangle,
+  XCircle,
 } from 'lucide-react';
-import { ProjectScope, ProjectScopeRule, KRAFT_HEINZ_GERMANY_SCOPE } from '../constants/projectScopes';
+import { ProjectScope, ProjectScopeRule, KRAFT_HEINZ_GERMANY_SCOPE, DIAGEO_GR_SCOPE } from '../constants/projectScopes';
 import { saveProjectScope, deleteProjectScope, resetDefaultProjectScopes } from '../services/db';
 
 interface ProjectScopeModalProps {
@@ -128,14 +130,14 @@ export const ProjectScopeModal: React.FC<ProjectScopeModalProps> = ({
   };
 
   const handleDeleteScope = async (scopeId: string) => {
-    if (scopeId === 'kraft-heinz-germany' || scopeId === 'diageo-ie') {
-      alert('Built-in project scopes (Kraft Heinz Germany, Diageo IE) cannot be deleted, but you can edit their rules or add your own scopes.');
+    if (scopeId === 'kraft-heinz-germany' || scopeId === 'diageo-ie' || scopeId === 'diageo-gr') {
+      alert('Built-in project scopes (Kraft Heinz Germany, Diageo IE, Diageo GR) cannot be deleted, but you can edit their rules or add your own scopes.');
       return;
     }
     if (confirm(`Delete project scope "${currentScope.name}"?`)) {
       await deleteProjectScope(scopeId);
       onScopesUpdated();
-      setSelectedScopeId('diageo-ie');
+      setSelectedScopeId('diageo-gr');
     }
   };
 
@@ -195,7 +197,7 @@ export const ProjectScopeModal: React.FC<ProjectScopeModalProps> = ({
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-bold text-white tracking-tight">Project Scope & Scope Matrix Hub</h2>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                  Kraft Heinz Germany & Custom
+                  Diageo GR, Diageo IE, Kraft Heinz & Custom
                 </span>
               </div>
               <p className="text-xs text-slate-400">
@@ -305,7 +307,7 @@ export const ProjectScopeModal: React.FC<ProjectScopeModalProps> = ({
                       <div>
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="font-bold text-xs text-white">{s.name}</span>
-                          {(s.id === 'kraft-heinz-germany' || s.id === 'diageo-ie') && (
+                          {(s.id === 'kraft-heinz-germany' || s.id === 'diageo-ie' || s.id === 'diageo-gr') && (
                             <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
                               TEMPLATE
                             </span>
@@ -400,7 +402,7 @@ export const ProjectScopeModal: React.FC<ProjectScopeModalProps> = ({
                   </button>
                 )}
 
-                {currentScope.id !== 'kraft-heinz-germany' && currentScope.id !== 'diageo-ie' && (
+                {currentScope.id !== 'kraft-heinz-germany' && currentScope.id !== 'diageo-ie' && currentScope.id !== 'diageo-gr' && (
                   <button
                     type="button"
                     onClick={() => handleDeleteScope(currentScope.id)}
@@ -412,6 +414,90 @@ export const ProjectScopeModal: React.FC<ProjectScopeModalProps> = ({
                 )}
               </div>
             </div>
+
+            {/* Special Notes & Scope Mandates Callout */}
+            {currentScope.specialNotes && currentScope.specialNotes.length > 0 && (
+              <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs space-y-1.5 shadow-sm">
+                <div className="flex items-center gap-2 font-bold text-amber-300">
+                  <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>Special Scope Mandates & Classification Rules</span>
+                </div>
+                <ul className="list-disc list-inside space-y-1 text-slate-300 text-[11px] pl-1">
+                  {currentScope.specialNotes.map((note, idx) => (
+                    <li key={idx} className="leading-relaxed">
+                      <span className="text-amber-200 font-medium">{note}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Trax Smart Palette Choices (Image 3: Smart Level1) */}
+            {currentScope.smartPaletteChoices && currentScope.smartPaletteChoices.length > 0 && (
+              <div className="p-3.5 rounded-xl bg-gradient-to-r from-purple-950/40 via-slate-900 to-slate-900 border border-purple-500/30 text-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-purple-300 flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-purple-400" />
+                    Trax Smart Palette (There are only {currentScope.smartPaletteChoices.length.toString().padStart(2, '0')} Smart Level1 options in Trax)
+                  </span>
+                  <span className="text-[10px] text-purple-400 font-mono">Trax Smart Level1 Dropdown</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {currentScope.smartPaletteChoices.map((choice, idx) => (
+                    <div
+                      key={choice}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/25 text-purple-200 font-semibold text-xs"
+                    >
+                      <span className="w-5 h-5 rounded-full bg-purple-500/20 text-purple-300 flex items-center justify-center text-[10px] font-bold">
+                        {idx + 1}
+                      </span>
+                      <span>{choice}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* In-Scope vs Out-of-Scope Dual Panels (Images 2 & 4) */}
+            {(currentScope.inScopeList || currentScope.outOfScopeList) && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* In Scope Panel */}
+                {currentScope.inScopeList && (
+                  <div className="p-3.5 rounded-xl bg-emerald-950/20 border border-emerald-500/30 text-xs space-y-2">
+                    <div className="flex items-center gap-2 font-bold text-emerald-300">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>In-Scope Products ({currentScope.inScopeList.length} Categories)</span>
+                    </div>
+                    <ul className="space-y-1.5 text-[11px] text-slate-300">
+                      {currentScope.inScopeList.map((item, idx) => (
+                        <li key={idx} className="flex items-start gap-1.5 leading-snug">
+                          <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Out of Scope Panel */}
+                {currentScope.outOfScopeList && (
+                  <div className="p-3.5 rounded-xl bg-rose-950/20 border border-rose-500/30 text-xs space-y-2">
+                    <div className="flex items-center gap-2 font-bold text-rose-300">
+                      <XCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                      <span>Out of Scope Products ({currentScope.outOfScopeList.length} Exclusions)</span>
+                    </div>
+                    <ul className="space-y-1.5 text-[11px] text-slate-300">
+                      {currentScope.outOfScopeList.map((item, idx) => (
+                        <li key={idx} className="flex items-start gap-1.5 leading-snug">
+                          <X className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
+                          <span className="text-rose-200/90">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Scope Matrix Table Header Info */}
             <div className="flex items-center justify-between text-xs text-slate-400">

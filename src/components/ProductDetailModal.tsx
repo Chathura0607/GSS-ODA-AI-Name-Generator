@@ -243,9 +243,16 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   </span>
                 </div>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
-                  {attributes.projectScopeName || activeScope?.name || 'Kraft Heinz Germany Project Scope'}
+                  {attributes.projectScopeName || activeScope?.name || 'Diageo GR Project Scope'}
                 </span>
               </div>
+
+              {(attributes.scopeCategory === 'Out of Scope' || attributes.traxCategory === 'Out of Scope') && (
+                <div className="flex items-center gap-2 p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold">
+                  <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span>Flagged as OUT OF SCOPE: This product is not within the active scope criteria.</span>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                 {/* Trax Category (2nd Column) */}
@@ -260,6 +267,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                       className="w-full px-2.5 py-1.5 bg-slate-900 border border-cyan-500/40 rounded-lg text-slate-200 focus:outline-none focus:border-cyan-400"
                     >
                       <option value="">Select Trax Category...</option>
+                      <option value="Out of Scope">Out of Scope</option>
                       {traxOptions.map(t => (
                         <option key={t} value={t}>
                           {t}

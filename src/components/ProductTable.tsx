@@ -61,7 +61,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
   onOpenScopeModal,
 }) => {
   const [search, setSearch] = useState('');
-  const [filterValid, setFilterValid] = useState<'all' | 'valid' | 'warning' | 'error' | 'scoped'>('all');
+  const [filterValid, setFilterValid] = useState<'all' | 'valid' | 'warning' | 'error' | 'scoped' | 'out_of_scope'>('all');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [copiedSkuId, setCopiedSkuId] = useState<string | null>(null);
@@ -95,6 +95,14 @@ export const ProductTable: React.FC<ProductTableProps> = ({
     if (filterValid === 'warning') return !p.isLengthValid || !p.isContainerValid || !p.isAlphanumericValid;
     if (filterValid === 'error') return p.status === 'error';
     if (filterValid === 'scoped') return Boolean(p.traxCategory || p.attributes.traxCategory || p.clientCategory || p.attributes.clientCategory);
+    if (filterValid === 'out_of_scope') {
+      return (
+        scope.includes('out of scope') ||
+        trax.includes('out of scope') ||
+        client.includes('out of scope') ||
+        smart.includes('out of scope')
+      );
+    }
     return true;
   });
 
@@ -189,6 +197,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
             >
               <option value="all">All Products ({products.length})</option>
               <option value="scoped">🎯 With Project Scope Matrix</option>
+              <option value="out_of_scope">🚫 Out of Scope Items</option>
               <option value="valid">100% Rule Valid Only</option>
               <option value="warning">Has Rule Warnings</option>
               {failedProducts.length > 0 && (
@@ -526,6 +535,13 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                               <span className="text-[10px] text-amber-400 flex items-center gap-0.5" title="Contains special characters">
                                 <AlertTriangle className="w-3 h-3" />
                                 Symbols Flagged
+                              </span>
+                            )}
+
+                            {(currentScopeGroup === 'Out of Scope' || currentTrax === 'Out of Scope' || currentClient === 'Out of Scope') && (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center gap-0.5">
+                                <AlertTriangle className="w-3 h-3 text-rose-400" />
+                                OUT OF SCOPE
                               </span>
                             )}
                           </div>
