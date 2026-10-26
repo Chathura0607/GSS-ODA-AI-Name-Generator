@@ -82,37 +82,39 @@ npm run build
 
 The suite comes with official pre-configured FMCG and Liquor project templates, fully mapped into the 4-column Trax/Client matrix:
 
-### 1. Diageo GR (Greece) Project Scope (NEW)
-Tailored for the **Diageo Greece** cataloguing workflow:
+### 1. Diageo GR (Greece) Project Scope (OFFICIAL PDF SPECIFICATION)
+Tailored for the **Diageo Greece** cataloguing workflow according to official GSS ODA guidelines:
 - **Client Category vs Trax Category Matrix**:
   | 1st Col: Scope Group | 2nd Col: Trax Category | 3rd Col: Client Category | Last Col: Smart L1 (Trax Palette) |
   | :--- | :--- | :--- | :--- |
-  | **Spirits** | Spirits | Spirit | Spirits, MENU, Whisky, Vodka, Gin, Rum, Tequila, Brandy |
-  | **Non-Alcoholic Spirits** | Spirits | Spirit | Spirits, Non-Alcoholic Spirits |
-  | **Alcoholic Pre-Mix Drink** | Alcoholic Ready to Drink | Alcoholic Pre-Mix Drink | Alcoholic Ready to Drink, RTD, Hard Seltzer |
-  | **Champagne** | Champagne/Spirits | Champagne | Champagne, Sparkling Wine |
-  | **MENU** | Spirits / General | Spirit / General | MENU |
+  | **Spirits** | Spirits | Spirits | Spirits |
+  | **Non-Alcoholic Spirits** | Spirits | Spirits | Spirits |
+  | **Alcoholic Pre-Mix Drink** | Alcoholic Ready to Drink | Alcoholic Pre-Mix Drink | Alcoholic Ready to Drink |
+  | **Champagne** | Champagne | Champagne | Champagne |
+  | **MENU** | Spirits | Spirits | MENU |
 - **Smart Palette Rule**: In Trax Smart Palette, there are strictly **04 Smart Level1** options:
   1. `Spirits`
   2. `Alcoholic Ready to Drink`
   3. `Champagne`
   4. `MENU`
-- **Special Mandates**:
-  - *"Non-alcoholic spirits"* (e.g. Tanqueray 0.0%, Gordon's 0.0%, Seedlip) & *"MENU"* products MUST be categorized under the **"Spirit"** client category.
+- **Special Mandates (Slide 2 & 5)**:
+  - *"Non-alcoholic spirits"* & *"MENU"* products MUST be categorized under the **"Spirits"** client category.
+  - **Seedlip Mandate**: Only **“Seedlip”** brand exists as non-alcoholic spirits! Any other non-alcoholic spirit brand (e.g. Tanqueray 0.0%, Gordon's 0.0%, Captain Morgan 0.0%, CleanCo, Lyre's) is strictly **Out of Scope** for Diageo GR. (Reference: [Confluence Diageo Non-Alcoholic Products](https://confluence.trax-cloud.com/display/OPS/Diageo+Non-Alcoholic+Products)).
 - **In-Scope Products**:
-  - All types of spirits (Whisky, Scotch, Vodka, Gin, Rum, Tequila, Mezcal, Brandy, Cognac, Liqueurs, Greek local spirits: Metaxa, Ouzo, Tsipouro).
-  - Non-Alcoholic spirits (0.0% spirits and non-alcoholic botanicals).
-  - All types of RTD / Pre-mix drinks (Smirnoff Ice, canned cocktails, hard seltzers).
-  - All types of Champagne & Champagne/Spirits.
-  - Bar menus & tasting kits.
+  - All types of spirits (Vodka / Tequila / Rum / Whiskey / Gin..etc).
+  - Non-Alcoholic spirits (ONLY "Seedlip" brand: Grove 42, Garden 108, Spice 94).
+  - All types of RTD / Pre-mix products (Smirnoff Ice, Gordon's Sin Alcohol RTD, Tanqueray Gin & Tonic, canned cocktails).
+  - All types of Champagne products (Veuve Clicquot, Moët & Chandon, Dom Pérignon, etc.).
+  - MENU products (Bar cocktail menus & tasting lists).
 - **Strict Out-of-Scope Products (7 Categories - Flagged Automatically)**:
-  1. **Beer & Cider products** (Heineken, Mythos, Fix, Amstel, Guinness, Somersby, Strongbow, etc.)
-  2. **Energy Items** (Red Bull, Monster, Hell, etc.)
-  3. **All food Items** (Snacks, chips, nuts, chocolates, confectionery, biscuits, meals, sauces)
-  4. **Tea Products** (Hot tea, iced tea, herbal infusions, Lipton, Nestea)
-  5. **Soft Drinks** (Coca-Cola, Pepsi, Sprite, Fanta, standalone soda & tonic waters)
-  6. **Juice Products** (Fruit juices, nectars, purees)
-  7. **Medicines and Treatments** (Pharmaceuticals, remedies, medicated items)
+  1. **Beer & Cider products** (All beer and cider products: Heineken, Bedele, Sofi malt, Fix, Alfa, Amstel, Guinness, Somersby, Strongbow, etc.)
+  2. **Energy Items** (Energy Drinks: Red Bull, Monster, Rockstar, Hell, etc.)
+  3. **All food Items** (Snacks, chips, nuts, chocolates, confectionery, biscuits, meals, sauces, condiments)
+  4. **Tea Products** (Tea Items: Hot tea, iced tea, Nestea, Lipton, herbal teas)
+  5. **Soft Drinks** (Soft Drinks: Coca-Cola, Pepsi, Sprite, Fanta, standalone soda & tonic waters)
+  6. **Juice Products** (Juice Products: Orange juice, apple juice, fruit juices, nectars, purees, Lucozade)
+  7. **Medicines and Treatments** (Pharmaceuticals, remedies, treatments)
+  8. **Non-Alcoholic Spirits not from Seedlip brand** (Flagged as Out of Scope)
 
 ### 2. Diageo IE (Ireland) Project Scope
 - In Scope: Spirits, Beer & Cider, and Alcoholic Ready to Drink (RTD).
