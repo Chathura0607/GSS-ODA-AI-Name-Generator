@@ -78,19 +78,68 @@ npm run build
 
 ---
 
+## 🎯 Project Scope & Scope Matrix Hub
+
+The suite comes with official pre-configured FMCG and Liquor project templates, fully mapped into the 4-column Trax/Client matrix:
+
+### 1. Diageo GR (Greece) Project Scope (NEW)
+Tailored for the **Diageo Greece** cataloguing workflow:
+- **Client Category vs Trax Category Matrix**:
+  | 1st Col: Scope Group | 2nd Col: Trax Category | 3rd Col: Client Category | Last Col: Smart L1 (Trax Palette) |
+  | :--- | :--- | :--- | :--- |
+  | **Spirits** | Spirits | Spirit | Spirits, MENU, Whisky, Vodka, Gin, Rum, Tequila, Brandy |
+  | **Non-Alcoholic Spirits** | Spirits | Spirit | Spirits, Non-Alcoholic Spirits |
+  | **Alcoholic Pre-Mix Drink** | Alcoholic Ready to Drink | Alcoholic Pre-Mix Drink | Alcoholic Ready to Drink, RTD, Hard Seltzer |
+  | **Champagne** | Champagne/Spirits | Champagne | Champagne, Sparkling Wine |
+  | **MENU** | Spirits / General | Spirit / General | MENU |
+- **Smart Palette Rule**: In Trax Smart Palette, there are strictly **04 Smart Level1** options:
+  1. `Spirits`
+  2. `Alcoholic Ready to Drink`
+  3. `Champagne`
+  4. `MENU`
+- **Special Mandates**:
+  - *"Non-alcoholic spirits"* (e.g. Tanqueray 0.0%, Gordon's 0.0%, Seedlip) & *"MENU"* products MUST be categorized under the **"Spirit"** client category.
+- **In-Scope Products**:
+  - All types of spirits (Whisky, Scotch, Vodka, Gin, Rum, Tequila, Mezcal, Brandy, Cognac, Liqueurs, Greek local spirits: Metaxa, Ouzo, Tsipouro).
+  - Non-Alcoholic spirits (0.0% spirits and non-alcoholic botanicals).
+  - All types of RTD / Pre-mix drinks (Smirnoff Ice, canned cocktails, hard seltzers).
+  - All types of Champagne & Champagne/Spirits.
+  - Bar menus & tasting kits.
+- **Strict Out-of-Scope Products (7 Categories - Flagged Automatically)**:
+  1. **Beer & Cider products** (Heineken, Mythos, Fix, Amstel, Guinness, Somersby, Strongbow, etc.)
+  2. **Energy Items** (Red Bull, Monster, Hell, etc.)
+  3. **All food Items** (Snacks, chips, nuts, chocolates, confectionery, biscuits, meals, sauces)
+  4. **Tea Products** (Hot tea, iced tea, herbal infusions, Lipton, Nestea)
+  5. **Soft Drinks** (Coca-Cola, Pepsi, Sprite, Fanta, standalone soda & tonic waters)
+  6. **Juice Products** (Fruit juices, nectars, purees)
+  7. **Medicines and Treatments** (Pharmaceuticals, remedies, medicated items)
+
+### 2. Diageo IE (Ireland) Project Scope
+- In Scope: Spirits, Beer & Cider, and Alcoholic Ready to Drink (RTD).
+
+### 3. Kraft Heinz Germany Project Scope
+- Official FMCG Matrix for Sauces, Ketchup, Mayonnaise, Spices (Gewürzdosen), Tomato Paste, and Baked Beans.
+
+---
+
 ## 📖 Sinhala Quick Guide (සිංහල මාර්ගෝපදේශය)
 
 ### භාවිතා කරන්නේ කෙසේද:
 1. **API Key ඇතුලත් කිරීම**: ඉහළ දකුණු කෙලවරේ ඇති Settings (⚙️) icon එක click කර ඔබගේ **Google Gemini API Key** එක ඇතුලත් කරන්න (Google AI Studio වෙතින් නොමිලේ ලබාගත හැක). Simple Google Search AI තාක්ෂණය මඟින් නොමිලේ ලබාගත් Gemini key එකකින් කිසිදු rate limit හෝ tool quota ගැටලුවකින් තොරව ක්‍රියාත්මක වේ.
-2. **Images / Files Upload කිරීම**:
+2. **Project Scope එක තේරීම (Diageo GR / Diageo IE / Kraft Heinz)**:
+   - ඉහළ Navbar එකේ ඇති **"Project Scope"** button එක click කරන්න.
+   - **Diageo GR Project Scope** එක තෝරා "Use This Project Scope" click කරන්න.
+   - එවිට uploaded image එකක් analyze කරන විට Diageo GR සඳහා වන Trax Category (Col 2), Client Category (Col 3), සහ Smart Level1 (Col 4) ස්වයංක්‍රීයව AI මඟින් නිවැරදිව තෝරාගනී.
+   - Beer, Cider, Soft Drink, Energy Drink, Food හෝ Juice වැනි Out-of-Scope නිෂ්පාදනයක් upload වුවහොත්, පද්ධතිය එය ක්ෂණිකව **"OUT OF SCOPE"** ලෙස red warning එකක් සහිතව හඳුනාගනී.
+3. **Images / Files Upload කිරීම**:
    - තනි image එකක් හෝ images ගොඩක් එකවර drag & drop කරන්න.
    - ZIP file හෝ PDF file එකක් upload කළ විට, app එක විසින් ස්වයංක්‍රීයව images extract කර එකින් එක AI හරහා analyze කර සම්මත English නම සාදයි.
    - "Load All 3 Samples" click කර GSS සාම්පල images සමඟ ක්ෂණිකව test කළ හැක.
-3. **GSS Rules & 49 Container Types**:
+4. **GSS Rules & 49 Container Types**:
    - GSS ODA formula එකට අනුකූලව Container types 49 පමණක් භාවිතයට ගැනීමට Dropdown එක සකසා ඇත.
    - නමේ උපරිම අකුරු ගණන 150 ඉක්මවා යන්නේද යන්න live check වේ.
-4. **Excel Export & 7-Day Backup**:
-   - සාදන ලද නම් සියල්ල Excel (.xlsx) හෝ CSV ලෙස download කරගත හැක.
+5. **Excel Export & 7-Day Backup**:
+   - සාදන ලද නම් සියල්ල Excel (.xlsx) හෝ CSV ලෙස download කරගත හැක (Scope Columns Col 1, Col 2, Col 3, Col 4 ඇතුලත්ව).
    - දත්ත IndexedDB හරහා අවම දින 7ක් ඔබගේ පරිගණකයේ සුරක්ෂිතව තබාගත හැකි අතර JSON Backup / Restore පහසුකමද ඇත.
 
 ---
