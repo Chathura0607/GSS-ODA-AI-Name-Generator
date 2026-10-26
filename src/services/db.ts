@@ -163,13 +163,24 @@ export async function getAllProjectScopes(): Promise<ProjectScope[]> {
     return DEFAULT_PROJECT_SCOPES;
   }
   
-  // Ensure all built-in default scopes are present in DB
+  // Ensure all built-in default scopes are present in DB and enriched
   let updated = [...stored];
   for (const defScope of DEFAULT_PROJECT_SCOPES) {
-    const exists = updated.some(s => s.id === defScope.id);
-    if (!exists) {
+    const existingIndex = updated.findIndex(s => s.id === defScope.id);
+    if (existingIndex === -1) {
       await saveProjectScope(defScope);
       updated.push(defScope);
+    } else if (defScope.isDefault && (!updated[existingIndex].outOfScopeList || !updated[existingIndex].rules.length)) {
+      // Refresh default template with enriched in-scope/out-of-scope metadata
+      updated[existingIndex] = {
+        ...defScope,
+        ...updated[existingIndex],
+        inScopeList: defScope.inScopeList,
+        outOfScopeList: defScope.outOfScopeList,
+        specialNotes: defScope.specialNotes,
+        smartPaletteChoices: defScope.smartPaletteChoices,
+      };
+      await saveProjectScope(updated[existingIndex]);
     }
   }
   return updated;

@@ -15,7 +15,141 @@ export interface ProjectScope {
   description?: string;
   isDefault?: boolean;
   rules: ProjectScopeRule[];
+  smartPaletteChoices?: string[];
+  specialNotes?: string[];
+  inScopeList?: string[];
+  outOfScopeList?: string[];
 }
+
+export const DIAGEO_GR_SCOPE: ProjectScope = {
+  id: 'diageo-gr',
+  name: 'Diageo GR Project Scope',
+  clientName: 'Diageo GR',
+  country: 'Greece',
+  description: 'Official Project Scope Matrix for Diageo GR / Greece (Spirits, Non-Alcoholic Spirits, Alcoholic Ready to Drink / RTD, and Champagne). Beer, Cider, Food, Energy & Soft Drinks are strictly Out of Scope.',
+  isDefault: true,
+  specialNotes: [
+    'Special Note : "Non-alcoholic spirits" & "MENU" products should be added under "Spirit" client category.',
+    'SMART PALETTE: There are only 04 Smart Level1 choices in Trax: 1. Spirits, 2. Alcoholic Ready to Drink, 3. Champagne, 4. MENU.',
+    'Out of Scope Products: Beer & Cider, Energy Items, All food Items, Tea Products, Soft Drinks, Juice Products, Medicines and Treatments.',
+  ],
+  smartPaletteChoices: [
+    'Spirits',
+    'Alcoholic Ready to Drink',
+    'Champagne',
+    'MENU',
+  ],
+  inScopeList: [
+    'All types of Spirits: Whisky / Whiskey (Scotch, Single Malt, Blended, Bourbon, Irish), Vodka, Gin, Rum, Tequila, Mezcal, Brandy, Cognac, Liqueurs, Greek local specialties (Ouzo, Tsipouro, Tsikoudia, Metaxa), Cocktail Mixers',
+    'Non-Alcoholic Spirits: Alcohol-free 0.0% spirits (Tanqueray 0.0%, Gordon\'s 0.0%, Captain Morgan 0.0%, Seedlip range, alcohol-free botanicals)',
+    'All types of Alcoholic Ready to Drink (RTD) / Pre-Mix Products: Pre-mixed spirit drinks, canned cocktails, hard seltzers, Smirnoff Ice, Gordon\'s & Tonic, Captain Morgan & Cola',
+    'All types of Champagne products: Champagne (Moët & Chandon, Veuve Clicquot, Dom Pérignon, Ruinart, Krug), Champagne/Spirits, Sparkling Wine, Prosecco, Cava',
+    'MENU Products: Bar cocktail menus, spirit lists, tasting menu packs (Client Category: Spirit, Smart L1: MENU)',
+  ],
+  outOfScopeList: [
+    'Beer & Cider products (e.g. Heineken, Mythos, Fix, Alfa, Amstel, Guinness, Somersby, Strongbow)',
+    'Energy Items (e.g. Red Bull, Monster, Hell, Rockstar)',
+    'All food Items (e.g. Snacks, chips, nuts, chocolates, confectionery, biscuits, meals, sauces, condiments)',
+    'Tea Products (e.g. Hot tea bags, iced tea, Nestea, Lipton, herbal teas)',
+    'Soft Drinks (e.g. Coca-Cola, Pepsi, Sprite, Fanta, standalone soda water, tonic water sold as soft drinks)',
+    'Juice Products (e.g. Orange juice, apple juice, fruit juices, nectars, purees)',
+    'Medicines and Treatments (e.g. Pharmaceuticals, medicinal remedies, health treatments)',
+  ],
+  rules: [
+    {
+      id: 'diageo-gr-spirits',
+      scopeCategory: 'Spirits',
+      traxCategory: 'Spirits',
+      clientCategory: 'Spirit',
+      smartL1List: [
+        'Spirits',
+        'MENU',
+        'Whisky',
+        'Scotch Whisky',
+        'Single Malt Scotch Whisky',
+        'Blended Scotch Whisky',
+        'Bourbon',
+        'Irish Whiskey',
+        'Vodka',
+        'Gin',
+        'Rum',
+        'Tequila',
+        'Mezcal',
+        'Liqueurs',
+        'Brandy',
+        'Cognac',
+        'Ouzo',
+        'Tsipouro',
+        'Metaxa',
+        'Non-Alcoholic Spirits',
+        'Cocktail Mixers',
+      ],
+      notes: 'In Scope: All spirit types. Trax Category: Spirits. Client Category: Spirit. Smart Level1 in Trax: Spirits (or MENU for menus).',
+    },
+    {
+      id: 'diageo-gr-non-alcoholic-spirits',
+      scopeCategory: 'Non-Alcoholic Spirits',
+      traxCategory: 'Spirits',
+      clientCategory: 'Spirit',
+      smartL1List: [
+        'Spirits',
+        'Non-Alcoholic Spirits',
+        '0.0% Spirits',
+      ],
+      notes: 'Special Note: "Non-alcoholic spirits" products must be added under "Spirit" client category and "Spirits" Trax Category.',
+    },
+    {
+      id: 'diageo-gr-rtd',
+      scopeCategory: 'Alcoholic Pre-Mix Drink',
+      traxCategory: 'Alcoholic Ready to Drink',
+      clientCategory: 'Alcoholic Pre-Mix Drink',
+      smartL1List: [
+        'Alcoholic Ready to Drink',
+        'Alcoholic Pre-Mix Drink',
+        'RTD',
+        'Hard Seltzer',
+        'Canned Cocktail',
+      ],
+      notes: 'In Scope: All RTD and pre-mix drinks. Trax Category: Alcoholic Ready to Drink. Client Category: Alcoholic Pre-Mix Drink. Smart Level1: Alcoholic Ready to Drink.',
+    },
+    {
+      id: 'diageo-gr-champagne',
+      scopeCategory: 'Champagne',
+      traxCategory: 'Champagne/Spirits',
+      clientCategory: 'Champagne',
+      smartL1List: [
+        'Champagne',
+        'Champagne/Spirits',
+        'Sparkling Wine',
+        'Prosecco',
+        'Cava',
+      ],
+      notes: 'In Scope: All champagne and sparkling wine products. Trax Category: Champagne/Spirits. Client Category: Champagne. Smart Level1: Champagne.',
+    },
+    {
+      id: 'diageo-gr-menu-spirits',
+      scopeCategory: 'MENU',
+      traxCategory: 'Spirits',
+      clientCategory: 'Spirit',
+      smartL1List: [
+        'MENU',
+        'Spirits',
+      ],
+      notes: 'Special Note: MENU products should be added under "Spirit" client category with Smart Level1 "MENU".',
+    },
+    {
+      id: 'diageo-gr-general',
+      scopeCategory: 'General',
+      traxCategory: 'General',
+      clientCategory: 'General',
+      smartL1List: [
+        'General',
+        'MENU',
+      ],
+      notes: 'General products and auxiliary bar items. Trax Category: General. Client Category: General.',
+    },
+  ],
+};
 
 export const KRAFT_HEINZ_GERMANY_SCOPE: ProjectScope = {
   id: 'kraft-heinz-germany',
@@ -178,6 +312,7 @@ export const DIAGEO_IE_SCOPE: ProjectScope = {
 };
 
 export const DEFAULT_PROJECT_SCOPES: ProjectScope[] = [
+  DIAGEO_GR_SCOPE,
   DIAGEO_IE_SCOPE,
   KRAFT_HEINZ_GERMANY_SCOPE,
   {
@@ -218,8 +353,39 @@ export const DEFAULT_PROJECT_SCOPES: ProjectScope[] = [
  */
 export function formatScopeForPrompt(scope: ProjectScope): string {
   let output = `### PROJECT SCOPE: ${scope.name} (Client: ${scope.clientName}, Country: ${scope.country})\n`;
-  output += `Rules Matrix:\n`;
-  
+  if (scope.description) {
+    output += `Description: ${scope.description}\n`;
+  }
+
+  if (scope.specialNotes && scope.specialNotes.length > 0) {
+    output += `\nSPECIAL SCOPE RULES & MANDATES:\n`;
+    scope.specialNotes.forEach(note => {
+      output += `- ${note}\n`;
+    });
+  }
+
+  if (scope.smartPaletteChoices && scope.smartPaletteChoices.length > 0) {
+    output += `\nTRAX SMART PALETTE (Only ${scope.smartPaletteChoices.length} valid Smart Level1 options in Trax):\n`;
+    scope.smartPaletteChoices.forEach((choice, i) => {
+      output += `  ${i + 1}. "${choice}"\n`;
+    });
+  }
+
+  if (scope.inScopeList && scope.inScopeList.length > 0) {
+    output += `\nIN-SCOPE PRODUCTS (Must be classified using the scope matrix below):\n`;
+    scope.inScopeList.forEach(item => {
+      output += `- IN-SCOPE: ${item}\n`;
+    });
+  }
+
+  if (scope.outOfScopeList && scope.outOfScopeList.length > 0) {
+    output += `\nOUT-OF-SCOPE PRODUCTS (STRICT MANDATE - If the uploaded product falls into ANY of these categories, you MUST set scopeCategory: "Out of Scope", traxCategory: "Out of Scope", clientCategory: "Out of Scope", smartL1: "Out of Scope", and in notes explain why it is out of scope):\n`;
+    scope.outOfScopeList.forEach(item => {
+      output += `- OUT OF SCOPE: ${item}\n`;
+    });
+  }
+
+  output += `\nRules Matrix (Column Mapping):\n`;
   scope.rules.forEach((r, idx) => {
     output += `Rule #${idx + 1}:\n`;
     output += `- Scope Group / 1st Column: "${r.scopeCategory}"\n`;

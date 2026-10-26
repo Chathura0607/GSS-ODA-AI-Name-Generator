@@ -222,11 +222,17 @@ ${formatScopeForPrompt(projectScope)}
 
 CRITICAL PROJECT SCOPE INSTRUCTIONS:
 Based on this product image and FMCG classification, you MUST match and assign the exact category attributes from this project scope:
-1. "scopeCategory": Choose the matching 1st column Scope Category (e.g. "${projectScope.rules[0].scopeCategory}") or "Out of Scope" if none match.
-2. "traxCategory": EXACT match for the 2nd column Trax Category from the matching rule (e.g. "${projectScope.rules[0].traxCategory}").
-3. "clientCategory": EXACT match for the 3rd column Client Category from the matching rule (e.g. "${projectScope.rules[0].clientCategory}").
-4. "smartL1": Choose the most specific and accurate Smart L1 item from the allowed Smart L1 list for the selected category (e.g. "${projectScope.rules[0].smartL1List[0]}").
-5. "projectScopeName": "${projectScope.name}"`;
+1. OUT OF SCOPE CHECK: If the product belongs to any of the OUT-OF-SCOPE categories (e.g. Beer & Cider, Energy Items, All food Items, Tea Products, Soft Drinks, Juice Products, Medicines and Treatments for Diageo GR), you MUST set:
+   - "scopeCategory": "Out of Scope"
+   - "traxCategory": "Out of Scope"
+   - "clientCategory": "Out of Scope"
+   - "smartL1": "Out of Scope"
+   - "notes": Explain why the product is Out of Scope (e.g. "Out of Scope: Beer is not in Diageo GR scope").
+2. "scopeCategory": If in scope, choose the matching 1st column Scope Category (e.g. "${projectScope.rules[0].scopeCategory}").
+3. "traxCategory": EXACT match for the 2nd column Trax Category from the matching rule (e.g. "${projectScope.rules[0].traxCategory}").
+4. "clientCategory": EXACT match for the 3rd column Client Category from the matching rule (e.g. "${projectScope.rules[0].clientCategory}").
+5. "smartL1": Choose the most specific and accurate Smart L1 item from the allowed Smart L1 list for the selected category (e.g. "${projectScope.rules[0].smartL1List[0]}").
+6. "projectScopeName": "${projectScope.name}"`;
   }
 
   const requestBody = {
