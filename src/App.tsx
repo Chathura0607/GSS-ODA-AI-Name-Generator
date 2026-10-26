@@ -11,9 +11,9 @@ import { ProjectScopeModal } from './components/ProjectScopeModal';
 import { BrandManufacturerStudio } from './components/BrandManufacturerStudio';
 
 import { ProcessedProduct, AppSettings } from './types';
-import { ProjectScope, KRAFT_HEINZ_GERMANY_SCOPE, DEFAULT_PROJECT_SCOPES } from './constants/projectScopes';
+import { ProjectScope, KRAFT_HEINZ_GERMANY_SCOPE, DIAGEO_GR_SCOPE, DEFAULT_PROJECT_SCOPES } from './constants/projectScopes';
 import { ExtractedImageFile } from './services/archiveExtractor';
-import { analyzeProductImage } from './services/gemini';
+import { analyzeProductImage, resolveScopeCategories } from './services/gemini';
 import { assembleStandardName, validateStandardName, generateGoogleSkuUrl } from './services/validator';
 import {
   saveProduct,
@@ -87,8 +87,50 @@ export const App: React.FC = () => {
 
         // Load existing products from DB
         const storedProducts = await getAllProducts();
-        setProducts(storedProducts);
-        setTotalSavedCount(storedProducts.length);
+        const currentActiveScope =
+          loadedScopes.find(s => s.id === (loadedSettings.activeProjectScopeId || 'diageo-gr')) ||
+          loadedScopes[0] ||
+          DIAGEO_GR_SCOPE;
+
+        // Auto-realign existing stored products against active scope rules to fix any false-positive Out of Scope
+        const normalizedStored = storedProducts.map(p => {
+          const resolved = resolveScopeCategories(
+            {
+              brand: p.attributes.brand,
+              item: p.attributes.item,
+              flavorOrVariant: p.attributes.flavorOrVariant,
+              scopeCategory: p.scopeCategory || p.attributes.scopeCategory,
+              traxCategory: p.traxCategory || p.attributes.traxCategory,
+              clientCategory: p.clientCategory || p.attributes.clientCategory,
+              smartL1: p.smartL1 || p.attributes.smartL1,
+              notes: p.notes,
+            },
+            currentActiveScope
+          );
+          return {
+            ...p,
+            scopeCategory: resolved.scopeCategory,
+            traxCategory: resolved.traxCategory,
+            clientCategory: resolved.clientCategory,
+            smartL1: resolved.smartL1,
+            projectScopeName: resolved.projectScopeName || currentActiveScope.name,
+            attributes: {
+              ...p.attributes,
+              scopeCategory: resolved.scopeCategory,
+              traxCategory: resolved.traxCategory,
+              clientCategory: resolved.clientCategory,
+              smartL1: resolved.smartL1,
+              projectScopeName: resolved.projectScopeName || currentActiveScope.name,
+            },
+            notes: resolved.notes || p.notes,
+          };
+        });
+
+        setProducts(normalizedStored);
+        setTotalSavedCount(normalizedStored.length);
+        if (normalizedStored.length > 0) {
+          await saveProducts(normalizedStored);
+        }
       } catch (err) {
         console.error('Initialization error:', err);
       }
@@ -110,6 +152,85 @@ export const App: React.FC = () => {
     const updatedSettings = { ...settings, activeProjectScopeId: scopeId };
     setSettings(updatedSettings);
     await saveSettings(updatedSettings);
+
+    // Auto-realign existing products to the newly selected scope
+    const targetScope = scopes.find(s => s.id === scopeId);
+    if (targetScope && products.length > 0) {
+      const updatedProducts = products.map(p => {
+        const resolved = resolveScopeCategories(
+          {
+            brand: p.attributes.brand,
+            item: p.attributes.item,
+            flavorOrVariant: p.attributes.flavorOrVariant,
+            scopeCategory: p.scopeCategory || p.attributes.scopeCategory,
+            traxCategory: p.traxCategory || p.attributes.traxCategory,
+            clientCategory: p.clientCategory || p.attributes.clientCategory,
+            smartL1: p.smartL1 || p.attributes.smartL1,
+            notes: p.notes,
+          },
+          targetScope
+        );
+        return {
+          ...p,
+          scopeCategory: resolved.scopeCategory,
+          traxCategory: resolved.traxCategory,
+          clientCategory: resolved.clientCategory,
+          smartL1: resolved.smartL1,
+          projectScopeName: resolved.projectScopeName || targetScope.name,
+          attributes: {
+            ...p.attributes,
+            scopeCategory: resolved.scopeCategory,
+            traxCategory: resolved.traxCategory,
+            clientCategory: resolved.clientCategory,
+            smartL1: resolved.smartL1,
+            projectScopeName: resolved.projectScopeName || targetScope.name,
+          },
+          notes: resolved.notes || p.notes,
+          updatedAt: Date.now(),
+        };
+      });
+      setProducts(updatedProducts);
+      await saveProducts(updatedProducts);
+    }
+  };
+
+  const handleRealignScope = async () => {
+    if (!activeScope || products.length === 0) return;
+    const updatedProducts = products.map(p => {
+      const resolved = resolveScopeCategories(
+        {
+          brand: p.attributes.brand,
+          item: p.attributes.item,
+          flavorOrVariant: p.attributes.flavorOrVariant,
+          scopeCategory: p.scopeCategory || p.attributes.scopeCategory,
+          traxCategory: p.traxCategory || p.attributes.traxCategory,
+          clientCategory: p.clientCategory || p.attributes.clientCategory,
+          smartL1: p.smartL1 || p.attributes.smartL1,
+          notes: p.notes,
+        },
+        activeScope
+      );
+      return {
+        ...p,
+        scopeCategory: resolved.scopeCategory,
+        traxCategory: resolved.traxCategory,
+        clientCategory: resolved.clientCategory,
+        smartL1: resolved.smartL1,
+        projectScopeName: resolved.projectScopeName || activeScope.name,
+        attributes: {
+          ...p.attributes,
+          scopeCategory: resolved.scopeCategory,
+          traxCategory: resolved.traxCategory,
+          clientCategory: resolved.clientCategory,
+          smartL1: resolved.smartL1,
+          projectScopeName: resolved.projectScopeName || activeScope.name,
+        },
+        notes: resolved.notes || p.notes,
+        updatedAt: Date.now(),
+      };
+    });
+    setProducts(updatedProducts);
+    await saveProducts(updatedProducts);
   };
 
   // Update total count
@@ -513,6 +634,7 @@ export const App: React.FC = () => {
               onLookupBrand={handleLookupBrand}
               activeScope={activeScope}
               onOpenScopeModal={() => setIsScopeModalOpen(true)}
+              onRealignScope={handleRealignScope}
             />
           </>
         )}
