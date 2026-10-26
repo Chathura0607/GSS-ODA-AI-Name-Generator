@@ -46,6 +46,7 @@ interface ProductTableProps {
   onLookupBrand?: (brand: string) => void;
   activeScope?: ProjectScope | null;
   onOpenScopeModal?: () => void;
+  onRealignScope?: () => void;
 }
 
 export const ProductTable: React.FC<ProductTableProps> = ({
@@ -59,6 +60,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
   onLookupBrand,
   activeScope,
   onOpenScopeModal,
+  onRealignScope,
 }) => {
   const [search, setSearch] = useState('');
   const [filterValid, setFilterValid] = useState<'all' | 'valid' | 'warning' | 'error' | 'scoped' | 'out_of_scope'>('all');
@@ -146,6 +148,39 @@ export const ProductTable: React.FC<ProductTableProps> = ({
     val: string
   ) => {
     const updatedAttributes = { ...product.attributes, [field]: val };
+
+    // Auto-sync scope matrix columns when category dropdowns change
+    if (field === 'traxCategory') {
+      if (val === 'Out of Scope') {
+        updatedAttributes.scopeCategory = 'Out of Scope';
+        updatedAttributes.traxCategory = 'Out of Scope';
+        updatedAttributes.clientCategory = 'Out of Scope';
+        updatedAttributes.smartL1 = 'Out of Scope';
+      } else if (activeScope) {
+        const matched = activeScope.rules.find(r => r.traxCategory.toLowerCase() === val.toLowerCase());
+        if (matched) {
+          updatedAttributes.scopeCategory = matched.scopeCategory;
+          updatedAttributes.traxCategory = matched.traxCategory;
+          updatedAttributes.clientCategory = matched.clientCategory;
+          updatedAttributes.smartL1 = matched.smartL1List[0] || '';
+        }
+      }
+    } else if (field === 'clientCategory') {
+      if (val === 'Out of Scope') {
+        updatedAttributes.scopeCategory = 'Out of Scope';
+        updatedAttributes.clientCategory = 'Out of Scope';
+        updatedAttributes.smartL1 = 'Out of Scope';
+      } else if (activeScope) {
+        const matched = activeScope.rules.find(r => r.clientCategory.toLowerCase() === val.toLowerCase());
+        if (matched) {
+          updatedAttributes.scopeCategory = matched.scopeCategory;
+          updatedAttributes.traxCategory = matched.traxCategory;
+          updatedAttributes.clientCategory = matched.clientCategory;
+          updatedAttributes.smartL1 = matched.smartL1List[0] || '';
+        }
+      }
+    }
+
     const standardName = assembleStandardName(updatedAttributes);
     const validation = validateStandardName(standardName, updatedAttributes.containerType);
     const googleSkuUrl = generateGoogleSkuUrl(updatedAttributes) || undefined;
@@ -246,6 +281,18 @@ export const ProductTable: React.FC<ProductTableProps> = ({
 
         {/* Action Controls */}
         <div className="flex flex-wrap items-center gap-2">
+          {onRealignScope && products.length > 0 && (
+            <button
+              type="button"
+              onClick={onRealignScope}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 transition-colors shadow-lg shadow-cyan-500/10"
+              title="Instantly re-evaluate scope categories for all products against active scope rules without re-calling AI API"
+            >
+              <Target className="w-3.5 h-3.5 text-cyan-400" />
+              Re-align Scope Matrix ({products.length})
+            </button>
+          )}
+
           {failedProducts.length > 0 && (
             <button
               type="button"
@@ -616,6 +663,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                               className="w-full px-2 py-1 bg-slate-900 border border-cyan-500/40 rounded text-xs text-cyan-300 font-semibold focus:border-cyan-400 focus:outline-none"
                             >
                               <option value="">Select Trax...</option>
+                              <option value="Out of Scope">Out of Scope</option>
                               {traxList.map(t => (
                                 <option key={t} value={t}>
                                   {t}
@@ -649,6 +697,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                               className="w-full px-2 py-1 bg-slate-900 border border-purple-500/40 rounded text-xs text-purple-300 font-semibold focus:border-purple-400 focus:outline-none"
                             >
                               <option value="">Select Client...</option>
+                              <option value="Out of Scope">Out of Scope</option>
                               {clientOptions.map(c => (
                                 <option key={c} value={c}>
                                   {c}
