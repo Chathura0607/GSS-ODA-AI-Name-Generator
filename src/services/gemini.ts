@@ -191,6 +191,241 @@ async function callWithRetry(
 }
 
 /**
+ * Deterministic scope category resolver: accurately maps FMCG products into active project scope rules
+ * without false-positive Out of Scope triggers.
+ */
+export function resolveScopeCategories(
+  parsed: {
+    brand?: string;
+    item?: string;
+    flavorOrVariant?: string;
+    scopeCategory?: string;
+    traxCategory?: string;
+    clientCategory?: string;
+    smartL1?: string;
+    notes?: string;
+  },
+  projectScope?: ProjectScope | null
+): {
+  scopeCategory?: string;
+  traxCategory?: string;
+  clientCategory?: string;
+  smartL1?: string;
+  projectScopeName?: string;
+  notes?: string;
+} {
+  if (!projectScope || !projectScope.rules || projectScope.rules.length === 0) {
+    return {
+      scopeCategory: parsed.scopeCategory,
+      traxCategory: parsed.traxCategory,
+      clientCategory: parsed.clientCategory,
+      smartL1: parsed.smartL1,
+      notes: parsed.notes,
+    };
+  }
+
+  const scopeName = projectScope.name;
+  let scopeCat = (parsed.scopeCategory || '').trim();
+  let traxCat = (parsed.traxCategory || '').trim();
+  let clientCat = (parsed.clientCategory || '').trim();
+  let smartL1Val = (parsed.smartL1 || '').trim();
+  let notes = parsed.notes || '';
+
+  const brandLower = (parsed.brand || '').toLowerCase();
+  const itemLower = (parsed.item || '').toLowerCase();
+  const flavorLower = (parsed.flavorOrVariant || '').toLowerCase();
+  const combinedText = `${brandLower} ${itemLower} ${flavorLower}`.toLowerCase();
+
+  // Special deterministic rule handler for Diageo GR
+  if (projectScope.id === 'diageo-gr') {
+    // 1. Non-alcoholic spirit check: Only "Seedlip" brand is in scope
+    const isNonAlcoholicSpirit =
+      itemLower.includes('non-alcoholic spirit') ||
+      itemLower.includes('non alcoholic spirit') ||
+      itemLower.includes('alcohol-free spirit') ||
+      itemLower.includes('alcohol free spirit') ||
+      itemLower.includes('distilled non-alcoholic') ||
+      scopeCat.toLowerCase().includes('non-alcoholic spirit') ||
+      ((itemLower.includes('spirit') || scopeCat.toLowerCase().includes('spirit') || flavorLower.includes('spirit')) &&
+        (itemLower.includes('0.0') || flavorLower.includes('0.0') || brandLower.includes('0.0') || combinedText.includes('alcohol free')));
+
+    if (isNonAlcoholicSpirit) {
+      if (brandLower.includes('seedlip')) {
+        return {
+          scopeCategory: 'Non-Alcoholic Spirits',
+          traxCategory: 'Spirits',
+          clientCategory: 'Spirits',
+          smartL1: 'Spirits',
+          projectScopeName: scopeName,
+          notes,
+        };
+      } else {
+        return {
+          scopeCategory: 'Out of Scope',
+          traxCategory: 'Out of Scope',
+          clientCategory: 'Out of Scope',
+          smartL1: 'Out of Scope',
+          projectScopeName: scopeName,
+          notes: notes.toLowerCase().includes('seedlip')
+            ? notes
+            : (notes ? notes + '. ' : '') + 'Out of Scope: Only Seedlip brand exists as in-scope non-alcoholic spirits for Diageo GR (per Confluence guidelines).',
+        };
+      }
+    }
+
+    // 2. Explicitly prohibited Out of Scope categories for Diageo GR:
+    // Beer & Cider, Energy Items, Food Items, Tea Products, Soft Drinks, Juice Products, Medicines
+    const isBeerOrCider = /\b(beer|cider|lager|ale|stout|pilsner|somersby|strongbow|heineken|amstel|fix|alfa|guinness|bedele|sofi malt|walia)\b/i.test(combinedText);
+    const isEnergy = /\b(energy drink|red bull|monster energy|rockstar|hell energy)\b/i.test(combinedText);
+    const isFood = /\b(chips|crisps|snack|biscuits|cookies|chocolate|confectionery|mayo|ketchup|sauce)\b/i.test(combinedText);
+    const isTea = /\b(tea|iced tea|nestea|lipton)\b/i.test(combinedText);
+    const isSoftDrink = /\b(coca-cola|pepsi|sprite|fanta|soda water|tonic water)\b/i.test(combinedText);
+    const isJuice = /\b(orange juice|apple juice|fruit juice|nectar|puree)\b/i.test(combinedText);
+
+    // RTD exception check (Smirnoff Ice, pre-mixed drinks, canned cocktails)
+    const isRtd =
+      /\b(rtd|ready to drink|pre-mix|premix|smirnoff ice|flavoured alcoholic beverage|flavored alcoholic beverage|canned cocktail|cocktail in a can|gin & tonic)\b/i.test(combinedText) ||
+      traxCat.toLowerCase().includes('ready to drink') ||
+      clientCat.toLowerCase().includes('pre-mix');
+
+    if (!isRtd && (isBeerOrCider || isEnergy || isFood || isTea || isSoftDrink || isJuice)) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Belongs to excluded categories for Diageo GR (Beer & Cider, Energy, Food, Tea, Soft Drinks, Juice).',
+      };
+    }
+
+    // 3. In-Scope: RTD / Alcoholic Ready to Drink
+    if (isRtd) {
+      return {
+        scopeCategory: 'Alcoholic Pre-Mix Drink',
+        traxCategory: 'Alcoholic Ready to Drink',
+        clientCategory: 'Alcoholic Pre-Mix Drink',
+        smartL1: 'Alcoholic Ready to Drink',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // 4. In-Scope: Champagne
+    if (/\b(champagne|dom perignon|veuve clicquot|moet & chandon|moët & chandon)\b/i.test(combinedText) || traxCat.toLowerCase() === 'champagne') {
+      return {
+        scopeCategory: 'Champagne',
+        traxCategory: 'Champagne',
+        clientCategory: 'Champagne',
+        smartL1: 'Champagne',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // 5. In-Scope: MENU products
+    if (/\bmenu\b/i.test(combinedText) || smartL1Val.toLowerCase() === 'menu') {
+      return {
+        scopeCategory: 'MENU',
+        traxCategory: 'Spirits',
+        clientCategory: 'Spirits',
+        smartL1: 'MENU',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // 6. In-Scope: Spirits (Whisky, Scotch, Vodka, Gin, Rum, Tequila, Brandy, Liqueur, Tsipouro, Ouzo, etc.)
+    const isSpirit =
+      /\b(whisky|whiskey|scotch|bourbon|vodka|gin|rum|tequila|mezcal|brandy|cognac|liqueur|liquor|spirit|spirits|ouzo|tsipouro|sambuca|vermouth|aperitif|haig|ciroc|smirnoff|johnnie walker|tanqueray|baileys|captain morgan|gordon's|gordons|j&b|ketel one|don julio|zacapa)\b/i.test(combinedText) ||
+      scopeCat.toLowerCase().includes('spirit') ||
+      traxCat.toLowerCase().includes('spirit') ||
+      clientCat.toLowerCase().includes('spirit') ||
+      smartL1Val.toLowerCase().includes('spirit');
+
+    if (isSpirit) {
+      return {
+        scopeCategory: 'Spirits',
+        traxCategory: 'Spirits',
+        clientCategory: 'Spirits',
+        smartL1: 'Spirits',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+  }
+
+  // General scope resolution (for Kraft Heinz Germany, Diageo IE, Custom scopes)
+  const isExplicitOutOfScope =
+    scopeCat.toLowerCase() === 'out of scope' ||
+    traxCat.toLowerCase() === 'out of scope' ||
+    clientCat.toLowerCase() === 'out of scope' ||
+    smartL1Val.toLowerCase() === 'out of scope' ||
+    (/^\s*out\s*of\s*scope\b/i.test(notes) && !/\bnot\s+out\s+of\s+scope\b/i.test(notes));
+
+  if (isExplicitOutOfScope) {
+    return {
+      scopeCategory: 'Out of Scope',
+      traxCategory: 'Out of Scope',
+      clientCategory: 'Out of Scope',
+      smartL1: 'Out of Scope',
+      projectScopeName: scopeName,
+      notes,
+    };
+  }
+
+  // Attempt to match against scope rules
+  const ruleMatch =
+    projectScope.rules.find(
+      r =>
+        (scopeCat && r.scopeCategory.toLowerCase() === scopeCat.toLowerCase()) ||
+        (traxCat && clientCat && r.traxCategory.toLowerCase() === traxCat.toLowerCase() && r.clientCategory.toLowerCase() === clientCat.toLowerCase()) ||
+        (clientCat && r.clientCategory.toLowerCase() === clientCat.toLowerCase()) ||
+        (traxCat && r.traxCategory.toLowerCase() === traxCat.toLowerCase())
+    ) ||
+    projectScope.rules.find(r =>
+      r.smartL1List.some(s => smartL1Val && (s.toLowerCase() === smartL1Val.toLowerCase() || smartL1Val.toLowerCase().includes(s.toLowerCase())))
+    );
+
+  if (ruleMatch) {
+    scopeCat = ruleMatch.scopeCategory;
+    traxCat = ruleMatch.traxCategory;
+    clientCat = ruleMatch.clientCategory;
+
+    const smartL1Match = ruleMatch.smartL1List.find(
+      s =>
+        smartL1Val &&
+        (s.toLowerCase() === smartL1Val.toLowerCase() ||
+          smartL1Val.toLowerCase().includes(s.toLowerCase()) ||
+          s.toLowerCase().includes(smartL1Val.toLowerCase()))
+    );
+    if (smartL1Match) {
+      smartL1Val = smartL1Match;
+    } else if (ruleMatch.smartL1List.length > 0) {
+      smartL1Val = ruleMatch.smartL1List[0];
+    }
+
+    return {
+      scopeCategory: scopeCat,
+      traxCategory: traxCat,
+      clientCategory: clientCat,
+      smartL1: smartL1Val,
+      projectScopeName: scopeName,
+      notes,
+    };
+  }
+
+  return {
+    scopeCategory: scopeCat || undefined,
+    traxCategory: traxCat || undefined,
+    clientCategory: clientCat || undefined,
+    smartL1: smartL1Val || undefined,
+    projectScopeName: scopeName,
+    notes,
+  };
+}
+
+/**
  * Call Google Gemini Vision API to analyze product image with automatic model resolution, rate limit backoff, and fallback
  */
 export async function analyzeProductImage(
@@ -222,9 +457,12 @@ ${formatScopeForPrompt(projectScope)}
 
 CRITICAL PROJECT SCOPE INSTRUCTIONS:
 Based on this product image and FMCG classification, you MUST match and assign the exact category attributes from this project scope:
-1. OUT OF SCOPE CHECK: If the product belongs to any of the OUT-OF-SCOPE categories (e.g. Beer & Cider, Energy Items, All food Items, Tea Products, Soft Drinks, Juice Products, Medicines and Treatments for Diageo GR):
-   - You MUST set "scopeCategory": "Out of Scope", "traxCategory": "Out of Scope", "clientCategory": "Out of Scope", "smartL1": "Out of Scope".
-   - In "notes", explain why the product is Out of Scope (e.g. "Out of Scope: Beer is not in Diageo GR scope").
+1. IN-SCOPE vs OUT-OF-SCOPE MANDATE:
+   - Carefully check if the product is IN SCOPE according to the Rules Matrix below.
+   - For Diageo GR: All Spirits (Vodka, Whisky, Gin, Rum, Tequila, etc.), Alcoholic Ready to Drink / RTD (including Smirnoff Ice, pre-mixed drinks), Seedlip non-alcoholic spirits, Champagne, and Bar Menus are 100% IN-SCOPE.
+   - ONLY classify as "Out of Scope" if the product is genuinely an excluded category (Beer & Cider, Energy Drinks, Food, Tea, Soft Drinks, Juice, Medicines, or non-alcoholic spirit NOT of brand Seedlip).
+   - If IN-SCOPE: You MUST set the matching scopeCategory, traxCategory, clientCategory, and smartL1 from the Rules Matrix. Do NOT write "Out of Scope" in notes for in-scope products!
+   - If OUT OF SCOPE: Set "scopeCategory": "Out of Scope", "traxCategory": "Out of Scope", "clientCategory": "Out of Scope", "smartL1": "Out of Scope", and in "notes" start with "Out of Scope: [reason]".
 2. SPECIAL RULE FOR DIAGEO GR NON-ALCOHOLIC SPIRITS:
    - Only "Seedlip" brand is in scope as non-alcoholic spirits!
    - If the product is a non-alcoholic spirit and the brand is NOT Seedlip (e.g. Tanqueray 0.0%, Gordon's 0.0%, Captain Morgan 0.0%, etc.), you MUST classify it as "Out of Scope" (e.g. "Out of Scope: Only Seedlip brand exists as non-alcoholic spirits in Diageo GR").
@@ -405,70 +643,29 @@ Based on this product image and FMCG classification, you MUST match and assign t
   let smartL1 = (parsed.smartL1 || '').trim();
   let projectScopeName = (parsed.projectScopeName || (projectScope ? projectScope.name : '')).trim();
 
-  // Normalize categories if a project scope is active
+  // Normalize categories if a project scope is active using deterministic resolver
   if (projectScope && projectScope.rules && projectScope.rules.length > 0) {
-    projectScopeName = projectScope.name;
-    const isOutOfScope =
-      scopeCategory.toLowerCase().includes('out of scope') ||
-      traxCategory.toLowerCase().includes('out of scope') ||
-      clientCategory.toLowerCase().includes('out of scope') ||
-      smartL1.toLowerCase().includes('out of scope') ||
-      (parsed.notes && parsed.notes.toLowerCase().includes('out of scope'));
+    const scopeResolution = resolveScopeCategories(
+      {
+        brand: parsed.brand,
+        item: parsed.item,
+        flavorOrVariant: parsed.flavorOrVariant,
+        scopeCategory,
+        traxCategory,
+        clientCategory,
+        smartL1,
+        notes: parsed.notes,
+      },
+      projectScope
+    );
 
-    // Check Diageo GR Seedlip rule:
-    const brandLower = (parsed.brand || '').toLowerCase();
-    const itemLower = (parsed.item || '').toLowerCase();
-    const flavorLower = (parsed.flavorOrVariant || '').toLowerCase();
-    const isNonAlcoholicSpirit =
-      itemLower.includes('non-alcoholic spirit') ||
-      itemLower.includes('non alcoholic spirit') ||
-      itemLower.includes('0.0%') ||
-      itemLower.includes('alcohol-free spirit') ||
-      itemLower.includes('alcohol free spirit') ||
-      itemLower.includes('distilled non-alcoholic') ||
-      scopeCategory.toLowerCase().includes('non-alcoholic spirit') ||
-      flavorLower.includes('non-alcoholic spirit') ||
-      flavorLower.includes('0.0%');
-
-    if (projectScope.id === 'diageo-gr' && isNonAlcoholicSpirit && !brandLower.includes('seedlip')) {
-      scopeCategory = 'Out of Scope';
-      traxCategory = 'Out of Scope';
-      clientCategory = 'Out of Scope';
-      smartL1 = 'Out of Scope';
-      if (!parsed.notes?.toLowerCase().includes('out of scope')) {
-        parsed.notes = (parsed.notes ? parsed.notes + '. ' : '') + 'Out of Scope: Only Seedlip brand exists as in-scope non-alcoholic spirits for Diageo GR (per Confluence guidelines).';
-      }
-    } else if (isOutOfScope) {
-      scopeCategory = 'Out of Scope';
-      traxCategory = 'Out of Scope';
-      clientCategory = 'Out of Scope';
-      smartL1 = 'Out of Scope';
-    } else {
-      const ruleMatch = projectScope.rules.find(r => 
-        (scopeCategory && r.scopeCategory.toLowerCase() === scopeCategory.toLowerCase()) ||
-        (traxCategory && clientCategory && r.traxCategory.toLowerCase() === traxCategory.toLowerCase() && r.clientCategory.toLowerCase() === clientCategory.toLowerCase()) ||
-        (clientCategory && r.clientCategory.toLowerCase() === clientCategory.toLowerCase()) ||
-        (traxCategory && r.traxCategory.toLowerCase() === traxCategory.toLowerCase())
-      ) || projectScope.rules.find(r =>
-        r.smartL1List.some(s => smartL1 && (s.toLowerCase() === smartL1.toLowerCase() || smartL1.toLowerCase().includes(s.toLowerCase())))
-      );
-
-      if (ruleMatch) {
-        if (!scopeCategory) {
-          scopeCategory = ruleMatch.scopeCategory;
-        }
-        traxCategory = ruleMatch.traxCategory;
-        clientCategory = ruleMatch.clientCategory;
-
-        const smartL1Match = ruleMatch.smartL1List.find(s =>
-          smartL1 && (s.toLowerCase() === smartL1.toLowerCase() || smartL1.toLowerCase().includes(s.toLowerCase()) || s.toLowerCase().includes(smartL1.toLowerCase()))
-        );
-        if (smartL1Match) {
-          smartL1 = smartL1Match;
-        } else if (ruleMatch.smartL1List.length > 0) {
-          smartL1 = ruleMatch.smartL1List[0];
-        }
-      }
+    scopeCategory = scopeResolution.scopeCategory || '';
+    traxCategory = scopeResolution.traxCategory || '';
+    clientCategory = scopeResolution.clientCategory || '';
+    smartL1 = scopeResolution.smartL1 || '';
+    projectScopeName = scopeResolution.projectScopeName || projectScope.name;
+    if (scopeResolution.notes) {
+      parsed.notes = scopeResolution.notes;
     }
   }
 
