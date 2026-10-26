@@ -297,6 +297,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                       className="w-full px-2.5 py-1.5 bg-slate-900 border border-purple-500/40 rounded-lg text-slate-200 focus:outline-none focus:border-purple-400"
                     >
                       <option value="">Select Client Category...</option>
+                      <option value="Out of Scope">Out of Scope</option>
                       {clientOptions.map(c => (
                         <option key={c} value={c}>
                           {c}
