@@ -1,6 +1,6 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 import { ProcessedProduct, AppSettings, BrandManufacturerInfo } from '../types';
-import { ProjectScope, DEFAULT_PROJECT_SCOPES, KRAFT_HEINZ_GERMANY_SCOPE } from '../constants/projectScopes';
+import { ProjectScope, DEFAULT_PROJECT_SCOPES, KRAFT_HEINZ_GERMANY_SCOPE, UNILEVER_PT_SCOPE } from '../constants/projectScopes';
 
 interface GssOdaDB extends DBSchema {
   products: {

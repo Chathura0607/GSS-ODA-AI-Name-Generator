@@ -355,6 +355,311 @@ export function resolveScopeCategories(
     }
   }
 
+  // Special deterministic rule handler for Unilever PT
+  if (projectScope.id === 'unilever-pt') {
+    // 1. Strict Out-of-Scope Exclusions for Unilever PT
+    if (/\b(foot deodorant|deodorant wipe|perfume|eau de parfum|eau de toilette|cologne)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Foot deodorants, perfumes, and wipes are excluded from Unilever PT scope.',
+      };
+    }
+
+    if (/\b(hair color|hair dye|bleach shampoo|colored shampoo|styling foam|hair mousse|hair gel|hair wax|hair paste|hair spray|hairspray|child shampoo|baby shampoo|hair dryer|hair curler|hair brush)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Hair coloring, hair styling products, baby shampoo, and appliances are excluded from Unilever PT scope.',
+      };
+    }
+
+    if (/\b(body scrub|intimate hygiene|intimate wash|intimate gel|intimate soap|baby wash|baby bath|baby soap)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Body scrubs, intimate hygiene products, and baby bath products are excluded from Unilever PT scope.',
+      };
+    }
+
+    if (/\b(foot cream|foot mask|nail cream|cuticle|sunscreen|sun screen|sun milk|spf|hair removal|depilatory|razor|makeup|mascara|lipstick|eyeliner|foundation|nail polish|acetone|aftershave|after shave|baby cream|baby lotion)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Foot cream, sunscreens, hair removal, makeup, and aftershaves are excluded from Unilever PT scope.',
+      };
+    }
+
+    if (/\b(hand laundry|hand wash detergent|wool & silk|woolite|soflan|stain remover|color protection wipe|dye|anti-limescale|descaling|machine cleaner|dry wash spray|easy glue)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Hand laundry detergent, specialist wool & silk, stain removers, and machine cleaners are excluded from Unilever PT scope.',
+      };
+    }
+
+    if (/\b(ironing water|perfumed water|textile air freshener|linen spray)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Ironing water and textile air fresheners are excluded from Unilever PT scope.',
+      };
+    }
+
+    if (/\b(ready meal|canned meal|liquid soup|miso soup|potato flake)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Ready meals, liquid canned soups, and potato flakes are excluded from Unilever PT scope.',
+      };
+    }
+
+    if (/\b(tomato paste|passata|crushed tomato|tomato pulp|pasta sauce|cooking sauce|pesto|bolognese|arrabbiata|francesinha|coconut milk|coconut cream|soy sauce|teriyaki|oyster sauce|hoisin|wasabi|tabasco|piri-piri|piri piri|jindungo|hummus|guacamole|vinaigrette|chutney)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Tomato sauces, cooking sauces (pesto, bolognese, francesinha), Asian sauces, and hot piri-piri sauces are excluded from Unilever PT scope.',
+      };
+    }
+
+    if (/\b(soft drink|coca-cola|pepsi|sprite|fanta|ginger ale|tonic water|kombucha|fruit juice|orange juice|apple juice|nectar|sangria|bloodletting|mineral water|sparkling water)\b/i.test(combinedText) && !/\b(ice tea|iced tea|lipton)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Soft drinks, juices, kombucha, and sangria are excluded from Unilever PT scope (only Ice Tea is in scope).',
+      };
+    }
+
+    if (/\b(coffee|cafe|café|tea capsule|nespresso|dolce gusto|soluble chocolate|hot chocolate|cereal drink)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Coffee, tea capsules, and soluble chocolate are excluded from Unilever PT scope.',
+      };
+    }
+
+    if (/\b(air freshener|insecticide|shoe spray|sanitary abrasive|furniture aerosol|cleaning vinegar|lixivia|lixívia|carpet cleaner|carpet detergent|floor wax|wood restorer)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Air fresheners, insecticides, cleaning vinegars, and carpet cleaners are excluded from Unilever PT scope.',
+      };
+    }
+
+    // 2. Specific Category Mappings for In-Scope products in Unilever PT
+    if (/\b(deodorant|antiperspirant|body spray|deo spray|roll-on|roll on|axe|rexona)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Deodorant',
+        traxCategory: 'APDO',
+        clientCategory: 'Deodorant',
+        smartL1: 'APDO',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    if (/\b(shampoo|conditioner|hair mask|hair serum|hair treatment|tresemme|tresemmé|sunsilk|clear)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Hair Care',
+        traxCategory: 'Hair Care',
+        clientCategory: 'Hair Care',
+        smartL1: 'Hair Care',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    if (/\b(shower gel|shower oil|bath foam|body wash)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Skin Cleansing',
+        traxCategory: 'Bath Care',
+        clientCategory: 'Skin Cleansing',
+        smartL1: 'Bath Care',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    if (/\b(bar soap|solid soap|liquid soap|hand soap|hand wash)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Soap',
+        traxCategory: 'Bar Soap',
+        clientCategory: 'SOAP',
+        smartL1: 'Bar Soap',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    if (/\b(lip balm|lip cream|lip therapy|lip care)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Skin Care',
+        traxCategory: 'Lip Balm',
+        clientCategory: 'Skin Care',
+        smartL1: 'Lip Balm',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    if (/\b(body cream|body lotion|body milk|body gel|body oil|body serum|multi-purpose cream|hand cream|hand & nail|vaseline)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Skin Care',
+        traxCategory: 'Face / Body Care',
+        clientCategory: 'Skin Care',
+        smartL1: 'Face / Body Care',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    if (/\b(laundry detergent|washing powder|liquid detergent|detergent capsules|washing capsules|skip|surf|persil)\b/i.test(combinedText)) {
+      const isPallet = scopeCat.toLowerCase().includes('pallet');
+      return {
+        scopeCategory: isPallet ? 'Fabric Cleaning-Pallets' : 'Fabric Cleaning',
+        traxCategory: 'Fabric Cleaning',
+        clientCategory: 'Fabric Cleaning',
+        smartL1: 'Fabric Cleaning',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    if (/\b(fabric softener|fabric enhancer|comfort|perfume enhancer|perfume spray)\b/i.test(combinedText)) {
+      const isPallet = scopeCat.toLowerCase().includes('pallet');
+      return {
+        scopeCategory: isPallet ? 'Fabric Enhancer-Pallets' : 'Fabric Enhancer',
+        traxCategory: 'Fabric Enhancer',
+        clientCategory: 'Fabric Enhancer',
+        smartL1: 'Fabric Enhancer',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    if (/\b(bouillon|broth cube|broth powder|seasoning cube|knorr caldo|broth jelly)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'SCA - Bouillons',
+        traxCategory: 'Salt & Spices & Seasoning',
+        clientCategory: 'SCA - Bouillons',
+        smartL1: 'Salt & Spices & Seasoning',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    if (/\b(instant noodles|noodles|pasta snack|pot pasta|instant rice|mashed potato|mashed potatoes)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Snacking',
+        traxCategory: 'Dry Cooking Ingredients',
+        clientCategory: 'Mini Meal',
+        smartL1: 'Dry Cooking Ingredients',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    if (/\b(dehydrated soup|dry soup|soup powder|packet soup|knorr soup)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'SCA - Soups',
+        traxCategory: 'Prepared Meals & Soups',
+        clientCategory: 'SCA - Soups',
+        smartL1: 'Prepared Meals & Soups',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    if (/\b(mayonnaise|ketchup|mustard|burger sauce|garlic sauce|barbecue sauce|bbq sauce|cocktail sauce|caesar sauce|yogurt sauce|tartar sauce|hellmann's|calve|calvé)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Dressing',
+        traxCategory: 'Sauces & Condiments',
+        clientCategory: 'Condiment',
+        smartL1: 'Sauces & Condiments',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    if (/\b(ice tea|iced tea|lipton ice tea)\b/i.test(combinedText)) {
+      const isPallet = scopeCat.toLowerCase().includes('pallet');
+      return {
+        scopeCategory: isPallet ? 'RTD-Pallets' : 'RTD',
+        traxCategory: 'RTD Tea',
+        clientCategory: 'RTD',
+        smartL1: 'RTD Tea',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    if (/\b(tea|leaf tea|tea bags|herbal tea infusion|infusion|lipton tea|pg tips)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Leaf Tea',
+        traxCategory: 'Tea',
+        clientCategory: 'Leaf Tea',
+        smartL1: 'Tea',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    if (/\b(cif|domestos|bleach spray|kitchen spray|degreaser|bathroom spray|glass cleaner|multisurface|multi-surface cleaner|cleaning spray)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'House Hold Cleaning',
+        traxCategory: 'Household Care',
+        clientCategory: 'House Hold Cleaning',
+        smartL1: 'Household Care',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    if (/\b(ice cream|ice pop|popsicle|magnum|cornetto|ben & jerry|viennetta|carte d'or|solero|feast)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Ice Cream Horizontal Coolers',
+        traxCategory: 'Ice Cream & Ice Pops',
+        clientCategory: 'Ice Cream',
+        smartL1: 'Ice Cream & Ice Pops',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+  }
+
   // General scope resolution (for Kraft Heinz Germany, Diageo IE, Custom scopes)
   const isExplicitOutOfScope =
     scopeCat.toLowerCase() === 'out of scope' ||

@@ -16,7 +16,7 @@ import {
   AlertTriangle,
   XCircle,
 } from 'lucide-react';
-import { ProjectScope, ProjectScopeRule, KRAFT_HEINZ_GERMANY_SCOPE, DIAGEO_GR_SCOPE } from '../constants/projectScopes';
+import { ProjectScope, ProjectScopeRule, KRAFT_HEINZ_GERMANY_SCOPE, DIAGEO_GR_SCOPE, UNILEVER_PT_SCOPE } from '../constants/projectScopes';
 import { saveProjectScope, deleteProjectScope, resetDefaultProjectScopes } from '../services/db';
 
 interface ProjectScopeModalProps {
@@ -307,7 +307,7 @@ export const ProjectScopeModal: React.FC<ProjectScopeModalProps> = ({
                       <div>
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="font-bold text-xs text-white">{s.name}</span>
-                          {(s.id === 'kraft-heinz-germany' || s.id === 'diageo-ie' || s.id === 'diageo-gr') && (
+                          {(s.id === 'kraft-heinz-germany' || s.id === 'diageo-ie' || s.id === 'diageo-gr' || s.id === 'unilever-pt') && (
                             <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
                               TEMPLATE
                             </span>
@@ -402,7 +402,7 @@ export const ProjectScopeModal: React.FC<ProjectScopeModalProps> = ({
                   </button>
                 )}
 
-                {currentScope.id !== 'kraft-heinz-germany' && currentScope.id !== 'diageo-ie' && currentScope.id !== 'diageo-gr' && (
+                {currentScope.id !== 'kraft-heinz-germany' && currentScope.id !== 'diageo-ie' && currentScope.id !== 'diageo-gr' && currentScope.id !== 'unilever-pt' && (
                   <button
                     type="button"
                     onClick={() => handleDeleteScope(currentScope.id)}
@@ -553,6 +553,18 @@ export const ProjectScopeModal: React.FC<ProjectScopeModalProps> = ({
                               </span>
                             ))}
                           </div>
+                          {r.inScopeProducts && r.inScopeProducts.length > 0 && (
+                            <div className="mt-2 pt-1.5 border-t border-slate-800/80">
+                              <span className="text-[10px] font-semibold text-emerald-400 block mb-0.5">In-Scope:</span>
+                              <p className="text-[10px] text-slate-400 leading-tight">{r.inScopeProducts.join(', ')}</p>
+                            </div>
+                          )}
+                          {r.outOfScopeProducts && r.outOfScopeProducts.length > 0 && (
+                            <div className="mt-1.5">
+                              <span className="text-[10px] font-semibold text-rose-400 block mb-0.5">Out of Scope:</span>
+                              <p className="text-[10px] text-rose-300/80 leading-tight">{r.outOfScopeProducts.join(', ')}</p>
+                            </div>
+                          )}
                         </td>
                         <td className="p-3 text-right">
                           <button

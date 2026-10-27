@@ -11,7 +11,7 @@ import { ProjectScopeModal } from './components/ProjectScopeModal';
 import { BrandManufacturerStudio } from './components/BrandManufacturerStudio';
 
 import { ProcessedProduct, AppSettings } from './types';
-import { ProjectScope, KRAFT_HEINZ_GERMANY_SCOPE, DIAGEO_GR_SCOPE, DEFAULT_PROJECT_SCOPES } from './constants/projectScopes';
+import { ProjectScope, KRAFT_HEINZ_GERMANY_SCOPE, DIAGEO_GR_SCOPE, UNILEVER_PT_SCOPE, DEFAULT_PROJECT_SCOPES } from './constants/projectScopes';
 import { ExtractedImageFile } from './services/archiveExtractor';
 import { analyzeProductImage, resolveScopeCategories } from './services/gemini';
 import { assembleStandardName, validateStandardName, generateGoogleSkuUrl } from './services/validator';
