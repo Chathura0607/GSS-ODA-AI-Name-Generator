@@ -660,6 +660,261 @@ export function resolveScopeCategories(
     }
   }
 
+  // Special deterministic rule handler for Coca-Cola Israel (CBC_IL)
+  if (projectScope.id === 'coca-cola-israel' || projectScope.id === 'cbc-il') {
+    // 1. Strict Out-of-Scope Exclusions for CBC_IL:
+    // Non-beverage items (food, snacks, grocery, condiments, dairy, personal care, household care, tobacco, medicines)
+    const isNonBeverage =
+      /\b(chips|crisps|pretzels|nachos|popcorn|crackers|biscuits|cookies|chocolate|confectionery|candy|gummies|gummy|wafers|snack bar|protein bar|mayo|mayonnaise|ketchup|mustard|vinegar|sauce|pasta|noodles|soup|seasoning|spices|salt|olive oil|cooking oil|cheese|yogurt|butter|curd|shampoo|soap|shower gel|body wash|deodorant|perfume|lotion|toothpaste|sunscreen|razor|detergent|softener|dishwash|bleach|cleaner|cigarettes|cigar|tobacco|vape|pod|medicine|syrup|capsules|tablets|pharmaceutical)\b/i.test(
+        combinedText
+      );
+
+    const isBeverage =
+      /\b(drink|beverage|cola|coke|soda|sparkling|water|juice|nectar|tea|coffee|latte|espresso|beer|ale|lager|stout|cider|spirit|spirits|whisky|whiskey|vodka|gin|rum|tequila|wine|champagne|rtd|energy drink|sports drink|isotonic|schweppes|fanta|sprite|fuze tea|prigat|neviot|tuborg|carlsberg)\b/i.test(
+        combinedText
+      );
+
+    if (isNonBeverage && !isBeverage) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes:
+          (notes ? notes + '. ' : '') +
+          'Out of Scope: Non-beverage item excluded from Coca-Cola Israel (CBC_IL) scope.',
+      };
+    }
+
+    // 2. RTD Coffee
+    if (
+      /\b(rtd coffee|ready to drink coffee|iced coffee|cold brew|canned coffee|coffee drink|latte drink|frappuccino|espresso drink)\b/i.test(
+        combinedText
+      ) ||
+      traxCat.toLowerCase().includes('coffee') ||
+      clientCat.toLowerCase().includes('coffee') ||
+      smartL1Val.toLowerCase().includes('coffee')
+    ) {
+      return {
+        scopeCategory: 'RTD Coffee',
+        traxCategory: 'RTD Coffee',
+        clientCategory: 'RTD Coffee',
+        smartL1: 'RTD Coffee',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // 3. Energy Drinks
+    if (
+      /\b(energy drink|energy drinks|red bull|monster energy|rockstar|hell energy|xl energy|blu energy)\b/i.test(
+        combinedText
+      ) ||
+      traxCat.toLowerCase().includes('energy') ||
+      smartL1Val.toLowerCase().includes('energy')
+    ) {
+      return {
+        scopeCategory: 'Energy Drinks',
+        traxCategory: 'Energy Drinks',
+        clientCategory: 'Energy Drinks',
+        smartL1: 'Energy Drinks',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // 4. Isotonic & Sports Drinks
+    if (
+      /\b(sports drink|sports drinks|isotonic|powerade|gatorade|electrolyte drink)\b/i.test(
+        combinedText
+      ) ||
+      traxCat.toLowerCase().includes('isotonic') ||
+      traxCat.toLowerCase().includes('sports') ||
+      clientCat.toLowerCase().includes('sports') ||
+      smartL1Val.toLowerCase().includes('sports')
+    ) {
+      return {
+        scopeCategory: 'Isotonic & Sports Drinks',
+        traxCategory: 'Isotonic & Sports Drinks',
+        clientCategory: 'Sports Drinks',
+        smartL1: 'Sports Drinks',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // 5. Tea / Ice Tea
+    if (
+      (/\b(ice tea|iced tea|fuze tea|nestea|lipton ice|leaf tea|tea drink)\b/i.test(
+        combinedText
+      ) ||
+        (combinedText.includes('tea') && !combinedText.includes('tequila'))) ||
+      traxCat.toLowerCase() === 'tea' ||
+      clientCat.toLowerCase().includes('tea') ||
+      smartL1Val.toLowerCase().includes('tea')
+    ) {
+      return {
+        scopeCategory: 'Tea',
+        traxCategory: 'Tea',
+        clientCategory: 'Ice Tea',
+        smartL1: 'Ice Tea',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // 6. Juices
+    if (
+      /\b(juice|juices|nectar|cranberries|freshy squeezed|freshly squeezed|prigat|fruit juice|orange juice|apple juice)\b/i.test(
+        combinedText
+      ) ||
+      traxCat.toLowerCase().includes('juice') ||
+      clientCat.toLowerCase().includes('juice') ||
+      smartL1Val.toLowerCase().includes('juice')
+    ) {
+      return {
+        scopeCategory: 'Juices',
+        traxCategory: 'Juices',
+        clientCategory: 'Juice / Juices',
+        smartL1: 'Juice',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // 7. Water
+    if (
+      /\b(water|mineral water|spring water|sparkling water|flavoured water|flavored water|near water|bottle water|bottled water|neviot|kinley soda)\b/i.test(
+        combinedText
+      ) ||
+      traxCat.toLowerCase() === 'water' ||
+      clientCat.toLowerCase() === 'water' ||
+      smartL1Val.toLowerCase() === 'water'
+    ) {
+      return {
+        scopeCategory: 'Water',
+        traxCategory: 'Water',
+        clientCategory: 'Water',
+        smartL1: 'Water',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // 8. Champagne
+    if (
+      /\b(champagne|dom perignon|veuve clicquot|moet & chandon|moët & chandon|cristal|krug)\b/i.test(
+        combinedText
+      ) ||
+      traxCat.toLowerCase() === 'champagne' ||
+      clientCat.toLowerCase() === 'champagne' ||
+      smartL1Val.toLowerCase() === 'champagne'
+    ) {
+      return {
+        scopeCategory: 'Champagne',
+        traxCategory: 'Champagne',
+        clientCategory: clientCat.toLowerCase().includes('spirit') ? 'Spirit' : 'Champagne',
+        smartL1: 'Champagne',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // 9. Alcoholic Ready to Drink / RTD
+    if (
+      /\b(rtd|ready to drink|pre-mix|premix|smirnoff ice|breezer|hard seltzer|white claw|canned cocktail)\b/i.test(
+        combinedText
+      ) ||
+      traxCat.toLowerCase().includes('alcoholic ready to drink') ||
+      smartL1Val.toLowerCase() === 'rtd'
+    ) {
+      return {
+        scopeCategory: 'Alcoholic Ready to Drink',
+        traxCategory: 'Alcoholic Ready to Drink',
+        clientCategory: clientCat.toLowerCase().includes('spirit') ? 'Spirit' : 'RTD',
+        smartL1: 'RTD',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // 10. Beer & Cider
+    if (
+      /\b(beer|malt beer|white beer|lager|ale|pilsner|stout|ipa|cider|tuborg|carlsberg|goldstar|maccabee|amstel|guinness|corona|stella artois|somersby)\b/i.test(
+        combinedText
+      ) ||
+      traxCat.toLowerCase().includes('beer') ||
+      smartL1Val.toLowerCase() === 'beer'
+    ) {
+      return {
+        scopeCategory: 'Beer & Cider',
+        traxCategory: 'Beer & Cider',
+        clientCategory: clientCat.toLowerCase().includes('spirit') ? 'Spirit' : 'Beer',
+        smartL1: 'Beer',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // 11. Wine
+    if (
+      /\b(wine|red wine|white wine|rose wine|rosé wine|desert wine|dessert wine|sparkling wine|prosecco|cava|cabernet|merlot|chardonnay|sauvignon|shiraz|pinot)\b/i.test(
+        combinedText
+      ) ||
+      traxCat.toLowerCase() === 'wine' ||
+      clientCat.toLowerCase() === 'wine' ||
+      smartL1Val.toLowerCase() === 'wine'
+    ) {
+      return {
+        scopeCategory: 'Wine',
+        traxCategory: 'Wine',
+        clientCategory: 'Wine',
+        smartL1: 'Wine',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // 12. Spirits
+    if (
+      /\b(spirit|spirits|whisky|whiskey|scotch|bourbon|vodka|gin|rum|tequila|mezcal|brandy|cognac|liqueur|liquor|cocktail mixer|cocktail mixers|non-alcoholic spirit|non-alcoholic spirits|arak|ouzo|aperitif|vermouth)\b/i.test(
+        combinedText
+      ) ||
+      traxCat.toLowerCase().includes('spirit') ||
+      clientCat.toLowerCase() === 'spirit' ||
+      smartL1Val.toLowerCase() === 'spirit'
+    ) {
+      return {
+        scopeCategory: 'Spirits',
+        traxCategory: 'Spirits',
+        clientCategory: 'Spirit',
+        smartL1: 'Spirit',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // 13. Soft Drinks / Flavored Sparkling (Colas, Fruit Sparkling, Lemon Sparkling, Soda, Soft Drinks)
+    if (
+      /\b(soft drink|soft drinks|carbonated|sparkling|black sparkling|fruit sparkling|lemon sparkling|soda|coca-cola|coke|fanta|sprite|schweppes|pepsi|7up|mirinda|dr pepper|ginger ale|tonic)\b/i.test(
+        combinedText
+      ) ||
+      traxCat.toLowerCase().includes('soft drink') ||
+      clientCat.toLowerCase().includes('sparkling') ||
+      smartL1Val.toLowerCase().includes('sparkling')
+    ) {
+      return {
+        scopeCategory: 'Soft Drinks',
+        traxCategory: 'Soft Drinks',
+        clientCategory: 'Flavored Sparkling',
+        smartL1: 'Flavored Sparkling',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+  }
+
   // General scope resolution (for Kraft Heinz Germany, Diageo IE, Custom scopes)
   const isExplicitOutOfScope =
     scopeCat.toLowerCase() === 'out of scope' ||
