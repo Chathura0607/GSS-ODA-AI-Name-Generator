@@ -16,7 +16,7 @@ import {
   AlertTriangle,
   XCircle,
 } from 'lucide-react';
-import { ProjectScope, ProjectScopeRule, COCA_COLA_ISRAEL_SCOPE, KRAFT_HEINZ_GERMANY_SCOPE, DIAGEO_GR_SCOPE, UNILEVER_PT_SCOPE } from '../constants/projectScopes';
+import { ProjectScope, ProjectScopeRule, COCA_COLA_ISRAEL_SCOPE, KRAFT_HEINZ_GERMANY_SCOPE, DIAGEO_GR_SCOPE, UNILEVER_PT_SCOPE, UNILEVER_IT_SCOPE } from '../constants/projectScopes';
 import { saveProjectScope, deleteProjectScope, resetDefaultProjectScopes } from '../services/db';
 
 interface ProjectScopeModalProps {
@@ -130,8 +130,8 @@ export const ProjectScopeModal: React.FC<ProjectScopeModalProps> = ({
   };
 
   const handleDeleteScope = async (scopeId: string) => {
-    if (scopeId === 'coca-cola-israel' || scopeId === 'kraft-heinz-germany' || scopeId === 'diageo-ie' || scopeId === 'diageo-gr' || scopeId === 'unilever-pt') {
-      alert('Built-in project scopes (Coca-Cola Israel, Kraft Heinz Germany, Diageo IE, Diageo GR, Unilever PT) cannot be deleted, but you can edit their rules or add your own scopes.');
+    if (scopeId === 'coca-cola-israel' || scopeId === 'kraft-heinz-germany' || scopeId === 'diageo-ie' || scopeId === 'diageo-gr' || scopeId === 'unilever-pt' || scopeId === 'unilever-it') {
+      alert('Built-in project scopes (Coca-Cola Israel, Kraft Heinz Germany, Diageo IE, Diageo GR, Unilever PT, Unilever IT) cannot be deleted, but you can edit their rules or add your own scopes.');
       return;
     }
     if (confirm(`Delete project scope "${currentScope.name}"?`)) {
@@ -307,7 +307,7 @@ export const ProjectScopeModal: React.FC<ProjectScopeModalProps> = ({
                       <div>
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="font-bold text-xs text-white">{s.name}</span>
-                          {(s.id === 'coca-cola-israel' || s.id === 'kraft-heinz-germany' || s.id === 'diageo-ie' || s.id === 'diageo-gr' || s.id === 'unilever-pt') && (
+                          {(s.id === 'coca-cola-israel' || s.id === 'kraft-heinz-germany' || s.id === 'diageo-ie' || s.id === 'diageo-gr' || s.id === 'unilever-pt' || s.id === 'unilever-it') && (
                             <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
                               TEMPLATE
                             </span>
@@ -402,7 +402,7 @@ export const ProjectScopeModal: React.FC<ProjectScopeModalProps> = ({
                   </button>
                 )}
 
-                {currentScope.id !== 'coca-cola-israel' && currentScope.id !== 'kraft-heinz-germany' && currentScope.id !== 'diageo-ie' && currentScope.id !== 'diageo-gr' && currentScope.id !== 'unilever-pt' && (
+                {currentScope.id !== 'coca-cola-israel' && currentScope.id !== 'kraft-heinz-germany' && currentScope.id !== 'diageo-ie' && currentScope.id !== 'diageo-gr' && currentScope.id !== 'unilever-pt' && currentScope.id !== 'unilever-it' && (
                   <button
                     type="button"
                     onClick={() => handleDeleteScope(currentScope.id)}
