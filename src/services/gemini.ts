@@ -660,6 +660,309 @@ export function resolveScopeCategories(
     }
   }
 
+  // Special deterministic rule handler for Unilever IT
+  if (projectScope.id === 'unilever-it') {
+    // 1. Strict Out-of-Scope Exclusions for Unilever IT (Food, Sauces, Ice Cream, Beverages, Home Care/Laundry, Tobacco, Medicines)
+    if (
+      /\b(ketchup|mayo|mayonnaise|mustard|pasta sauce|pesto|bolognese|cooking sauce|bouillon|broth|instant soup|canned soup|noodles|pasta snack|instant rice|mashed potato|ice cream|ice pop|popsicle|magnum|cornetto|viennetta|carte d'or|solero|feast|chips|crisps|snack|chocolate|candy|biscuits|cookie|cookies)\b/i.test(
+        combinedText
+      )
+    ) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Food, sauces, soups, and ice cream are excluded from Unilever IT scope.',
+      };
+    }
+
+    if (
+      /\b(soft drink|coca-cola|pepsi|sprite|fanta|ginger ale|tonic water|mineral water|sparkling water|fruit juice|orange juice|apple juice|nectar|iced tea|ice tea|lipton|tea bags|leaf tea|coffee|espresso|latte|beer|lager|cider|wine|spirit|whisky|vodka|energy drink|sports drink)\b/i.test(
+        combinedText
+      )
+    ) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Beverages, soft drinks, tea, coffee, and alcohol are excluded from Unilever IT scope.',
+      };
+    }
+
+    if (
+      /\b(laundry detergent|washing powder|liquid detergent|detergent capsules|fabric softener|fabric enhancer|bleach spray|kitchen spray|degreaser|bathroom spray|glass cleaner|multisurface|multi-surface cleaner|cleaning spray|dishwash|dishwasher|toilet cleaner|floor cleaner|carpet cleaner|air freshener|insecticide)\b/i.test(
+        combinedText
+      )
+    ) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Laundry detergents, fabric softeners, and household cleaners are excluded from Unilever IT scope.',
+      };
+    }
+
+    if (/\b(cigarette|cigar|tobacco|vape|pod|medicine|syrup|capsules|tablets|pharmaceutical)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Tobacco, pharmaceuticals, and medicines are excluded from Unilever IT scope.',
+      };
+    }
+
+    // 2. Specific Category Mappings for In-Scope products in Unilever IT
+
+    // Deo (Perfume, Body Sprays, Female/Male Deodorants)
+    if (
+      /\b(perfume|eau de parfum|eau de toilette|cologne|body spray|body sprays|deodorant|antiperspirant|deo|deo spray|roll-on|roll on|axe|rexona)\b/i.test(
+        combinedText
+      ) ||
+      scopeCat.toLowerCase() === 'deo' ||
+      clientCat.toLowerCase() === 'deo' ||
+      traxCat.toLowerCase() === 'apdo' ||
+      smartL1Val.toLowerCase() === 'apdo'
+    ) {
+      return {
+        scopeCategory: 'Deo',
+        traxCategory: 'APDO',
+        clientCategory: 'Deo',
+        smartL1: 'APDO',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Oral - Dental Accessories
+    if (
+      /\b(dental accessories|dental accessory|dental floss|floss|interdental|flosser|floss pick|dental tape)\b/i.test(
+        combinedText
+      ) ||
+      smartL1Val.toLowerCase() === 'dental accessories' ||
+      traxCat.toLowerCase() === 'dental accessories'
+    ) {
+      return {
+        scopeCategory: 'Oral',
+        traxCategory: 'Dental Accessories',
+        clientCategory: 'Oral',
+        smartL1: 'Dental Accessories',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Oral - Toothbrush
+    if (
+      /\b(toothbrush|toothbrushes|electric toothbrush|manual toothbrush|power toothbrush|sonicare)\b/i.test(
+        combinedText
+      ) ||
+      traxCat.toLowerCase() === 'toothbrush'
+    ) {
+      return {
+        scopeCategory: 'Oral',
+        traxCategory: 'Toothbrush',
+        clientCategory: 'Oral',
+        smartL1: 'Toothbrush and Toothpaste',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Oral - Toothpaste
+    if (
+      /\b(toothpaste|tooth paste|dentifrice)\b/i.test(combinedText) ||
+      traxCat.toLowerCase() === 'toothpaste'
+    ) {
+      return {
+        scopeCategory: 'Oral',
+        traxCategory: 'Toothpaste',
+        clientCategory: 'Oral',
+        smartL1: 'Toothbrush and Toothpaste',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Oral - Denture Cleansers & Mouthwash
+    if (
+      /\b(denture cleanser|denture cleaner|denture|corega|polident|mouthwash|mouth wash|oral rinse|mouth rinse|gargle)\b/i.test(
+        combinedText
+      ) ||
+      traxCat.toLowerCase().includes('denture') ||
+      traxCat.toLowerCase().includes('mouthwash')
+    ) {
+      return {
+        scopeCategory: 'Oral',
+        traxCategory: 'Mouthwash & Denture Cleansers',
+        clientCategory: 'Oral',
+        smartL1: 'Mouthwash & Mouth Freshener',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Oral - Mouth Freshener
+    if (
+      /\b(mouth spray|mouth sprays|mouth freshener|breath spray|mouth fresh tablet|breath mint|breath fresh)\b/i.test(
+        combinedText
+      ) ||
+      traxCat.toLowerCase().includes('freshener')
+    ) {
+      return {
+        scopeCategory: 'Oral',
+        traxCategory: 'Mouth Freshener',
+        clientCategory: 'Oral',
+        smartL1: 'Mouthwash & Mouth Freshener',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Oral - General catch-all
+    if (
+      clientCat.toLowerCase() === 'oral' ||
+      /\b(oral-b|sensodyne|parodontax|aquafresh|colgate|mentadent|signal|close-up)\b/i.test(combinedText)
+    ) {
+      return {
+        scopeCategory: 'Oral',
+        traxCategory: 'Toothpaste',
+        clientCategory: 'Oral',
+        smartL1: 'Toothbrush and Toothpaste',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Hair Care - Hair Styling
+    if (
+      /\b(hair styling|styling spray|styling water|hair mousse|mousse|hair spray|hairspray|hair wax|hair gel|styling gel|hair paste|hair clay|pomade|men's hair styling)\b/i.test(
+        combinedText
+      ) ||
+      traxCat.toLowerCase() === 'hair styling'
+    ) {
+      return {
+        scopeCategory: 'Hair Care',
+        traxCategory: 'Hair Styling',
+        clientCategory: 'Hair Care',
+        smartL1: 'Hair Care and Hair Styling',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Hair Care - Shampoo & Conditioner (Bath Care)
+    if (
+      /\b(shampoo|conditioner|hair conditioner|men's shampoo|2 in 1 shampoo|2-in-1 shampoo|dry shampoo)\b/i.test(
+        combinedText
+      ) ||
+      (clientCat.toLowerCase() === 'hair care' && traxCat.toLowerCase() === 'bath care')
+    ) {
+      return {
+        scopeCategory: 'Hair Care',
+        traxCategory: 'Bath Care',
+        clientCategory: 'Hair Care',
+        smartL1: 'Hair Care and Hair Styling',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Hair Care - Treatments, Mask, Serum, Kids Hair Care
+    if (
+      /\b(hair mask|hair cream|hair treatment|hair serum|hair oil|kids hair care|kids hair|sunsilk|tresemme|tresemmé|clear)\b/i.test(
+        combinedText
+      ) ||
+      clientCat.toLowerCase() === 'hair care' ||
+      smartL1Val.toLowerCase().includes('hair styling')
+    ) {
+      return {
+        scopeCategory: 'Hair Care',
+        traxCategory: 'Hair Care',
+        clientCategory: 'Hair Care',
+        smartL1: 'Hair Care and Hair Styling',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Bath - shower (Body wash, Men's Shower Gel, Shower Cream, Shower Gel, Shower Mousse, Head to Toe)
+    if (
+      /\b(body wash|bodywash|shower gel|shower cream|shower mousse|head to toe|men's shower gel)\b/i.test(
+        combinedText
+      ) ||
+      clientCat.toLowerCase().includes('bath') ||
+      clientCat.toLowerCase().includes('shower') ||
+      (smartL1Val.toLowerCase() === 'bath care' && !combinedText.includes('shampoo'))
+    ) {
+      return {
+        scopeCategory: 'Bath - shower',
+        traxCategory: 'Bath Care',
+        clientCategory: 'Bath - shower',
+        smartL1: 'Bath Care',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Soap - Bar Soap
+    if (
+      /\b(soap bar|soap bars|beauty soap|beauty bar|bar soap|solid soap)\b/i.test(combinedText) ||
+      traxCat.toLowerCase() === 'bar soap'
+    ) {
+      return {
+        scopeCategory: 'Soap',
+        traxCategory: 'Bar Soap',
+        clientCategory: 'Soap',
+        smartL1: 'Soap and Hand Wash',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Soap - Hand Wash / Hand Cleansing Gel & Spray
+    if (
+      /\b(hand wash|handwash|hand cleansing gel|hand cleansing spray|hand soap|liquid hand soap|hand sanitizer)\b/i.test(
+        combinedText
+      ) ||
+      (clientCat.toLowerCase() === 'soap' && traxCat.toLowerCase().includes('face'))
+    ) {
+      return {
+        scopeCategory: 'Soap',
+        traxCategory: 'Face / Body Care',
+        clientCategory: 'Soap',
+        smartL1: 'Soap and Hand Wash',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Skin Care (Body Butter, Lotions, Oil, Foam Bath, Makeup Wipes, Talcum, Shaving Gel, Bath Soak, Body Scrub, Face Creams/Wash/Serum, Deodorant Wipes, Sunscreen, etc.)
+    if (
+      /\b(body butter|body lotion|moisturizing lotion|body oil|foam bath|makeup removing|make up removing|talcum powder|shaving gel|bath soak|body scrub|face cleansing|eye cream|face cream|face mask|face serum|facial filler|facial sunscreen|sunscreen|facial toner|facial wash|wet wipes|wet tissues|deodorant wipes|deodorant wipe|face wash|moisturizer|night cream|hand cream|skin care|skincare|vaseline|simple|dove lotion)\b/i.test(
+        combinedText
+      ) ||
+      clientCat.toLowerCase() === 'skin care' ||
+      smartL1Val.toLowerCase() === 'face / body care'
+    ) {
+      return {
+        scopeCategory: 'Skin Care',
+        traxCategory: 'Face / Body Care',
+        clientCategory: 'Skin Care',
+        smartL1: 'Face / Body Care',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+  }
+
   // Special deterministic rule handler for Coca-Cola Israel (CBC_IL)
   if (projectScope.id === 'coca-cola-israel' || projectScope.id === 'cbc-il') {
     // 1. Strict Out-of-Scope Exclusions for CBC_IL:
