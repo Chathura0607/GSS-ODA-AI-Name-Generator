@@ -963,6 +963,392 @@ export function resolveScopeCategories(
     }
   }
 
+  // Special deterministic rule handler for P&G Portugal (PNG_PT)
+  if (projectScope.id === 'png-pt') {
+    // 1. Strict Out-of-Scope Exclusions for PNG_PT:
+    // A. Female Deodorants & Female Body Sprays (Strictly Out of Scope!)
+    if (
+      /\b(female apdo|female deodorant|female body spray|woman deodorant|women deodorant|women's deodorant|womens deodorant|woman body spray|women body spray|women's body spray|womens body spray|secret deodorant|lady speed stick)\b/i.test(
+        combinedText
+      )
+    ) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes:
+          (notes ? notes + '. ' : '') +
+          'Out of Scope: Female APDO, Female Deodorants, and Female Body Sprays are strictly excluded from PNG_PT scope (Deodorants covers MEN only).',
+      };
+    }
+
+    // B. Hair Care Exclusions: Hair Gel, Hair Mousse, Hair Fixing Cream, Hair Styling Cream
+    if (/\b(hair gel|hair mousse|hair fixing cream|hair styling cream|fixing cream|styling gel)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes:
+          (notes ? notes + '. ' : '') +
+          'Out of Scope: Hair Gel, Hair Mousse, Hair Fixing Cream, and Hair Styling Cream are strictly excluded from PNG_PT Hair Care scope.',
+      };
+    }
+
+    // C. General Out-of-Scope items: Food, Sauces, Snacks, Confectionery, Beverages, Alcohol, Tobacco, Medicines
+    if (
+      /\b(ketchup|mayo|mayonnaise|mustard|pasta sauce|pesto|bolognese|cooking sauce|bouillon|broth|soup|noodles|pasta|rice|ice cream|ice pop|popsicle|chips|crisps|snack|chocolate|candy|biscuits|cookie|cookies)\b/i.test(
+        combinedText
+      )
+    ) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Food, snacks, and confectionery are excluded from PNG_PT scope.',
+      };
+    }
+
+    if (
+      /\b(soft drink|coca-cola|pepsi|sprite|fanta|ginger ale|tonic water|mineral water|sparkling water|fruit juice|orange juice|apple juice|nectar|iced tea|ice tea|tea|coffee|espresso|latte|beer|lager|cider|wine|spirit|whisky|vodka|energy drink|sports drink)\b/i.test(
+        combinedText
+      )
+    ) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Beverages, soft drinks, tea, coffee, and alcohol are excluded from PNG_PT scope.',
+      };
+    }
+
+    if (/\b(cigarette|cigar|tobacco|vape|pod|medicine|syrup|capsules|tablets|pharmaceutical)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Tobacco, pharmaceuticals, and medicines are excluded from PNG_PT scope.',
+      };
+    }
+
+    // 2. Specific Category Mappings for In-Scope products in PNG_PT
+
+    // Adult Incontinence
+    if (
+      /\b(adult diaper|adult diapers|incontinence pant|incontinence pants|adult pants|bed pad|bed pads|barrier cream|period pant|period pants|always discreet|tena)\b/i.test(
+        combinedText
+      ) ||
+      clientCat.toLowerCase() === 'adult incontinence' ||
+      smartL1Val.toLowerCase() === 'adult incontinence'
+    ) {
+      if (/\bbarrier cream\b/i.test(combinedText)) {
+        return {
+          scopeCategory: 'Adult Incontinence',
+          traxCategory: 'Face / Body Care',
+          clientCategory: 'Adult Incontinence',
+          smartL1: 'Adult Incontinence',
+          projectScopeName: scopeName,
+          notes,
+        };
+      }
+      if (/\b(bed pad|bed pads|liner|liners|pad|pads)\b/i.test(combinedText) && !/\bdiaper\b/i.test(combinedText)) {
+        return {
+          scopeCategory: 'Adult Incontinence',
+          traxCategory: 'Pads & Liners',
+          clientCategory: 'Adult Incontinence',
+          smartL1: 'Adult Incontinence',
+          projectScopeName: scopeName,
+          notes,
+        };
+      }
+      return {
+        scopeCategory: 'Adult Incontinence',
+        traxCategory: 'Adult Diapers',
+        clientCategory: 'Adult Incontinence',
+        smartL1: 'Adult Incontinence',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Baby Care
+    if (
+      /\b(baby wipe|baby wipes|baby mat|baby mats|baby feeder|swimming pant|swimming pants|swim pants|pampers|baby diaper|baby diapers|nappy|nappies)\b/i.test(
+        combinedText
+      ) ||
+      clientCat.toLowerCase() === 'baby care' ||
+      smartL1Val.toLowerCase() === 'baby care'
+    ) {
+      if (/\b(baby wipe|baby wipes|wipes)\b/i.test(combinedText)) {
+        return {
+          scopeCategory: 'Baby Care',
+          traxCategory: 'Baby Wipes',
+          clientCategory: 'Baby Care',
+          smartL1: 'Baby Care',
+          projectScopeName: scopeName,
+          notes,
+        };
+      }
+      if (/\b(baby mat|baby mats|baby feeder|feeder|bottle)\b/i.test(combinedText)) {
+        return {
+          scopeCategory: 'Baby Care',
+          traxCategory: 'Baby Accessories',
+          clientCategory: 'Baby Care',
+          smartL1: 'Baby Care',
+          projectScopeName: scopeName,
+          notes,
+        };
+      }
+      return {
+        scopeCategory: 'Baby Care',
+        traxCategory: 'Diapers',
+        clientCategory: 'Baby Care',
+        smartL1: 'Baby Care',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Feminine Care
+    if (
+      /\b(menstrual cup|tampon|tampons|pantiliner|pantiliners|sanitary towel|sanitary towels|always|evax|tampax|sanitary pad|sanitary pads|fem care|feminine care)\b/i.test(
+        combinedText
+      ) ||
+      clientCat.toLowerCase() === 'feminine care' ||
+      smartL1Val.toLowerCase() === 'feminine care'
+    ) {
+      if (/\b(tampon|tampons|menstrual cup)\b/i.test(combinedText)) {
+        return {
+          scopeCategory: 'Feminine Care',
+          traxCategory: 'Tampons',
+          clientCategory: 'Feminine Care',
+          smartL1: 'Feminine Care',
+          projectScopeName: scopeName,
+          notes,
+        };
+      }
+      return {
+        scopeCategory: 'Feminine Care',
+        traxCategory: 'Pads & Liners',
+        clientCategory: 'Feminine Care',
+        smartL1: 'Feminine Care',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Dish Care
+    if (
+      /\b(dishwashing|dishwasher|fairy|dish soap|regenerating salt|regenerating salts|finish|dish tab|dish tabs|dishwasher cleaner)\b/i.test(
+        combinedText
+      ) ||
+      clientCat.toLowerCase() === 'dish care' ||
+      smartL1Val.toLowerCase() === 'dish care'
+    ) {
+      return {
+        scopeCategory: 'Dish Care',
+        traxCategory: 'Dishwashing Products',
+        clientCategory: 'Dish Care',
+        smartL1: 'Dish Care',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Epilation (Female Razors, Shaving & Hair Removal)
+    if (
+      /\b(venus|female razor|female razors|female blade|female blades|women razor|women razors|women blade|women blades|razor for women|epilation|hair removal product|hair removal cream|female shaving)\b/i.test(
+        combinedText
+      ) ||
+      clientCat.toLowerCase() === 'epilation' ||
+      smartL1Val.toLowerCase().includes('female razor') ||
+      smartL1Val.toLowerCase().includes('female shaving')
+    ) {
+      if (/\b(shaving cream|shaving gel|shave gel|hair removal)\b/i.test(combinedText)) {
+        return {
+          scopeCategory: 'Epilation',
+          traxCategory: 'Shaving Gel & Foam',
+          clientCategory: 'Epilation',
+          smartL1: 'Female Shaving Gel & Foam',
+          projectScopeName: scopeName,
+          notes,
+        };
+      }
+      return {
+        scopeCategory: 'Epilation',
+        traxCategory: 'Razors & Blades',
+        clientCategory: 'Epilation',
+        smartL1: 'Female Razors & Blades',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Male Grooming (Men Razors, Shaving Gel, Beard Grooming)
+    if (
+      /\b(gillette|king c|men's razor|mens razor|men razor|beard|beard scissors|beard comb|beard cream|beard oil|beard serum|beard cleanser|beard balm|beard trimmer|shaving brush|after shave|aftershave|men's shaving|mens shaving|men shaving)\b/i.test(
+        combinedText
+      ) ||
+      clientCat.toLowerCase() === 'male grooming' ||
+      smartL1Val.toLowerCase().includes('men razor') ||
+      smartL1Val.toLowerCase().includes('men shaving')
+    ) {
+      if (/\b(shaving gel|shaving foam|shave foam|after shave|aftershave)\b/i.test(combinedText)) {
+        return {
+          scopeCategory: 'Male Grooming',
+          traxCategory: 'Shaving Gel & Foam',
+          clientCategory: 'Male Grooming',
+          smartL1: 'Men Shaving Gel & Foam',
+          projectScopeName: scopeName,
+          notes,
+        };
+      }
+      return {
+        scopeCategory: 'Male Grooming',
+        traxCategory: 'Razors & Blades',
+        clientCategory: 'Male Grooming',
+        smartL1: 'Men Razors & Blades',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Fabric Enhancers
+    if (
+      /\b(fabric conditioner|fabric conditioners|fabric softener|fabric softeners|lenor|downy|washing liquid|laundry washing liquid|fabric care)\b/i.test(
+        combinedText
+      ) ||
+      clientCat.toLowerCase() === 'fabric enhancers' ||
+      smartL1Val.toLowerCase() === 'fabric care'
+    ) {
+      return {
+        scopeCategory: 'Fabric Enhancers',
+        traxCategory: 'Laundry Washing Liquids Fabric Conditioners',
+        clientCategory: 'Fabric Enhancers',
+        smartL1: 'Fabric care',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Bath & Shower gels
+    if (
+      /\b(body wash|bodywash|shower gel|shower cream|shower mousse|men's shower gel|mens shower gel)\b/i.test(
+        combinedText
+      ) ||
+      clientCat.toLowerCase().includes('bath & shower') ||
+      (smartL1Val.toLowerCase() === 'bath care' && !combinedText.includes('shampoo'))
+    ) {
+      return {
+        scopeCategory: 'Bath & Shower gels',
+        traxCategory: 'Bath Care',
+        clientCategory: 'Bath & Shower gels',
+        smartL1: 'Bath Care',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Hair Care (Shampoo, Conditioner, Hair Oil/Serum/Mask/Treatment/Cream, Styling cream, Hair Toner, Dry shampoo)
+    if (
+      /\b(shampoo|conditioner|hair oil|hair serum|hair mask|hair treatment|dry shampoo|hair cream|hair toner|head & shoulders|head and shoulders|pantene|herbal essences|aussie)\b/i.test(
+        combinedText
+      ) ||
+      clientCat.toLowerCase() === 'hair care' ||
+      smartL1Val.toLowerCase() === 'hair care'
+    ) {
+      return {
+        scopeCategory: 'Hair Care',
+        traxCategory: 'Hair Care',
+        clientCategory: 'Hair Care',
+        smartL1: 'Hair Care',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Oral Care
+    if (
+      /\b(oral-b|oral b|crest|fixodent|blend-a-med|toothpaste|toothbrush|toothbrushes|mouthwash|dental floss|dental fixing cream)\b/i.test(
+        combinedText
+      ) ||
+      clientCat.toLowerCase() === 'oral care' ||
+      smartL1Val.toLowerCase().includes('floss') ||
+      smartL1Val.toLowerCase().includes('toothbrush') ||
+      smartL1Val.toLowerCase().includes('toothpaste')
+    ) {
+      // Multi-category bundles
+      if (/\b(combo|bundle|kit|set|brush and paste|toothbrush and toothpaste|multi category)\b/i.test(combinedText)) {
+        return {
+          scopeCategory: 'Oral Care',
+          traxCategory: 'General',
+          clientCategory: 'Oral Care',
+          smartL1: 'Multi Category',
+          projectScopeName: scopeName,
+          notes,
+        };
+      }
+      // Mouthwash & Floss
+      if (/\b(mouthwash|mouth wash|dental floss|floss|interdental floss|oral rinse)\b/i.test(combinedText)) {
+        return {
+          scopeCategory: 'Oral Care',
+          traxCategory: 'Mouthwash & Denture Cleansers',
+          clientCategory: 'Oral Care',
+          smartL1: 'Mouthwash & Floss',
+          projectScopeName: scopeName,
+          notes,
+        };
+      }
+      // Toothbrush
+      if (/\b(toothbrush|toothbrushes|electric toothbrush|manual toothbrush|power brush|sonic)\b/i.test(combinedText)) {
+        return {
+          scopeCategory: 'Oral Care',
+          traxCategory: 'Toothbrush',
+          clientCategory: 'Oral Care',
+          smartL1: 'Toothbrush',
+          projectScopeName: scopeName,
+          notes,
+        };
+      }
+      // Toothpaste & fixing cream
+      return {
+        scopeCategory: 'Oral Care',
+        traxCategory: 'Toothpaste',
+        clientCategory: 'Oral Care',
+        smartL1: 'Toothpaste',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Deodorants (MEN ONLY)
+    if (
+      /\b(old spice|gillette deo|men apdo|men perfume|men body spray|men's deodorant|mens deodorant|men deodorant|men deodorant cream)\b/i.test(
+        combinedText
+      ) ||
+      clientCat.toLowerCase() === 'deodorants' ||
+      smartL1Val.toLowerCase() === 'apdo'
+    ) {
+      return {
+        scopeCategory: 'Deodorants',
+        traxCategory: 'APDO',
+        clientCategory: 'Deodorants',
+        smartL1: 'APDO',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+  }
+
   // Special deterministic rule handler for Coca-Cola Israel (CBC_IL)
   if (projectScope.id === 'coca-cola-israel' || projectScope.id === 'cbc-il') {
     // 1. Strict Out-of-Scope Exclusions for CBC_IL:
