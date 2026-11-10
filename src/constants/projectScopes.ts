@@ -1453,6 +1453,148 @@ export const PNG_PT_SCOPE: ProjectScope = {
   ],
 };
 
+export const PEPSI_DE_SCOPE: ProjectScope = {
+  id: 'pepsi-de',
+  name: 'Pepsi Germany (Pepsi DE) Project Scope',
+  clientName: 'PepsiCo Germany',
+  country: 'Germany',
+  description:
+    'Official Project Scope Matrix for PepsiCo Germany / Pepsi DE. Covers 3 Client Categories (Juices, Savory Snacks, Social Beverages) across 6 Trax Categories: Juices, Crisps & Snacks, Dips & Spreads, RTD Tea, Energy Drinks, and Soft Drinks.',
+  isDefault: true,
+  smartPaletteChoices: [
+    'Fruit Juices',
+    'Vegetable Juice',
+    'Cheese Snacks',
+    'Corn Snacks',
+    'Crisps/Chips',
+    'Peanuts Snacks',
+    'Popcorn',
+    'Pretzels',
+    'Tortilla Snacks',
+    'Fruit Snacks',
+    'Meat Snacks',
+    'Deli Spreads',
+    'Dips',
+    'Ice Tea',
+    'Energy Drinks',
+    'Carbonated Drinks',
+    'Flavored Malt Beverages',
+    'Root Beer',
+    'Soda Water',
+  ],
+  specialNotes: [
+    'Scope covers 3 Client Categories across PepsiCo Germany (Pepsi DE): Juices, Savory Snacks, and Social Beverages.',
+    'Trax Categories (6 total): Juices, Crisps & Snacks, Dips & Spreads, RTD Tea, Energy Drinks, and Soft Drinks.',
+    'Trax Sub Categories (19 total): Fruit Juices, Vegetable Juice, Cheese Snacks, Corn Snacks, Crisps/Chips, Peanuts Snacks, Popcorn, Pretzels, Tortilla Snacks, Fruit Snacks, Meat Snacks, Deli Spreads, Dips, Ice Tea, Energy Drinks, Carbonated Drinks, Flavored Malt Beverages, Root Beer, Soda Water.',
+    'Savory Snacks branches into two Trax Categories: "Crisps & Snacks" (Chips, Popcorn, Pretzels, Tortilla Snacks, Nuts, Meat/Fruit Snacks) and "Dips & Spreads" (Deli Spreads, Dips).',
+    'Social Beverages branches into three Trax Categories: "RTD Tea" (Ice Tea), "Energy Drinks" (Energy Drinks), and "Soft Drinks" (Carbonated Drinks, Flavored Malt Beverages, Root Beer, Soda Water).',
+    'Strict Out-of-Scope exclusions: Personal Care & Hygiene, Home Care & Cleaning, Dairy, Fresh Meat, Alcohol (Beer/Wine/Spirits), Hot Tea/Coffee, Sweet Confectionery (Candies, Chocolate), and Medicines.',
+  ],
+  inScopeList: [
+    'Juices: Fruit Juices, Vegetable Juice (Punica, Tropicana, Naked Juice) -> Trax Category: Juices',
+    'Savory Snacks - Crisps & Snacks: Cheese Snacks (Cheetos), Corn Snacks, Crisps/Chips (Lay\'s, Walkers), Peanuts Snacks (Duyvis), Popcorn, Pretzels, Tortilla Snacks (Doritos), Fruit Snacks, Meat Snacks -> Trax Category: Crisps & Snacks',
+    'Savory Snacks - Dips & Spreads: Deli Spreads, Dips (Doritos dips, salsa, cheese dips) -> Trax Category: Dips & Spreads',
+    'Social Beverages - RTD Tea: Ice Tea (Lipton Ice Tea, Pure Leaf) -> Trax Category: RTD Tea, Trax Sub Category: Ice Tea',
+    'Social Beverages - Energy Drinks: Energy Drinks (Rockstar Energy, Sting) -> Trax Category: Energy Drinks, Trax Sub Category: Energy Drinks',
+    'Social Beverages - Soft Drinks: Carbonated Drinks (Pepsi, Pepsi Max, 7UP, Mirinda, Schwip Schwap, Mountain Dew), Flavored Malt Beverages, Root Beer, Soda Water -> Trax Category: Soft Drinks',
+  ],
+  outOfScopeList: [
+    'Personal Care & Hygiene (Shampoo, soap, shower gel, deodorant, skin care, oral care, hair care, razors, diapers)',
+    'Home Care & Cleaning (Laundry detergents, fabric softeners, household cleaners, dishwashing liquid, bleach)',
+    'Dairy & Fresh Grocery (Milk, cheese blocks, yogurt, butter, fresh meat, eggs)',
+    'Alcoholic Beverages (Beer, wine, spirits, champagne, cider - except non-alcoholic flavored malt beverages)',
+    'Hot Coffee & Hot Tea (Hot coffee beans, ground coffee, tea bags - only RTD Ice Tea is in scope)',
+    'Confectionery & Sweet Baked Goods (Chocolate bars, gummy candy, sweet biscuits, pastries, cakes - only savory snacks are in scope)',
+    'Tobacco, Cigarettes & Vapes',
+    'Medicines & Pharmaceuticals (Medicines, pharmaceutical supplements, medical devices)',
+  ],
+  rules: [
+    // 1. Juices
+    {
+      id: 'pepsi-de-juices',
+      scopeCategory: 'Juices',
+      traxCategory: 'Juices',
+      clientCategory: 'Juices',
+      smartL1List: ['Fruit Juices', 'Vegetable Juice', 'Juices'],
+      inScopeProducts: ['Fruit Juices', 'Vegetable Juice'],
+      notes: 'In-Scope: Fruit Juices, Vegetable Juice (e.g. Punica, Tropicana, Naked Juice).',
+    },
+    // 2. Savory Snacks - Crisps & Snacks
+    {
+      id: 'pepsi-de-crisps-snacks',
+      scopeCategory: 'Savory Snacks',
+      traxCategory: 'Crisps & Snacks',
+      clientCategory: 'Savory Snacks',
+      smartL1List: [
+        'Crisps/Chips',
+        'Cheese Snacks',
+        'Corn Snacks',
+        'Peanuts Snacks',
+        'Popcorn',
+        'Pretzels',
+        'Tortilla Snacks',
+        'Fruit Snacks',
+        'Meat Snacks',
+        'Crisps & Snacks',
+      ],
+      inScopeProducts: [
+        'Cheese Snacks',
+        'Corn Snacks',
+        'Crisps/Chips',
+        'Peanuts Snacks',
+        'Popcorn',
+        'Pretzels',
+        'Tortilla Snacks',
+        'Fruit Snacks',
+        'Meat Snacks',
+      ],
+      notes:
+        'In-Scope: Cheese Snacks (Cheetos), Corn Snacks, Crisps/Chips (Lay\'s, Walkers), Peanuts Snacks (Duyvis), Popcorn, Pretzels, Tortilla Snacks (Doritos), Fruit Snacks, Meat Snacks.',
+    },
+    // 3. Savory Snacks - Dips & Spreads
+    {
+      id: 'pepsi-de-dips-spreads',
+      scopeCategory: 'Savory Snacks',
+      traxCategory: 'Dips & Spreads',
+      clientCategory: 'Savory Snacks',
+      smartL1List: ['Deli Spreads', 'Dips', 'Dips & Spreads'],
+      inScopeProducts: ['Deli Spreads', 'Dips'],
+      notes: 'In-Scope: Deli Spreads, Dips (Doritos Dips, salsa, cheese dips, guacamole dips).',
+    },
+    // 4. Social Beverages - RTD Tea
+    {
+      id: 'pepsi-de-rtd-tea',
+      scopeCategory: 'Social Beverages',
+      traxCategory: 'RTD Tea',
+      clientCategory: 'Social Beverages',
+      smartL1List: ['Ice Tea', 'RTD Tea'],
+      inScopeProducts: ['Ice Tea'],
+      notes: 'In-Scope: Ice Tea (Lipton Ice Tea, Pure Leaf).',
+    },
+    // 5. Social Beverages - Energy Drinks
+    {
+      id: 'pepsi-de-energy-drinks',
+      scopeCategory: 'Social Beverages',
+      traxCategory: 'Energy Drinks',
+      clientCategory: 'Social Beverages',
+      smartL1List: ['Energy Drinks'],
+      inScopeProducts: ['Energy Drinks'],
+      notes: 'In-Scope: Energy Drinks (Rockstar Energy, Sting, etc.).',
+    },
+    // 6. Social Beverages - Soft Drinks
+    {
+      id: 'pepsi-de-soft-drinks',
+      scopeCategory: 'Social Beverages',
+      traxCategory: 'Soft Drinks',
+      clientCategory: 'Social Beverages',
+      smartL1List: ['Carbonated Drinks', 'Flavored Malt Beverages', 'Root Beer', 'Soda Water', 'Soft Drinks'],
+      inScopeProducts: ['Carbonated Drinks', 'Flavored Malt Beverages', 'Root Beer', 'Soda Water'],
+      notes:
+        'In-Scope: Carbonated Drinks (Pepsi, Pepsi Max, 7UP, Mirinda, Schwip Schwap, Mountain Dew), Flavored Malt Beverages, Root Beer, Soda Water.',
+    },
+  ],
+};
+
 export const COCA_COLA_ISRAEL_SCOPE: ProjectScope = {
   id: 'coca-cola-israel',
   name: 'Coca-Cola Israel (CBC_IL) Project Scope',
@@ -1656,6 +1798,7 @@ export const COCA_COLA_ISRAEL_SCOPE: ProjectScope = {
 };
 
 export const DEFAULT_PROJECT_SCOPES: ProjectScope[] = [
+  PEPSI_DE_SCOPE,
   PNG_PT_SCOPE,
   COCA_COLA_ISRAEL_SCOPE,
   UNILEVER_PT_SCOPE,
