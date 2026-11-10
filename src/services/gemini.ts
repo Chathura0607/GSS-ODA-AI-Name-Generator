@@ -1349,6 +1349,228 @@ export function resolveScopeCategories(
     }
   }
 
+  // Special deterministic rule handler for Pepsi Germany (Pepsi DE)
+  if (projectScope.id === 'pepsi-de') {
+    // 1. Strict Out-of-Scope Exclusions for Pepsi DE:
+    // A. Personal Care & Hygiene
+    if (
+      /\b(shampoo|conditioner|soap|body wash|shower gel|deodorant|antiperspirant|body spray|skin care|lotion|cream|toothpaste|toothbrush|mouthwash|razor|blade|diaper|tampon|pad)\b/i.test(
+        combinedText
+      )
+    ) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Personal Care and hygiene products are excluded from Pepsi DE scope.',
+      };
+    }
+
+    // B. Home Care & Cleaning
+    if (/\b(laundry|detergent|softener|cleaner|bleach|dishwash|dishwasher|fabric)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Home care and cleaning products are excluded from Pepsi DE scope.',
+      };
+    }
+
+    // C. Dairy & Fresh Food
+    if (/\b(milk|cheese block|fresh cheese|yogurt|butter|fresh meat|egg|eggs)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Dairy and fresh groceries are excluded from Pepsi DE scope.',
+      };
+    }
+
+    // D. Alcoholic Beverages (except non-alcoholic malt drinks or root beer)
+    if (
+      /\b(beer|wine|whisky|whiskey|vodka|rum|gin|tequila|spirit|spirits|liqueur|champagne)\b/i.test(combinedText) &&
+      !/\b(malt|root beer|ginger ale)\b/i.test(combinedText)
+    ) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Alcoholic beverages are excluded from Pepsi DE scope.',
+      };
+    }
+
+    // E. Sweet Confectionery & Baked Goods
+    if (/\b(chocolate|candy|gummies|gummy|sweet biscuit|cake|pastry)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Sweet confectionery is excluded from Pepsi DE scope (only savory snacks are in scope).',
+      };
+    }
+
+    // F. Tobacco, Vapes & Medicines
+    if (/\b(cigarette|cigar|tobacco|vape|pod|medicine|syrup|capsules|tablets|pharmaceutical)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Tobacco, pharmaceuticals, and medicines are excluded from Pepsi DE scope.',
+      };
+    }
+
+    // 2. In-Scope Products for Pepsi DE
+
+    // Juices (Fruit Juices, Vegetable Juice)
+    if (
+      /\b(juice|juices|fruit juice|vegetable juice|orange juice|apple juice|multivitamin juice|smoothie|punica|tropicana|naked juice|hohes c|granini)\b/i.test(
+        combinedText
+      ) ||
+      clientCat.toLowerCase() === 'juices' ||
+      traxCat.toLowerCase() === 'juices'
+    ) {
+      const isVeg = /\b(vegetable|tomato juice|carrot juice|gemüsesaft|tomatensaft)\b/i.test(combinedText);
+      return {
+        scopeCategory: 'Juices',
+        traxCategory: 'Juices',
+        clientCategory: 'Juices',
+        smartL1: isVeg ? 'Vegetable Juice' : 'Fruit Juices',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Savory Snacks - Dips & Spreads
+    if (
+      /\b(dip|dips|salsa|spread|spreads|deli spread|cheese dip|guacamole dip|doritos dip|sour cream dip)\b/i.test(
+        combinedText
+      ) ||
+      traxCat.toLowerCase().includes('dip')
+    ) {
+      const isSpread = /\b(spread|deli spread|aufstrich)\b/i.test(combinedText);
+      return {
+        scopeCategory: 'Savory Snacks',
+        traxCategory: 'Dips & Spreads',
+        clientCategory: 'Savory Snacks',
+        smartL1: isSpread ? 'Deli Spreads' : 'Dips',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Savory Snacks - Crisps & Snacks
+    if (
+      /\b(chips|crisps|snack|snacks|popcorn|pretzel|pretzels|tortilla|tortillas|peanuts|peanut snack|corn snack|cheese snack|meat snack|fruit snack|lay's|lays|doritos|cheetos|duyvis|walkers|bugles|pringles|chio|funny-frisch|beef jerky|salami snack|bifi)\b/i.test(
+        combinedText
+      ) ||
+      clientCat.toLowerCase() === 'savory snacks' ||
+      traxCat.toLowerCase().includes('crisps')
+    ) {
+      let smartL1Val = 'Crisps/Chips';
+      if (/\b(tortilla|doritos|nacho|nachos)\b/i.test(combinedText)) {
+        smartL1Val = 'Tortilla Snacks';
+      } else if (/\bpopcorn\b/i.test(combinedText)) {
+        smartL1Val = 'Popcorn';
+      } else if (/\b(pretzel|pretzels|brezel|salzstangen)\b/i.test(combinedText)) {
+        smartL1Val = 'Pretzels';
+      } else if (/\b(peanut|peanuts|erdnüsse|duyvis|cashew|nuts)\b/i.test(combinedText)) {
+        smartL1Val = 'Peanuts Snacks';
+      } else if (/\b(cheese snack|cheetos|käsesnack)\b/i.test(combinedText)) {
+        smartL1Val = 'Cheese Snacks';
+      } else if (/\b(corn snack|bugles|mais)\b/i.test(combinedText)) {
+        smartL1Val = 'Corn Snacks';
+      } else if (/\b(meat snack|beef jerky|bifi|salami)\b/i.test(combinedText)) {
+        smartL1Val = 'Meat Snacks';
+      } else if (/\bfruit snack\b/i.test(combinedText)) {
+        smartL1Val = 'Fruit Snacks';
+      }
+
+      return {
+        scopeCategory: 'Savory Snacks',
+        traxCategory: 'Crisps & Snacks',
+        clientCategory: 'Savory Snacks',
+        smartL1: smartL1Val,
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Social Beverages - RTD Tea
+    if (
+      /\b(ice tea|iced tea|rtd tea|lipton|fuze tea|nestea|arizona tea|pfanner|pure leaf|eistee)\b/i.test(
+        combinedText
+      ) ||
+      traxCat.toLowerCase() === 'rtd tea' ||
+      smartL1Val.toLowerCase() === 'ice tea'
+    ) {
+      return {
+        scopeCategory: 'Social Beverages',
+        traxCategory: 'RTD Tea',
+        clientCategory: 'Social Beverages',
+        smartL1: 'Ice Tea',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Social Beverages - Energy Drinks
+    if (
+      /\b(energy drink|energy drinks|rockstar|monster energy|red bull|relentless|sting energy)\b/i.test(
+        combinedText
+      ) ||
+      traxCat.toLowerCase() === 'energy drinks' ||
+      smartL1Val.toLowerCase() === 'energy drinks'
+    ) {
+      return {
+        scopeCategory: 'Social Beverages',
+        traxCategory: 'Energy Drinks',
+        clientCategory: 'Social Beverages',
+        smartL1: 'Energy Drinks',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Social Beverages - Soft Drinks
+    if (
+      /\b(soft drink|soft drinks|carbonated|cola|pepsi|pepsi max|7up|seven up|mirinda|schwip schwap|mountain dew|soda|soda water|sodastream|root beer|malt beverage|carbonated drink)\b/i.test(
+        combinedText
+      ) ||
+      clientCat.toLowerCase() === 'social beverages' ||
+      traxCat.toLowerCase() === 'soft drinks'
+    ) {
+      let smartL1Val = 'Carbonated Drinks';
+      if (/\broot beer\b/i.test(combinedText)) {
+        smartL1Val = 'Root Beer';
+      } else if (/\b(soda water|sodastream|sparkling water|sprudelwasser)\b/i.test(combinedText)) {
+        smartL1Val = 'Soda Water';
+      } else if (/\b(malt beverage|malt drink|malzbier|karamalz)\b/i.test(combinedText)) {
+        smartL1Val = 'Flavored Malt Beverages';
+      }
+
+      return {
+        scopeCategory: 'Social Beverages',
+        traxCategory: 'Soft Drinks',
+        clientCategory: 'Social Beverages',
+        smartL1: smartL1Val,
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+  }
+
   // Special deterministic rule handler for Coca-Cola Israel (CBC_IL)
   if (projectScope.id === 'coca-cola-israel' || projectScope.id === 'cbc-il') {
     // 1. Strict Out-of-Scope Exclusions for CBC_IL:
