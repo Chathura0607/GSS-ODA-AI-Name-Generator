@@ -9,12 +9,14 @@ import { HistoryModal } from './components/HistoryModal';
 import { SettingsModal } from './components/SettingsModal';
 import { ProjectScopeModal } from './components/ProjectScopeModal';
 import { BrandManufacturerStudio } from './components/BrandManufacturerStudio';
+import { LoginScreen } from './components/LoginScreen';
 
-import { ProcessedProduct, AppSettings } from './types';
+import { ProcessedProduct, AppSettings, AuthUser } from './types';
 import { ProjectScope, PEPSI_DE_SCOPE, PNG_PT_SCOPE, COCA_COLA_ISRAEL_SCOPE, KRAFT_HEINZ_GERMANY_SCOPE, DIAGEO_GR_SCOPE, UNILEVER_PT_SCOPE, UNILEVER_IT_SCOPE, DEFAULT_PROJECT_SCOPES } from './constants/projectScopes';
 import { ExtractedImageFile } from './services/archiveExtractor';
 import { analyzeProductImage, resolveScopeCategories } from './services/gemini';
 import { assembleStandardName, validateStandardName, generateGoogleSkuUrl } from './services/validator';
+import { getStoredUser, logoutUser } from './services/auth';
 import {
   saveProduct,
   saveProducts,
@@ -38,6 +40,9 @@ import {
 } from 'lucide-react';
 
 export const App: React.FC = () => {
+  // User Authentication State
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => getStoredUser());
+
   // Navigation View State
   const [activeView, setActiveView] = useState<'products' | 'brands'>('products');
   const [brandQueryToOpen, setBrandQueryToOpen] = useState<string>('');
@@ -453,6 +458,17 @@ export const App: React.FC = () => {
   const validCount = products.filter(p => p.isLengthValid && p.isContainerValid && p.isAlphanumericValid && p.status === 'completed').length;
   const warningCount = products.filter(p => (!p.isLengthValid || !p.isContainerValid || !p.isAlphanumericValid) && p.status === 'completed').length;
 
+  // Gate app behind Google / Gmail authentication screen
+  if (!currentUser) {
+    return (
+      <LoginScreen
+        onLoginSuccess={user => setCurrentUser(user)}
+        settings={settings}
+        onUpdateSettings={setSettings}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col antialiased">
       {/* Top Navbar with Tab Switcher & Active Project Scope Pill */}
@@ -466,6 +482,11 @@ export const App: React.FC = () => {
         onOpenSettings={() => setIsSettingsOpen(true)}
         activeScopeName={activeScope.name}
         onOpenProjectScopes={() => setIsScopeModalOpen(true)}
+        currentUser={currentUser}
+        onLogout={() => {
+          logoutUser();
+          setCurrentUser(null);
+        }}
       />
 
       {/* Main Container */}

@@ -20,6 +20,7 @@ import { AppSettings } from '../types';
 import { ProjectScope } from '../constants/projectScopes';
 import { testGeminiApiKey, fetchAvailableModels, ModelOption } from '../services/gemini';
 import { saveSettings, getAllProjectScopes } from '../services/db';
+import { getGoogleClientId, saveGoogleClientId } from '../services/auth';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -51,6 +52,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [autoProcess, setAutoProcess] = useState(settings.autoProcessOnUpload ?? true);
   const [strictContainer, setStrictContainer] = useState(settings.strictContainerCheck ?? true);
   const [activeScopeId, setActiveScopeId] = useState(settings.activeProjectScopeId || 'kraft-heinz-germany');
+  const [googleClientId, setGoogleClientId] = useState(
+    settings.googleClientId || getGoogleClientId() || ''
+  );
   const [availableScopes, setAvailableScopes] = useState<ProjectScope[]>([]);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
@@ -133,10 +137,12 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       autoProcessOnUpload: autoProcess,
       strictContainerCheck: strictContainer,
       activeProjectScopeId: activeScopeId,
+      googleClientId: googleClientId.trim(),
     };
 
     localStorage.setItem('gss_gemini_key', apiKey.trim());
     localStorage.setItem('gss_gemini_model', model);
+    saveGoogleClientId(googleClientId.trim());
 
     // Clean up any old provider keys from localStorage
     localStorage.removeItem('gss_ai_provider');
@@ -418,6 +424,34 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 className="w-4 h-4 rounded text-cyan-600 bg-slate-800 border-slate-700 focus:ring-cyan-500"
               />
             </label>
+          </div>
+
+          {/* Google Sign-In & Team Identity Setup */}
+          <div className="pt-3 border-t border-slate-800 space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="font-semibold text-white text-xs flex items-center gap-1.5">
+                <Key className="w-3.5 h-3.5 text-cyan-400" />
+                Google Identity / OAuth Client ID
+              </label>
+              <a
+                href="https://console.cloud.google.com/apis/credentials"
+                target="_blank"
+                rel="noreferrer"
+                className="text-[10px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1 hover:underline"
+              >
+                Google Cloud Console <ExternalLink className="w-2.5 h-2.5" />
+              </a>
+            </div>
+            <input
+              type="text"
+              value={googleClientId}
+              onChange={e => setGoogleClientId(e.target.value)}
+              placeholder="e.g. 123456789-abc.apps.googleusercontent.com"
+              className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 text-xs font-mono focus:outline-none focus:border-cyan-500"
+            />
+            <p className="text-[10px] text-slate-400 leading-relaxed">
+              Enables 1-click Google Sign-In with any Gmail account for your analysts and team members.
+            </p>
           </div>
         </div>
 
