@@ -504,77 +504,101 @@ export const App: React.FC = () => {
           <>
             {/* Welcome & Analytics Banner */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="md:col-span-2 p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-700/80 shadow-xl relative overflow-hidden flex flex-col justify-between">
-                <div className="relative z-10 space-y-1.5">
+              <div className="md:col-span-2 p-6 rounded-3xl bg-gradient-to-r from-slate-900/90 via-slate-800/80 to-slate-900/90 border border-slate-700/70 shadow-2xl relative overflow-hidden flex flex-col justify-between backdrop-blur-xl group">
+                {/* Decorative ambient corner glow */}
+                <div className="absolute -top-12 -right-12 w-40 h-40 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-cyan-500/15 transition-all" />
+
+                <div className="relative z-10 space-y-2">
                   <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-bold border border-cyan-500/30 uppercase tracking-wider">
-                      GSS Production Ready
+                    <span className="px-3 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-black border border-cyan-500/40 uppercase tracking-widest">
+                      GSS Enterprise Suite
                     </span>
-                    <span className="text-slate-400 text-xs">ODA Data Standardization Hub</span>
+                    <span className="text-slate-400 text-xs font-medium">ODA Data Standardization Hub</span>
                   </div>
-                  <h1 className="text-xl font-extrabold text-white tracking-tight">
+                  <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
                     Operational Data Product Standardizer
                   </h1>
-                  <p className="text-xs text-slate-300 max-w-md">
-                    Automating English naming formulas, multi-format archive extraction, 49-container classification, and Trax/Client category auto-selection.
+                  <p className="text-xs text-slate-300 max-w-lg leading-relaxed">
+                    Automating strict 150-char English naming formulas, multi-format archive extraction, 49 packaging container classifications, and multi-client scope matrices.
                   </p>
                 </div>
-                <div className="relative z-10 flex items-center gap-4 pt-4 text-xs text-slate-400 border-t border-slate-700/60 mt-3">
-                  <span className="flex items-center gap-1 text-slate-300 font-medium">
-                    <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
-                    7-Day Retention
+
+                <div className="relative z-10 flex flex-wrap items-center gap-4 pt-4 text-xs text-slate-400 border-t border-slate-700/60 mt-4">
+                  <span className="flex items-center gap-1.5 text-slate-300 font-semibold">
+                    <ShieldCheck className="w-4 h-4 text-cyan-400" />
+                    7-Day Retention Vault
                   </span>
-                  <span className="flex items-center gap-1 text-slate-300 font-medium">
-                    <Layers className="w-3.5 h-3.5 text-purple-400" />
-                    49 Containers
+                  <span className="flex items-center gap-1.5 text-slate-300 font-semibold">
+                    <Layers className="w-4 h-4 text-purple-400" />
+                    49 Container Types
                   </span>
                   <button
                     type="button"
                     onClick={() => setActiveView('brands')}
-                    className="flex items-center gap-1 text-cyan-400 hover:text-cyan-300 font-medium ml-auto"
+                    className="flex items-center gap-1.5 text-xs font-bold text-cyan-400 hover:text-cyan-300 ml-auto transition-colors"
                   >
-                    <Building2 className="w-3.5 h-3.5" />
-                    Brand & Logo Studio &rarr;
+                    <Building2 className="w-4 h-4" />
+                    <span>Brand & Logo Studio &rarr;</span>
                   </button>
                 </div>
               </div>
 
               {/* Stat 1: Total Active */}
-              <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-lg flex flex-col justify-between">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  Total Current Products
-                </span>
-                <div className="flex items-baseline justify-between mt-2">
-                  <span className="text-3xl font-extrabold text-white font-mono">{products.length}</span>
-                  <span className="text-xs text-slate-500 font-medium">Items Loaded</span>
+              <div className="p-5 rounded-3xl bg-slate-900/80 border border-slate-800 shadow-xl flex flex-col justify-between backdrop-blur-xl relative overflow-hidden">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Current Batch
+                  </span>
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
                 </div>
-                <div className="text-[11px] text-slate-400 mt-2 flex items-center gap-1">
-                  <History className="w-3 h-3 text-purple-400" />
-                  <span>{totalSavedCount} in 7-day vault</span>
+                <div className="flex items-baseline justify-between mt-3">
+                  <span className="text-4xl font-black text-white font-mono tracking-tight">{products.length}</span>
+                  <span className="text-xs text-slate-400 font-semibold">Items Loaded</span>
+                </div>
+                <div className="text-[11px] text-slate-400 mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <History className="w-3.5 h-3.5 text-purple-400" />
+                    <span>{totalSavedCount} in local vault</span>
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-mono">IndexedDB</span>
                 </div>
               </div>
 
               {/* Stat 2: Compliance Rate */}
-              <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-lg flex flex-col justify-between">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  GSS Rule Compliance
-                </span>
-                <div className="flex items-baseline justify-between mt-2">
-                  <span className="text-3xl font-extrabold text-emerald-400 font-mono">
-                    {products.length > 0 ? Math.round((validCount / products.length) * 100) : 100}%
+              <div className="p-5 rounded-3xl bg-slate-900/80 border border-slate-800 shadow-xl flex flex-col justify-between backdrop-blur-xl">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Formula Compliance
                   </span>
-                  <span className="text-xs text-emerald-400 font-medium">{validCount} Perfect</span>
+                  <span className="text-xs text-emerald-400 font-bold">{validCount} Perfect</span>
                 </div>
-                <div className="text-[11px] text-slate-400 mt-2 flex items-center gap-1">
+                <div className="mt-2">
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-4xl font-black text-emerald-400 font-mono tracking-tight">
+                      {products.length > 0 ? Math.round((validCount / products.length) * 100) : 100}%
+                    </span>
+                    <span className="text-[11px] text-slate-500 font-medium">GSS Standard</span>
+                  </div>
+                  {/* Progress Compliance Bar */}
+                  <div className="w-full bg-slate-800/90 h-2 rounded-full overflow-hidden mt-2.5 border border-slate-700/60">
+                    <div
+                      className="h-full bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 transition-all duration-500 rounded-full"
+                      style={{
+                        width: `${products.length > 0 ? Math.round((validCount / products.length) * 100) : 100}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="text-[11px] text-slate-400 mt-2 flex items-center gap-1.5">
                   {warningCount > 0 ? (
-                    <span className="text-amber-400 flex items-center gap-1">
-                      <AlertTriangle className="w-3 h-3" />
-                      {warningCount} need attention
+                    <span className="text-amber-400 font-semibold flex items-center gap-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                      {warningCount} SKU{warningCount > 1 ? 's' : ''} require review
                     </span>
                   ) : (
-                    <span className="text-slate-500 flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                      All rules compliant
+                    <span className="text-emerald-400 font-semibold flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                      100% compliant with GSS rules
                     </span>
                   )}
                 </div>
@@ -582,25 +606,25 @@ export const App: React.FC = () => {
             </div>
 
             {/* Active Project Scope Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-gradient-to-r from-slate-900 via-cyan-950/30 to-slate-900 border border-cyan-500/30 rounded-2xl shadow-lg">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                  <Target className="w-4 h-4" />
+            <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-gradient-to-r from-slate-900/90 via-cyan-950/40 to-slate-900/90 border border-cyan-500/30 rounded-3xl shadow-xl backdrop-blur-xl">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 shadow-md shadow-cyan-500/10">
+                  <Target className="w-5 h-5" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                    <span className="text-[10px] uppercase font-black text-cyan-400 tracking-wider">
                       Active Project Scope Matrix
                     </span>
-                    <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
-                      Auto-Classifying
+                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-black border border-emerald-500/30">
+                      LIVE RESOLUTION
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 mt-0.5">
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
                     <select
                       value={activeScopeId}
                       onChange={e => handleSelectActiveScope(e.target.value)}
-                      className="bg-slate-900 border border-cyan-500/50 rounded-lg px-2.5 py-1 text-xs font-bold text-white focus:outline-none focus:border-cyan-400 cursor-pointer"
+                      className="bg-slate-900 border border-cyan-500/50 rounded-xl px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-cyan-400 cursor-pointer shadow-sm hover:border-cyan-400 transition-colors"
                     >
                       {scopes.map(s => (
                         <option key={s.id} value={s.id}>
@@ -608,8 +632,8 @@ export const App: React.FC = () => {
                         </option>
                       ))}
                     </select>
-                    <span className="text-[11px] text-slate-400 hidden sm:inline">
-                      • {activeScope.rules.length} scope rule categories loaded
+                    <span className="text-[11px] text-slate-400 hidden sm:inline font-medium">
+                      • {activeScope.rules.length} scope rule categories active
                     </span>
                   </div>
                 </div>
@@ -619,10 +643,10 @@ export const App: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsScopeModalOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/40 transition-colors shadow-sm"
+                  className="flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-xl bg-gradient-to-r from-cyan-600/20 to-blue-600/20 hover:from-cyan-600/30 hover:to-blue-600/30 text-cyan-300 border border-cyan-500/40 transition-all shadow-md hover:scale-[1.02]"
                 >
-                  <Layers className="w-3.5 h-3.5" />
-                  <span>View Scope Matrix & Manage Scopes</span>
+                  <Layers className="w-4 h-4 text-cyan-400" />
+                  <span>View Scope Matrix & Manage</span>
                 </button>
               </div>
             </div>

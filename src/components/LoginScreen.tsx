@@ -9,10 +9,13 @@ import {
   UserCheck,
   LogIn,
   AlertCircle,
-  ExternalLink,
   ChevronRight,
   Database,
   Lock,
+  Boxes,
+  Zap,
+  Globe2,
+  Cpu,
 } from 'lucide-react';
 import { AuthUser, AppSettings } from '../types';
 import {
@@ -28,15 +31,22 @@ interface LoginScreenProps {
   onUpdateSettings?: (settings: AppSettings) => void;
 }
 
+const SUPPORTED_SCOPES = [
+  { name: 'Pepsi Germany', tag: 'Beverages & Snacks', color: 'from-blue-500/20 to-cyan-500/20 text-cyan-300 border-cyan-500/30' },
+  { name: 'P&G Portugal', tag: 'Personal & Home Care', color: 'from-amber-500/20 to-orange-500/20 text-amber-300 border-amber-500/30' },
+  { name: 'Unilever Italy & PT', tag: 'FMCG Food & Care', color: 'from-emerald-500/20 to-teal-500/20 text-emerald-300 border-emerald-500/30' },
+  { name: 'Kraft Heinz DE', tag: 'Grocery & Condiments', color: 'from-red-500/20 to-rose-500/20 text-rose-300 border-rose-500/30' },
+  { name: 'Diageo Greece', tag: 'Spirits & RTD', color: 'from-purple-500/20 to-violet-500/20 text-purple-300 border-purple-500/30' },
+  { name: 'Coca-Cola Israel', tag: 'Beverage Suite', color: 'from-red-500/20 to-orange-500/20 text-orange-300 border-orange-500/30' },
+];
+
 export const LoginScreen: React.FC<LoginScreenProps> = ({
   onLoginSuccess,
   settings,
-  onUpdateSettings,
 }) => {
-  const [clientId, setClientId] = useState<string>(
+  const [clientId] = useState<string>(
     getGoogleClientId() || settings.googleClientId || ''
   );
-  const [showConfig, setShowConfig] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isGsiReady, setIsGsiReady] = useState(false);
   const googleBtnRef = useRef<HTMLDivElement>(null);
@@ -49,10 +59,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       if (window.google?.accounts?.id) {
         setIsGsiReady(true);
         clearInterval(interval);
-      } else if (attempts > 30) {
+      } else if (attempts > 35) {
         clearInterval(interval);
       }
-    }, 200);
+    }, 150);
 
     return () => clearInterval(interval);
   }, []);
@@ -90,7 +100,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           shape: 'pill',
           text: 'signin_with',
           logo_alignment: 'left',
-          width: 280,
+          width: 290,
         });
       }
 
@@ -105,17 +115,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       setErrorMsg('Failed to initialize Google Sign-In with this Client ID.');
     }
   }, [isGsiReady, clientId, onLoginSuccess]);
-
-  const handleSaveClientId = (newId: string) => {
-    const trimmed = newId.trim();
-    setClientId(trimmed);
-    saveGoogleClientId(trimmed);
-    if (onUpdateSettings) {
-      onUpdateSettings({ ...settings, googleClientId: trimmed });
-    }
-    setShowConfig(false);
-    setErrorMsg(null);
-  };
 
   // Instant Guest / Demo Analyst sign-in
   const handleGuestLogin = () => {
@@ -132,173 +131,193 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-center items-center px-4 py-8 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-slate-950 flex flex-col justify-between items-center px-4 py-8 sm:py-12 relative overflow-hidden font-sans selection:bg-cyan-500 selection:text-white">
       {/* Background Decorative Ambient Glows */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-600/10 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-10 right-1/4 w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[500px] bg-gradient-to-b from-cyan-600/15 via-blue-600/10 to-transparent rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-1/2 -left-32 w-[450px] h-[450px] bg-purple-600/10 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-0 right-[-100px] w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[160px] pointer-events-none" />
+      
+      {/* Subtle Grid Pattern Overlay */}
+      <div 
+        className="absolute inset-0 opacity-[0.03] pointer-events-none"
+        style={{
+          backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px)`,
+          backgroundSize: '24px 24px'
+        }}
+      />
 
-      {/* Main Container */}
-      <div className="w-full max-w-md z-10 animate-in fade-in zoom-in-95 duration-300">
-        {/* Brand Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-600 to-blue-600 shadow-xl shadow-cyan-500/25 mb-4 border border-cyan-400/30">
-            <Layers className="w-8 h-8 text-white" />
+      {/* Top System Status Bar */}
+      <header className="w-full max-w-5xl z-10 flex items-center justify-between pb-6 border-b border-slate-800/60">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-white shadow-md shadow-cyan-500/20 border border-cyan-400/30">
+            <Layers className="w-4 h-4" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            GSS <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">ODA</span> Suite
-          </h1>
-          <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-            AI-Powered Operational Data Analyst Platform & FMCG Standardization
-          </p>
+          <div>
+            <span className="text-sm font-extrabold text-white tracking-tight">
+              GSS <span className="text-cyan-400">ODA</span> Suite
+            </span>
+            <span className="hidden sm:inline-block ml-2 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+              • Enterprise Edition
+            </span>
+          </div>
         </div>
 
-        {/* Login Card */}
-        <div className="bg-slate-900/90 border border-slate-800 backdrop-blur-xl rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6">
-          <div className="text-center space-y-1">
-            <h2 className="text-base font-bold text-slate-100 flex items-center justify-center gap-2">
-              <LogIn className="w-4 h-4 text-cyan-400" />
-              Sign in to Continue
-            </h2>
-            <p className="text-xs text-slate-400">
-              Access product name standardizer, brand intelligence, and scope rules
+        <div className="flex items-center gap-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-[11px] font-semibold">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>AI Engine Online</span>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Container */}
+      <main className="w-full max-w-5xl z-10 my-auto py-8 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+        {/* Left Side: Brand Value Proposition & Supported Scopes */}
+        <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/70 border border-cyan-500/30 text-cyan-300 text-xs font-semibold backdrop-blur-md">
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Next-Gen Operational Data Analyst Platform</span>
+          </div>
+
+          <div className="space-y-3">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
+              Standardize FMCG Products with{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-300 to-blue-500">
+                Precision AI
+              </span>
+            </h1>
+            <p className="text-sm sm:text-base text-slate-400 max-w-xl mx-auto lg:mx-0 leading-relaxed">
+              Auto-generate 150-character standard English naming strings, detect 49 packaging container types, and map Trax categories instantly with vision intelligence.
             </p>
           </div>
 
-          {errorMsg && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-              <span>{errorMsg}</span>
+          {/* Supported Scopes Pills Grid */}
+          <div className="space-y-2 pt-2">
+            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+              Pre-Configured Enterprise Scopes
+            </span>
+            <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
+              {SUPPORTED_SCOPES.map(sc => (
+                <div
+                  key={sc.name}
+                  className={`px-3 py-1.5 rounded-xl border text-xs font-medium bg-gradient-to-r ${sc.color} transition-all hover:scale-105 shadow-sm`}
+                >
+                  <span className="font-bold">{sc.name}</span>
+                  <span className="opacity-75 text-[10px] ml-1.5">({sc.tag})</span>
+                </div>
+              ))}
             </div>
-          )}
+          </div>
 
-          {/* Google Sign-In Button Area */}
-          <div className="space-y-4">
-            {clientId.trim() ? (
-              <div className="flex flex-col items-center justify-center space-y-3">
+          {/* Quick Feature Badges */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3">
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 text-left">
+              <Cpu className="w-4 h-4 text-cyan-400 mb-1.5" />
+              <div className="text-xs font-bold text-slate-200">Gemini 2.0 Flash</div>
+              <div className="text-[11px] text-slate-400">High-speed OCR & SKU vision</div>
+            </div>
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 text-left">
+              <Boxes className="w-4 h-4 text-purple-400 mb-1.5" />
+              <div className="text-xs font-bold text-slate-200">49 Packaging Types</div>
+              <div className="text-[11px] text-slate-400">Bottle, Can, Sachet & more</div>
+            </div>
+            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 text-left">
+              <Database className="w-4 h-4 text-emerald-400 mb-1.5" />
+              <div className="text-xs font-bold text-slate-200">Private Local Vault</div>
+              <div className="text-[11px] text-slate-400">7-day client-side retention</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side: Authentication Box */}
+        <div className="lg:col-span-5 w-full max-w-md mx-auto">
+          <div className="glass-panel-glow rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden space-y-6">
+            {/* Ambient inner glow */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="text-center space-y-1.5">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white mx-auto shadow-lg shadow-cyan-500/25 border border-cyan-300/30">
+                <LogIn className="w-6 h-6" />
+              </div>
+              <h2 className="text-xl font-extrabold text-white tracking-tight pt-1">
+                Analyst Portal
+              </h2>
+              <p className="text-xs text-slate-400">
+                Sign in with your Google Workspace or Gmail account
+              </p>
+            </div>
+
+            {errorMsg && (
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2 animate-in fade-in">
+                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
+            {/* Official Google Sign In Button Container */}
+            <div className="space-y-4">
+              <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-slate-950/60 border border-slate-800/80">
                 <div
                   ref={googleBtnRef}
                   className="min-h-[44px] flex items-center justify-center"
                 />
                 {!isGsiReady && (
-                  <p className="text-[11px] text-slate-500 animate-pulse">
-                    Connecting to Google Identity Services...
-                  </p>
+                  <div className="flex items-center gap-2 py-2 text-xs text-slate-400 animate-pulse">
+                    <span className="w-2 h-2 rounded-full bg-cyan-400" />
+                    <span>Connecting to Google Identity Services...</span>
+                  </div>
                 )}
               </div>
-            ) : (
-              <div className="p-4 rounded-xl bg-cyan-950/20 border border-cyan-500/30 space-y-3 text-center">
-                <div className="w-10 h-10 rounded-full bg-cyan-500/10 text-cyan-400 flex items-center justify-center mx-auto border border-cyan-500/20">
-                  <Key className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-bold text-slate-200">Google Client ID Setup</h3>
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    To enable 1-click Google sign-in with your Gmail, enter your Google OAuth Client ID.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowConfig(!showConfig)}
-                  className="w-full py-2 px-3 rounded-lg text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950 transition-colors shadow-md shadow-cyan-500/10"
-                >
-                  Configure Google Client ID
-                </button>
+
+              {/* Divider */}
+              <div className="relative flex items-center justify-center">
+                <div className="border-t border-slate-800 w-full" />
+                <span className="bg-slate-900 px-3 text-[10px] text-slate-500 uppercase tracking-widest font-bold absolute">
+                  OR
+                </span>
               </div>
-            )}
 
-            {/* Google Client ID Configuration Form */}
-            {showConfig && (
-              <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-700/80 space-y-3 animate-in fade-in duration-200">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                    <Key className="w-3.5 h-3.5 text-cyan-400" />
-                    Google OAuth Client ID
-                  </span>
-                  <a
-                    href="https://console.cloud.google.com/apis/credentials"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[10px] text-cyan-400 hover:underline flex items-center gap-1"
-                  >
-                    Get Free ID <ExternalLink className="w-3 h-3" />
-                  </a>
+              {/* Guest / Demo Analyst Sign-In */}
+              <button
+                type="button"
+                onClick={handleGuestLogin}
+                className="w-full py-3 px-4 rounded-xl text-xs font-bold bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 hover:border-cyan-500/40 text-slate-200 flex items-center justify-between transition-all shadow-md group"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <UserCheck className="w-4 h-4" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-xs font-bold text-white">Continue as Guest Analyst</div>
+                    <div className="text-[10px] text-slate-400">Demo access without signing in</div>
+                  </div>
                 </div>
-                <input
-                  type="text"
-                  placeholder="e.g. 123456789-abc.apps.googleusercontent.com"
-                  defaultValue={clientId}
-                  id="client-id-input"
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg text-xs text-slate-200 font-mono focus:outline-none focus:border-cyan-400"
-                />
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const input = document.getElementById(
-                        'client-id-input'
-                      ) as HTMLInputElement;
-                      if (input) handleSaveClientId(input.value);
-                    }}
-                    className="flex-1 py-1.5 rounded-lg text-xs font-bold bg-cyan-500 hover:bg-cyan-400 text-slate-950"
-                  >
-                    Save & Enable Google Login
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowConfig(false)}
-                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300"
-                  >
-                    Cancel
-                  </button>
-                </div>
+                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-cyan-400 group-hover:translate-x-0.5 transition-all" />
+              </button>
+            </div>
+
+            {/* Security Guarantee Pill Badges */}
+            <div className="pt-4 border-t border-slate-800/80 space-y-2">
+              <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                <ShieldCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                <span>Zero Server Uploads • Files processed in your browser</span>
               </div>
-            )}
-
-            {/* Divider */}
-            <div className="relative flex items-center justify-center">
-              <div className="border-t border-slate-800 w-full" />
-              <span className="bg-slate-900 px-2 text-[10px] text-slate-500 uppercase tracking-widest font-semibold absolute">
-                OR
-              </span>
-            </div>
-
-            {/* Guest / Demo Access Button */}
-            <button
-              type="button"
-              onClick={handleGuestLogin}
-              className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-slate-800/80 hover:bg-slate-800 border border-slate-700 hover:border-slate-600 text-slate-200 flex items-center justify-center gap-2 transition-all shadow-sm group"
-            >
-              <UserCheck className="w-4 h-4 text-cyan-400 group-hover:scale-110 transition-transform" />
-              <span>Continue as Guest / Demo Analyst</span>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-500 group-hover:translate-x-0.5 transition-transform ml-auto" />
-            </button>
-          </div>
-
-          {/* Quick Features List */}
-          <div className="pt-2 border-t border-slate-800/80 space-y-2">
-            <div className="flex items-center gap-2 text-[11px] text-slate-400">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span>Multi-scope support (Pepsi, P&G, Unilever, Diageo, Kraft Heinz)</span>
-            </div>
-            <div className="flex items-center gap-2 text-[11px] text-slate-400">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span>Local browser persistence (Private & isolated per user)</span>
-            </div>
-            <div className="flex items-center gap-2 text-[11px] text-slate-400">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span>Google Gemini Multimodal AI vision analysis</span>
+              <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                <span>Verified Google OAuth 2.0 Single Sign-On</span>
+              </div>
             </div>
           </div>
-
-
         </div>
+      </main>
 
-        {/* Footer info */}
-        <p className="text-center text-[11px] text-slate-600 mt-6">
-          GSS Operational Data Analyst Suite • Free GitHub & Vercel Deployable
-        </p>
-      </div>
+      {/* Footer */}
+      <footer className="w-full max-w-5xl z-10 pt-6 border-t border-slate-800/60 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <p>GSS Operational Data Analyst (ODA) Standardizer • Brand Intelligence Studio</p>
+        <p className="text-[11px] text-slate-600">Enterprise FMCG Scope Architecture • Free GitHub & Vercel Deployable</p>
+      </footer>
     </div>
   );
 };
+
 

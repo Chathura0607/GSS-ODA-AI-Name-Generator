@@ -129,10 +129,10 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onClick={() => fileInputRef.current?.click()}
-        className={`relative border-2 border-dashed rounded-2xl p-8 transition-all cursor-pointer text-center group ${
+        className={`relative border-2 border-dashed rounded-3xl p-8 sm:p-10 transition-all cursor-pointer text-center group ${
           isDragging
-            ? 'border-cyan-400 bg-cyan-500/10 scale-[1.005]'
-            : 'border-slate-700/80 bg-slate-800/40 hover:border-cyan-500/50 hover:bg-slate-800/70'
+            ? 'border-cyan-400 bg-cyan-500/10 shadow-2xl shadow-cyan-500/20 scale-[1.008]'
+            : 'border-slate-700/80 bg-slate-900/60 hover:border-cyan-500/50 hover:bg-slate-900/90 shadow-xl backdrop-blur-sm'
         }`}
       >
         <input
@@ -144,49 +144,49 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
           className="hidden"
         />
 
-        <div className="flex flex-col items-center justify-center space-y-3">
+        <div className="flex flex-col items-center justify-center space-y-3.5">
           <div
-            className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all ${
+            className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 ${
               isDragging
-                ? 'bg-cyan-500 text-white shadow-xl shadow-cyan-500/40'
-                : 'bg-slate-800 text-cyan-400 border border-slate-700 group-hover:border-cyan-500/40 group-hover:scale-110'
+                ? 'bg-cyan-500 text-white shadow-xl shadow-cyan-500/40 scale-110 rotate-3'
+                : 'bg-slate-800/90 text-cyan-400 border border-slate-700/80 group-hover:border-cyan-400/50 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-cyan-500/10'
             }`}
           >
             <UploadCloud className="w-8 h-8" />
           </div>
 
           <div className="space-y-1">
-            <h3 className="text-base font-bold text-white tracking-tight">
+            <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
               Drag & Drop Product Images or Archives Here
             </h3>
-            <p className="text-xs text-slate-400 max-w-lg mx-auto">
-              Upload single or batch images. Automatically extracts pages from <strong className="text-slate-300">PDF</strong> files and images from <strong className="text-slate-300">ZIP</strong> archives.
+            <p className="text-xs text-slate-400 max-w-md mx-auto">
+              Upload single or batch product images. Automatically extracts pages from <strong className="text-slate-200">PDF</strong> files and unpacks images from <strong className="text-slate-200">ZIP / RAR</strong> archives.
             </p>
           </div>
 
           {/* Supported badges */}
           <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
-            <span className="flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300">
-              <ImageIcon className="w-3 h-3 text-cyan-400" />
+            <span className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full bg-slate-800/90 border border-slate-700/80 text-slate-300 shadow-sm">
+              <ImageIcon className="w-3.5 h-3.5 text-cyan-400" />
               JPG, PNG, WEBP
             </span>
-            <span className="flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300">
-              <FileText className="w-3 h-3 text-rose-400" />
-              PDF (Pages Extracted)
+            <span className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full bg-slate-800/90 border border-slate-700/80 text-slate-300 shadow-sm">
+              <FileText className="w-3.5 h-3.5 text-rose-400" />
+              PDF Pages
             </span>
-            <span className="flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300">
-              <FolderArchive className="w-3 h-3 text-amber-400" />
-              ZIP Archives
+            <span className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full bg-slate-800/90 border border-slate-700/80 text-slate-300 shadow-sm">
+              <FolderArchive className="w-3.5 h-3.5 text-amber-400" />
+              ZIP / RAR Archives
             </span>
-            <span className="flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300">
-              <Sparkles className="w-3 h-3 text-purple-400" />
+            <span className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full bg-slate-800/90 border border-slate-700/80 text-slate-300 shadow-sm">
+              <Sparkles className="w-3.5 h-3.5 text-purple-400" />
               Ctrl+V Paste Image
             </span>
           </div>
         </div>
 
         {statusText && (
-          <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs animate-pulse">
+          <div className="mt-4 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs font-semibold animate-pulse shadow-md">
             <Sparkles className="w-3.5 h-3.5" />
             {statusText}
           </div>
