@@ -16,17 +16,22 @@ declare global {
   }
 }
 
+// Default Google OAuth Client ID embedded for all users/analysts
+export const DEFAULT_GOOGLE_CLIENT_ID =
+  '763224014453-799g3sceiuq8ec9d7ecg3n37e2ue6mf8.apps.googleusercontent.com';
+
 const AUTH_USER_KEY = 'gss_auth_user';
 const GOOGLE_CLIENT_ID_KEY = 'gss_google_client_id';
 
 /**
  * Fallback / default Google Client ID
- * Users can also set VITE_GOOGLE_CLIENT_ID in .env or configure in Settings
+ * Uses embedded DEFAULT_GOOGLE_CLIENT_ID first, with env / localStorage fallbacks
  */
 export function getGoogleClientId(): string {
   return (
-    localStorage.getItem(GOOGLE_CLIENT_ID_KEY) ||
+    DEFAULT_GOOGLE_CLIENT_ID ||
     import.meta.env.VITE_GOOGLE_CLIENT_ID ||
+    localStorage.getItem(GOOGLE_CLIENT_ID_KEY) ||
     ''
   );
 }

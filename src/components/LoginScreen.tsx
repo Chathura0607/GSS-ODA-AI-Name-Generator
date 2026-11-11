@@ -34,7 +34,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   onUpdateSettings,
 }) => {
   const [clientId, setClientId] = useState<string>(
-    settings.googleClientId || getGoogleClientId() || ''
+    getGoogleClientId() || settings.googleClientId || ''
   );
   const [showConfig, setShowConfig] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -290,17 +290,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             </div>
           </div>
 
-          {clientId.trim() && !showConfig && (
-            <div className="text-center pt-1">
-              <button
-                type="button"
-                onClick={() => setShowConfig(true)}
-                className="text-[10px] text-slate-500 hover:text-cyan-400 transition-colors"
-              >
-                Change Google Client ID
-              </button>
-            </div>
-          )}
+
         </div>
 
         {/* Footer info */}
