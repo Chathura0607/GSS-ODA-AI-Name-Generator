@@ -56,6 +56,18 @@ export interface AppSettings {
   autoProcessOnUpload: boolean;
   strictContainerCheck: boolean;
   activeProjectScopeId?: string; // e.g. 'kraft-heinz-germany'
+  googleClientId?: string; // Google OAuth Client ID for Gmail / Google Sign-In
+}
+
+export interface AuthUser {
+  id: string; // Google subject ID
+  name: string;
+  email: string;
+  picture?: string;
+  givenName?: string;
+  familyName?: string;
+  token?: string;
+  loggedInAt: number;
 }
 
 export interface ExtractionProgress {
