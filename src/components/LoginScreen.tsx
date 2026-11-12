@@ -32,12 +32,12 @@ interface LoginScreenProps {
 }
 
 const SUPPORTED_SCOPES = [
-  { name: 'Pepsi Germany', tag: 'Beverages & Snacks', color: 'from-blue-500/20 to-cyan-500/20 text-cyan-300 border-cyan-500/30' },
-  { name: 'P&G Portugal', tag: 'Personal & Home Care', color: 'from-amber-500/20 to-orange-500/20 text-amber-300 border-amber-500/30' },
-  { name: 'Unilever Italy & PT', tag: 'FMCG Food & Care', color: 'from-emerald-500/20 to-teal-500/20 text-emerald-300 border-emerald-500/30' },
-  { name: 'Kraft Heinz DE', tag: 'Grocery & Condiments', color: 'from-red-500/20 to-rose-500/20 text-rose-300 border-rose-500/30' },
-  { name: 'Diageo Greece', tag: 'Spirits & RTD', color: 'from-purple-500/20 to-violet-500/20 text-purple-300 border-purple-500/30' },
-  { name: 'Coca-Cola Israel', tag: 'Beverage Suite', color: 'from-red-500/20 to-orange-500/20 text-orange-300 border-orange-500/30' },
+  { name: 'Pepsi Germany', tag: 'Beverages & Snacks', color: 'from-blue-600/20 to-indigo-600/20 text-blue-300 border-blue-500/30' },
+  { name: 'P&G Portugal', tag: 'Personal Care', color: 'from-amber-600/20 to-orange-600/20 text-amber-300 border-amber-500/30' },
+  { name: 'Unilever Italy & PT', tag: 'FMCG Food & Care', color: 'from-emerald-600/20 to-teal-600/20 text-emerald-300 border-emerald-500/30' },
+  { name: 'Kraft Heinz DE', tag: 'Grocery & Condiments', color: 'from-rose-600/20 to-red-600/20 text-rose-300 border-rose-500/30' },
+  { name: 'Diageo Greece', tag: 'Spirits & RTD', color: 'from-purple-600/20 to-violet-600/20 text-purple-300 border-purple-500/30' },
+  { name: 'Coca-Cola Israel', tag: 'Beverage Suite', color: 'from-red-600/20 to-amber-600/20 text-amber-300 border-red-500/30' },
 ];
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({
@@ -100,7 +100,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           shape: 'pill',
           text: 'signin_with',
           logo_alignment: 'left',
-          width: 290,
+          width: 280,
         });
       }
 
@@ -131,139 +131,136 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col justify-between items-center px-4 py-8 sm:py-12 relative overflow-hidden font-sans selection:bg-cyan-500 selection:text-white">
-      {/* Background Decorative Ambient Glows */}
-      <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[500px] bg-gradient-to-b from-cyan-600/15 via-blue-600/10 to-transparent rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute top-1/2 -left-32 w-[450px] h-[450px] bg-purple-600/10 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-0 right-[-100px] w-[500px] h-[500px] bg-cyan-500/10 rounded-full blur-[160px] pointer-events-none" />
-      
+    <div className="min-h-screen lg:h-screen lg:max-h-screen bg-[#080C14] flex flex-col justify-between items-center px-4 py-3 sm:py-5 lg:py-4 relative overflow-y-auto lg:overflow-hidden font-sans selection:bg-indigo-500 selection:text-white">
+      {/* Ambient background glows with indigo & violet luxury tones */}
+      <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[650px] h-[350px] bg-gradient-to-b from-indigo-600/15 via-violet-600/10 to-transparent rounded-full blur-[130px] pointer-events-none" />
+      <div className="absolute top-1/3 -left-28 w-[380px] h-[380px] bg-indigo-500/10 rounded-full blur-[130px] pointer-events-none" />
+      <div className="absolute bottom-[-50px] right-[-50px] w-[420px] h-[420px] bg-cyan-500/10 rounded-full blur-[140px] pointer-events-none" />
+
       {/* Subtle Grid Pattern Overlay */}
-      <div 
-        className="absolute inset-0 opacity-[0.03] pointer-events-none"
+      <div
+        className="absolute inset-0 opacity-[0.025] pointer-events-none"
         style={{
           backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.4) 1px, transparent 1px)`,
-          backgroundSize: '24px 24px'
+          backgroundSize: '24px 24px',
         }}
       />
 
       {/* Top System Status Bar */}
-      <header className="w-full max-w-5xl z-10 flex items-center justify-between pb-6 border-b border-slate-800/60">
+      <header className="w-full max-w-6xl z-10 flex items-center justify-between pb-3 sm:pb-4 border-b border-white/[0.06] shrink-0">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-white shadow-md shadow-cyan-500/20 border border-cyan-400/30">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 flex items-center justify-center text-white shadow-md shadow-indigo-500/25 border border-indigo-400/30">
             <Layers className="w-4 h-4" />
           </div>
           <div>
             <span className="text-sm font-extrabold text-white tracking-tight">
-              GSS <span className="text-cyan-400">ODA</span> Suite
+              GSS <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-300">ODA</span> Suite
             </span>
-            <span className="hidden sm:inline-block ml-2 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+            <span className="hidden sm:inline-block ml-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
               • Enterprise Edition
             </span>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-[11px] font-semibold">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-[11px] font-semibold">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span>AI Engine Online</span>
           </div>
         </div>
       </header>
 
-      {/* Main Container */}
-      <main className="w-full max-w-5xl z-10 my-auto py-8 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+      {/* Main Container - Balanced for Laptops & Desktops */}
+      <main className="w-full max-w-6xl z-10 my-auto py-3 sm:py-6 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center shrink-0">
         {/* Left Side: Brand Value Proposition & Supported Scopes */}
-        <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/70 border border-cyan-500/30 text-cyan-300 text-xs font-semibold backdrop-blur-md">
-            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Next-Gen Operational Data Analyst Platform</span>
+        <div className="lg:col-span-7 space-y-4 text-center lg:text-left">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-950/60 border border-indigo-500/30 text-indigo-300 text-xs font-semibold backdrop-blur-md">
+            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Operational Data Analyst Platform</span>
           </div>
 
-          <div className="space-y-3">
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
+          <div className="space-y-2">
+            <h1 className="text-2xl sm:text-3xl lg:text-3xl xl:text-4xl font-extrabold text-white tracking-tight leading-tight">
               Standardize FMCG Products with{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-300 to-blue-500">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-300 to-cyan-400">
                 Precision AI
               </span>
             </h1>
-            <p className="text-sm sm:text-base text-slate-400 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-              Auto-generate 150-character standard English naming strings, detect 49 packaging container types, and map Trax categories instantly with vision intelligence.
+            <p className="text-xs sm:text-sm text-slate-300/90 max-w-lg mx-auto lg:mx-0 leading-relaxed">
+              Auto-generate 150-character standard English naming strings, classify 49 packaging container types, and map Trax/Client categories automatically.
             </p>
           </div>
 
           {/* Supported Scopes Pills Grid */}
-          <div className="space-y-2 pt-2">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
-              Pre-Configured Enterprise Scopes
+          <div className="space-y-1.5 pt-1">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+              Active Enterprise Project Scopes
             </span>
-            <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
+            <div className="flex flex-wrap gap-1.5 justify-center lg:justify-start">
               {SUPPORTED_SCOPES.map(sc => (
                 <div
                   key={sc.name}
-                  className={`px-3 py-1.5 rounded-xl border text-xs font-medium bg-gradient-to-r ${sc.color} transition-all hover:scale-105 shadow-sm`}
+                  className={`px-2.5 py-1 rounded-lg border text-[11px] font-medium bg-gradient-to-r ${sc.color} transition-all hover:scale-105 shadow-sm`}
                 >
                   <span className="font-bold">{sc.name}</span>
-                  <span className="opacity-75 text-[10px] ml-1.5">({sc.tag})</span>
+                  <span className="opacity-75 text-[10px] ml-1">({sc.tag})</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Quick Feature Badges */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3">
-            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 text-left">
-              <Cpu className="w-4 h-4 text-cyan-400 mb-1.5" />
-              <div className="text-xs font-bold text-slate-200">Gemini 2.0 Flash</div>
-              <div className="text-[11px] text-slate-400">High-speed OCR & SKU vision</div>
+          <div className="grid grid-cols-3 gap-2.5 pt-2">
+            <div className="p-2.5 rounded-xl bg-slate-900/70 border border-white/[0.06] text-left">
+              <Cpu className="w-4 h-4 text-indigo-400 mb-1" />
+              <div className="text-xs font-bold text-slate-200">Gemini 2.0</div>
+              <div className="text-[10px] text-slate-400 leading-tight">Vision OCR & SKU extraction</div>
             </div>
-            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 text-left">
-              <Boxes className="w-4 h-4 text-purple-400 mb-1.5" />
-              <div className="text-xs font-bold text-slate-200">49 Packaging Types</div>
-              <div className="text-[11px] text-slate-400">Bottle, Can, Sachet & more</div>
+            <div className="p-2.5 rounded-xl bg-slate-900/70 border border-white/[0.06] text-left">
+              <Boxes className="w-4 h-4 text-purple-400 mb-1" />
+              <div className="text-xs font-bold text-slate-200">49 Packaging</div>
+              <div className="text-[10px] text-slate-400 leading-tight">Bottle, Can, Sachet, Pack</div>
             </div>
-            <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 text-left">
-              <Database className="w-4 h-4 text-emerald-400 mb-1.5" />
-              <div className="text-xs font-bold text-slate-200">Private Local Vault</div>
-              <div className="text-[11px] text-slate-400">7-day client-side retention</div>
+            <div className="p-2.5 rounded-xl bg-slate-900/70 border border-white/[0.06] text-left">
+              <Database className="w-4 h-4 text-emerald-400 mb-1" />
+              <div className="text-xs font-bold text-slate-200">7-Day Vault</div>
+              <div className="text-[10px] text-slate-400 leading-tight">Private local IndexedDB</div>
             </div>
           </div>
         </div>
 
         {/* Right Side: Authentication Box */}
-        <div className="lg:col-span-5 w-full max-w-md mx-auto">
-          <div className="glass-panel-glow rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden space-y-6">
-            {/* Ambient inner glow */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
-
-            <div className="text-center space-y-1.5">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white mx-auto shadow-lg shadow-cyan-500/25 border border-cyan-300/30">
-                <LogIn className="w-6 h-6" />
+        <div className="lg:col-span-5 w-full max-w-sm mx-auto">
+          <div className="glass-panel-glow rounded-3xl p-5 sm:p-6 shadow-2xl relative overflow-hidden space-y-4">
+            <div className="text-center space-y-1">
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-600 to-cyan-500 flex items-center justify-center text-white mx-auto shadow-lg shadow-indigo-500/25 border border-indigo-400/30">
+                <LogIn className="w-5 h-5" />
               </div>
-              <h2 className="text-xl font-extrabold text-white tracking-tight pt-1">
+              <h2 className="text-lg font-bold text-white tracking-tight pt-1">
                 Analyst Portal
               </h2>
               <p className="text-xs text-slate-400">
-                Sign in with your Google Workspace or Gmail account
+                Sign in with your Google account
               </p>
             </div>
 
             {errorMsg && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2 animate-in fade-in">
+              <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
                 <span>{errorMsg}</span>
               </div>
             )}
 
             {/* Official Google Sign In Button Container */}
-            <div className="space-y-4">
-              <div className="flex flex-col items-center justify-center p-3 rounded-2xl bg-slate-950/60 border border-slate-800/80">
+            <div className="space-y-3">
+              <div className="flex flex-col items-center justify-center p-2.5 rounded-2xl bg-slate-950/80 border border-white/[0.08]">
                 <div
                   ref={googleBtnRef}
                   className="min-h-[44px] flex items-center justify-center"
                 />
                 {!isGsiReady && (
-                  <div className="flex items-center gap-2 py-2 text-xs text-slate-400 animate-pulse">
-                    <span className="w-2 h-2 rounded-full bg-cyan-400" />
+                  <div className="flex items-center gap-2 py-1 text-xs text-slate-400 animate-pulse">
+                    <span className="w-2 h-2 rounded-full bg-indigo-400" />
                     <span>Connecting to Google Identity Services...</span>
                   </div>
                 )}
@@ -272,7 +269,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               {/* Divider */}
               <div className="relative flex items-center justify-center">
                 <div className="border-t border-slate-800 w-full" />
-                <span className="bg-slate-900 px-3 text-[10px] text-slate-500 uppercase tracking-widest font-bold absolute">
+                <span className="bg-[#0D1321] px-2.5 text-[10px] text-slate-500 uppercase tracking-widest font-bold absolute">
                   OR
                 </span>
               </div>
@@ -281,28 +278,28 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               <button
                 type="button"
                 onClick={handleGuestLogin}
-                className="w-full py-3 px-4 rounded-xl text-xs font-bold bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 hover:border-cyan-500/40 text-slate-200 flex items-center justify-between transition-all shadow-md group"
+                className="w-full py-2.5 px-3.5 rounded-xl text-xs font-bold bg-slate-900/90 hover:bg-slate-850 border border-white/[0.08] hover:border-indigo-500/40 text-slate-200 flex items-center justify-between transition-all shadow-md group"
               >
                 <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <div className="w-7 h-7 rounded-lg bg-indigo-500/15 border border-indigo-500/25 text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <UserCheck className="w-4 h-4" />
                   </div>
                   <div className="text-left">
                     <div className="text-xs font-bold text-white">Continue as Guest Analyst</div>
-                    <div className="text-[10px] text-slate-400">Demo access without signing in</div>
+                    <div className="text-[10px] text-slate-400">Instant access without signing in</div>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-cyan-400 group-hover:translate-x-0.5 transition-all" />
+                <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-indigo-400 group-hover:translate-x-0.5 transition-all" />
               </button>
             </div>
 
             {/* Security Guarantee Pill Badges */}
-            <div className="pt-4 border-t border-slate-800/80 space-y-2">
-              <div className="flex items-center gap-2 text-[11px] text-slate-400">
-                <ShieldCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                <span>Zero Server Uploads • Files processed in your browser</span>
+            <div className="pt-3 border-t border-white/[0.06] space-y-1.5">
+              <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                <ShieldCheck className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                <span>Zero Server Uploads • Processed in browser</span>
               </div>
-              <div className="flex items-center gap-2 text-[11px] text-slate-400">
+              <div className="flex items-center gap-2 text-[10px] text-slate-400">
                 <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                 <span>Verified Google OAuth 2.0 Single Sign-On</span>
               </div>
@@ -312,9 +309,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       </main>
 
       {/* Footer */}
-      <footer className="w-full max-w-5xl z-10 pt-6 border-t border-slate-800/60 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2">
-        <p>GSS Operational Data Analyst (ODA) Standardizer • Brand Intelligence Studio</p>
-        <p className="text-[11px] text-slate-600">Enterprise FMCG Scope Architecture • Free GitHub & Vercel Deployable</p>
+      <footer className="w-full max-w-6xl z-10 pt-2.5 border-t border-white/[0.06] text-center text-[11px] text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-1 shrink-0">
+        <p>GSS Operational Data Analyst (ODA) Standardizer • Brand Studio</p>
+        <p className="text-slate-600">Enterprise FMCG Scope Architecture • Free GitHub & Vercel Deployable</p>
       </footer>
     </div>
   );

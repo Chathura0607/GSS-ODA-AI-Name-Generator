@@ -129,10 +129,10 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onClick={() => fileInputRef.current?.click()}
-        className={`relative border-2 border-dashed rounded-3xl p-8 sm:p-10 transition-all cursor-pointer text-center group ${
+        className={`relative border-2 border-dashed rounded-3xl p-6 sm:p-8 lg:p-9 transition-all cursor-pointer text-center group ${
           isDragging
-            ? 'border-cyan-400 bg-cyan-500/10 shadow-2xl shadow-cyan-500/20 scale-[1.008]'
-            : 'border-slate-700/80 bg-slate-900/60 hover:border-cyan-500/50 hover:bg-slate-900/90 shadow-xl backdrop-blur-sm'
+            ? 'border-indigo-400 bg-indigo-500/10 shadow-2xl shadow-indigo-500/25 scale-[1.008]'
+            : 'border-white/[0.08] bg-slate-900/60 hover:border-indigo-500/40 hover:bg-slate-900/90 shadow-xl backdrop-blur-xl'
         }`}
       >
         <input
@@ -144,15 +144,15 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
           className="hidden"
         />
 
-        <div className="flex flex-col items-center justify-center space-y-3.5">
+        <div className="flex flex-col items-center justify-center space-y-3">
           <div
-            className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 ${
+            className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center transition-all duration-300 ${
               isDragging
-                ? 'bg-cyan-500 text-white shadow-xl shadow-cyan-500/40 scale-110 rotate-3'
-                : 'bg-slate-800/90 text-cyan-400 border border-slate-700/80 group-hover:border-cyan-400/50 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-cyan-500/10'
+                ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-500/40 scale-110 rotate-3'
+                : 'bg-slate-800/90 text-indigo-400 border border-white/[0.08] group-hover:border-indigo-400/50 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-indigo-500/15'
             }`}
           >
-            <UploadCloud className="w-8 h-8" />
+            <UploadCloud className="w-7 h-7 sm:w-8 sm:h-8" />
           </div>
 
           <div className="space-y-1">
@@ -165,20 +165,20 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
           </div>
 
           {/* Supported badges */}
-          <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
-            <span className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full bg-slate-800/90 border border-slate-700/80 text-slate-300 shadow-sm">
-              <ImageIcon className="w-3.5 h-3.5 text-cyan-400" />
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-1.5">
+            <span className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full bg-slate-800/80 border border-white/[0.08] text-slate-300 shadow-sm">
+              <ImageIcon className="w-3.5 h-3.5 text-indigo-400" />
               JPG, PNG, WEBP
             </span>
-            <span className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full bg-slate-800/90 border border-slate-700/80 text-slate-300 shadow-sm">
+            <span className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full bg-slate-800/80 border border-white/[0.08] text-slate-300 shadow-sm">
               <FileText className="w-3.5 h-3.5 text-rose-400" />
               PDF Pages
             </span>
-            <span className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full bg-slate-800/90 border border-slate-700/80 text-slate-300 shadow-sm">
+            <span className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full bg-slate-800/80 border border-white/[0.08] text-slate-300 shadow-sm">
               <FolderArchive className="w-3.5 h-3.5 text-amber-400" />
               ZIP / RAR Archives
             </span>
-            <span className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full bg-slate-800/90 border border-slate-700/80 text-slate-300 shadow-sm">
+            <span className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full bg-slate-800/80 border border-white/[0.08] text-slate-300 shadow-sm">
               <Sparkles className="w-3.5 h-3.5 text-purple-400" />
               Ctrl+V Paste Image
             </span>
@@ -186,7 +186,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
         </div>
 
         {statusText && (
-          <div className="mt-4 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs font-semibold animate-pulse shadow-md">
+          <div className="mt-3.5 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/20 text-indigo-200 border border-indigo-500/30 text-xs font-semibold animate-pulse shadow-md">
             <Sparkles className="w-3.5 h-3.5" />
             {statusText}
           </div>
@@ -203,7 +203,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
       {/* Quick Test Samples Bar */}
       <div className="flex flex-wrap items-center justify-between gap-2 px-1">
         <div className="flex items-center gap-1.5 text-xs text-slate-400">
-          <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+          <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
           <span>Quick test with GSS sample images:</span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -213,7 +213,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
               e.stopPropagation();
               handleLoadSample('./samples/tru_blu_ceda_12pack.jpg', 'Tru_Blu_Ceda_12Pack.jpg');
             }}
-            className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
+            className="text-[11px] px-2.5 py-1 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-white/[0.08] hover:border-indigo-500/30 transition-colors"
           >
             Tru Blu Ceda (12 Pack)
           </button>
@@ -223,7 +223,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
               e.stopPropagation();
               handleLoadSample('./samples/cascade_ginger_ale_4pack.jpg', 'Cascade_Ginger_Ale_4Pack.jpg');
             }}
-            className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
+            className="text-[11px] px-2.5 py-1 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-white/[0.08] hover:border-indigo-500/30 transition-colors"
           >
             Cascade Ginger Ale (4 Pack)
           </button>
@@ -233,7 +233,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
               e.stopPropagation();
               handleLoadSample('./samples/fanta_orange_8pack.jpg', 'Fanta_Orange_NoSugar_8Pack.jpg');
             }}
-            className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
+            className="text-[11px] px-2.5 py-1 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-white/[0.08] hover:border-indigo-500/30 transition-colors"
           >
             Fanta Orange (8 Pack)
           </button>
@@ -243,7 +243,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
               e.stopPropagation();
               handleLoadAllSamples();
             }}
-            className="text-[11px] font-semibold px-3 py-1 rounded-lg bg-cyan-600/30 hover:bg-cyan-600/50 text-cyan-300 border border-cyan-500/40 transition-colors"
+            className="text-[11px] font-semibold px-3 py-1 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-200 border border-indigo-500/40 transition-colors"
           >
             Load All 3 Samples
           </button>

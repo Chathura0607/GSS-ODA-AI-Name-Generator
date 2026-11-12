@@ -489,8 +489,8 @@ export const App: React.FC = () => {
         }}
       />
 
-      {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      {/* Main Container - Fluid for Laptops & Desktops */}
+      <main className="flex-1 max-w-[1720px] w-full mx-auto px-3 sm:px-5 lg:px-8 py-4 sm:py-5 space-y-4 sm:space-y-5">
         {activeView === 'brands' ? (
           /* Brand Manufacturer & Logo Studio View */
           <BrandManufacturerStudio
@@ -503,29 +503,29 @@ export const App: React.FC = () => {
           /* Product Name Standardizer View */
           <>
             {/* Welcome & Analytics Banner */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="md:col-span-2 p-6 rounded-3xl bg-gradient-to-r from-slate-900/90 via-slate-800/80 to-slate-900/90 border border-slate-700/70 shadow-2xl relative overflow-hidden flex flex-col justify-between backdrop-blur-xl group">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+              <div className="md:col-span-2 p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-slate-900/90 via-indigo-950/25 to-slate-900/90 border border-white/[0.08] shadow-2xl relative overflow-hidden flex flex-col justify-between backdrop-blur-xl group">
                 {/* Decorative ambient corner glow */}
-                <div className="absolute -top-12 -right-12 w-40 h-40 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-cyan-500/15 transition-all" />
+                <div className="absolute -top-12 -right-12 w-40 h-40 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-indigo-500/15 transition-all" />
 
-                <div className="relative z-10 space-y-2">
+                <div className="relative z-10 space-y-1.5 sm:space-y-2">
                   <div className="flex items-center gap-2">
-                    <span className="px-3 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-black border border-cyan-500/40 uppercase tracking-widest">
+                    <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 text-[10px] font-black border border-indigo-500/30 uppercase tracking-widest">
                       GSS Enterprise Suite
                     </span>
                     <span className="text-slate-400 text-xs font-medium">ODA Data Standardization Hub</span>
                   </div>
-                  <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                  <h1 className="text-lg sm:text-xl xl:text-2xl font-black text-white tracking-tight">
                     Operational Data Product Standardizer
                   </h1>
-                  <p className="text-xs text-slate-300 max-w-lg leading-relaxed">
+                  <p className="text-xs text-slate-300/90 max-w-xl leading-relaxed">
                     Automating strict 150-char English naming formulas, multi-format archive extraction, 49 packaging container classifications, and multi-client scope matrices.
                   </p>
                 </div>
 
-                <div className="relative z-10 flex flex-wrap items-center gap-4 pt-4 text-xs text-slate-400 border-t border-slate-700/60 mt-4">
+                <div className="relative z-10 flex flex-wrap items-center gap-4 pt-3 sm:pt-4 text-xs text-slate-400 border-t border-white/[0.06] mt-3 sm:mt-4">
                   <span className="flex items-center gap-1.5 text-slate-300 font-semibold">
-                    <ShieldCheck className="w-4 h-4 text-cyan-400" />
+                    <ShieldCheck className="w-4 h-4 text-indigo-400" />
                     7-Day Retention Vault
                   </span>
                   <span className="flex items-center gap-1.5 text-slate-300 font-semibold">
@@ -535,7 +535,7 @@ export const App: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setActiveView('brands')}
-                    className="flex items-center gap-1.5 text-xs font-bold text-cyan-400 hover:text-cyan-300 ml-auto transition-colors"
+                    className="flex items-center gap-1.5 text-xs font-bold text-indigo-400 hover:text-indigo-300 ml-auto transition-colors"
                   >
                     <Building2 className="w-4 h-4" />
                     <span>Brand & Logo Studio &rarr;</span>
@@ -544,18 +544,18 @@ export const App: React.FC = () => {
               </div>
 
               {/* Stat 1: Total Active */}
-              <div className="p-5 rounded-3xl bg-slate-900/80 border border-slate-800 shadow-xl flex flex-col justify-between backdrop-blur-xl relative overflow-hidden">
+              <div className="p-4 sm:p-5 rounded-3xl bg-slate-900/80 border border-white/[0.08] shadow-xl flex flex-col justify-between backdrop-blur-xl relative overflow-hidden">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                     Current Batch
                   </span>
-                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+                  <span className="w-2 h-2 rounded-full bg-indigo-400 animate-ping" />
                 </div>
-                <div className="flex items-baseline justify-between mt-3">
-                  <span className="text-4xl font-black text-white font-mono tracking-tight">{products.length}</span>
+                <div className="flex items-baseline justify-between mt-2 sm:mt-3">
+                  <span className="text-3xl sm:text-4xl font-black text-white font-mono tracking-tight">{products.length}</span>
                   <span className="text-xs text-slate-400 font-semibold">Items Loaded</span>
                 </div>
-                <div className="text-[11px] text-slate-400 mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between">
+                <div className="text-[11px] text-slate-400 mt-2 sm:mt-3 pt-2.5 sm:pt-3 border-t border-white/[0.06] flex items-center justify-between">
                   <span className="flex items-center gap-1.5">
                     <History className="w-3.5 h-3.5 text-purple-400" />
                     <span>{totalSavedCount} in local vault</span>
@@ -565,31 +565,31 @@ export const App: React.FC = () => {
               </div>
 
               {/* Stat 2: Compliance Rate */}
-              <div className="p-5 rounded-3xl bg-slate-900/80 border border-slate-800 shadow-xl flex flex-col justify-between backdrop-blur-xl">
+              <div className="p-4 sm:p-5 rounded-3xl bg-slate-900/80 border border-white/[0.08] shadow-xl flex flex-col justify-between backdrop-blur-xl">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                     Formula Compliance
                   </span>
                   <span className="text-xs text-emerald-400 font-bold">{validCount} Perfect</span>
                 </div>
-                <div className="mt-2">
+                <div className="mt-1.5 sm:mt-2">
                   <div className="flex items-baseline justify-between">
-                    <span className="text-4xl font-black text-emerald-400 font-mono tracking-tight">
+                    <span className="text-3xl sm:text-4xl font-black text-emerald-400 font-mono tracking-tight">
                       {products.length > 0 ? Math.round((validCount / products.length) * 100) : 100}%
                     </span>
                     <span className="text-[11px] text-slate-500 font-medium">GSS Standard</span>
                   </div>
                   {/* Progress Compliance Bar */}
-                  <div className="w-full bg-slate-800/90 h-2 rounded-full overflow-hidden mt-2.5 border border-slate-700/60">
+                  <div className="w-full bg-slate-800/90 h-2 rounded-full overflow-hidden mt-2 border border-white/[0.06]">
                     <div
-                      className="h-full bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 transition-all duration-500 rounded-full"
+                      className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400 transition-all duration-500 rounded-full"
                       style={{
                         width: `${products.length > 0 ? Math.round((validCount / products.length) * 100) : 100}%`,
                       }}
                     />
                   </div>
                 </div>
-                <div className="text-[11px] text-slate-400 mt-2 flex items-center gap-1.5">
+                <div className="text-[11px] text-slate-400 mt-1.5 sm:mt-2 flex items-center gap-1.5">
                   {warningCount > 0 ? (
                     <span className="text-amber-400 font-semibold flex items-center gap-1.5">
                       <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
@@ -606,25 +606,25 @@ export const App: React.FC = () => {
             </div>
 
             {/* Active Project Scope Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-gradient-to-r from-slate-900/90 via-cyan-950/40 to-slate-900/90 border border-cyan-500/30 rounded-3xl shadow-xl backdrop-blur-xl">
+            <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 sm:p-4 bg-gradient-to-r from-slate-900/90 via-indigo-950/30 to-slate-900/90 border border-indigo-500/25 rounded-3xl shadow-xl backdrop-blur-xl">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 shadow-md shadow-cyan-500/10">
-                  <Target className="w-5 h-5" />
+                <div className="p-2 sm:p-2.5 rounded-2xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/25 shadow-md shadow-indigo-500/10">
+                  <Target className="w-4 h-4 sm:w-5 sm:h-5" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] uppercase font-black text-cyan-400 tracking-wider">
+                    <span className="text-[10px] uppercase font-black text-indigo-400 tracking-wider">
                       Active Project Scope Matrix
                     </span>
                     <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-black border border-emerald-500/30">
                       LIVE RESOLUTION
                     </span>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                  <div className="flex flex-wrap items-center gap-2 mt-0.5 sm:mt-1">
                     <select
                       value={activeScopeId}
                       onChange={e => handleSelectActiveScope(e.target.value)}
-                      className="bg-slate-900 border border-cyan-500/50 rounded-xl px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:border-cyan-400 cursor-pointer shadow-sm hover:border-cyan-400 transition-colors"
+                      className="bg-slate-950 border border-indigo-500/40 rounded-xl px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs font-bold text-white focus:outline-none focus:border-indigo-400 cursor-pointer shadow-sm hover:border-indigo-400 transition-colors"
                     >
                       {scopes.map(s => (
                         <option key={s.id} value={s.id}>
@@ -632,7 +632,7 @@ export const App: React.FC = () => {
                         </option>
                       ))}
                     </select>
-                    <span className="text-[11px] text-slate-400 hidden sm:inline font-medium">
+                    <span className="text-[11px] text-slate-400 hidden md:inline font-medium">
                       • {activeScope.rules.length} scope rule categories active
                     </span>
                   </div>
@@ -643,9 +643,9 @@ export const App: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsScopeModalOpen(true)}
-                  className="flex items-center gap-2 px-3.5 py-2 text-xs font-bold rounded-xl bg-gradient-to-r from-cyan-600/20 to-blue-600/20 hover:from-cyan-600/30 hover:to-blue-600/30 text-cyan-300 border border-cyan-500/40 transition-all shadow-md hover:scale-[1.02]"
+                  className="flex items-center gap-2 px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs font-bold rounded-xl bg-gradient-to-r from-indigo-600/20 to-purple-600/20 hover:from-indigo-600/30 hover:to-purple-600/30 text-indigo-200 border border-indigo-500/30 transition-all shadow-md hover:scale-[1.02]"
                 >
-                  <Layers className="w-4 h-4 text-cyan-400" />
+                  <Layers className="w-4 h-4 text-indigo-400" />
                   <span>View Scope Matrix & Manage</span>
                 </button>
               </div>

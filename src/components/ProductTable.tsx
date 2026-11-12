@@ -210,25 +210,25 @@ export const ProductTable: React.FC<ProductTableProps> = ({
   return (
     <div className="space-y-4">
       {/* Controls Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-slate-800/40 border border-slate-700/80 rounded-2xl">
-        <div className="flex items-center gap-3 flex-1 min-w-[280px]">
-          <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 sm:p-4 bg-slate-900/80 border border-white/[0.08] rounded-3xl backdrop-blur-xl shadow-lg">
+        <div className="flex flex-wrap items-center gap-2.5 flex-1 min-w-[280px]">
+          <div className="relative flex-1 min-w-[200px] max-w-sm">
             <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-500" />
             <input
               type="text"
-              placeholder="Search by name, brand, Trax, Client category, Smart L1..."
+              placeholder="Search by name, brand, Trax, Client category..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+              className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-950 border border-white/[0.08] rounded-xl text-slate-200 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
             />
           </div>
 
           <div className="flex items-center gap-1.5 text-xs">
-            <Filter className="w-3.5 h-3.5 text-slate-400" />
+            <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <select
               value={filterValid}
               onChange={e => setFilterValid(e.target.value as any)}
-              className="px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-300 text-xs focus:outline-none focus:border-cyan-500"
+              className="px-2.5 py-1.5 bg-slate-950 border border-white/[0.08] rounded-xl text-slate-300 text-xs focus:outline-none focus:border-indigo-500 transition-colors cursor-pointer"
             >
               <option value="all">All Products ({products.length})</option>
               <option value="scoped">🎯 With Project Scope Matrix</option>
@@ -242,13 +242,13 @@ export const ProductTable: React.FC<ProductTableProps> = ({
           </div>
 
           {/* Column View Mode Switcher */}
-          <div className="hidden lg:flex items-center bg-slate-900 p-0.5 rounded-lg border border-slate-700 text-[11px]">
+          <div className="flex items-center bg-slate-950 p-1 rounded-xl border border-white/[0.08] text-[11px]">
             <button
               type="button"
               onClick={() => setColumnView('all')}
-              className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
+              className={`px-2.5 py-1 rounded-lg font-medium transition-colors ${
                 columnView === 'all'
-                  ? 'bg-cyan-600/30 text-cyan-300 font-bold'
+                  ? 'bg-indigo-600/30 text-indigo-300 font-bold border border-indigo-500/30'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -257,24 +257,24 @@ export const ProductTable: React.FC<ProductTableProps> = ({
             <button
               type="button"
               onClick={() => setColumnView('scope_matrix')}
-              className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
+              className={`px-2.5 py-1 rounded-lg font-medium transition-colors ${
                 columnView === 'scope_matrix'
-                  ? 'bg-purple-600/30 text-purple-300 font-bold'
+                  ? 'bg-purple-600/30 text-purple-300 font-bold border border-purple-500/30'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              🎯 Scope Matrix (Col 2/3/4)
+              🎯 Scope Matrix
             </button>
             <button
               type="button"
               onClick={() => setColumnView('formula')}
-              className={`px-2.5 py-1 rounded-md font-medium transition-colors ${
+              className={`px-2.5 py-1 rounded-lg font-medium transition-colors ${
                 columnView === 'formula'
-                  ? 'bg-cyan-600/30 text-cyan-300 font-bold'
+                  ? 'bg-cyan-600/30 text-cyan-300 font-bold border border-cyan-500/30'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              🔤 GSS Formula Only
+              🔤 Formula Only
             </button>
           </div>
         </div>
@@ -285,11 +285,11 @@ export const ProductTable: React.FC<ProductTableProps> = ({
             <button
               type="button"
               onClick={onRealignScope}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 transition-colors shadow-lg shadow-cyan-500/10"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-200 border border-indigo-500/30 transition-colors shadow-sm"
               title="Instantly re-evaluate scope categories for all products against active scope rules without re-calling AI API"
             >
-              <Target className="w-3.5 h-3.5 text-cyan-400" />
-              Re-align Scope Matrix ({products.length})
+              <Target className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Re-align Scope ({products.length})</span>
             </button>
           )}
 
@@ -303,10 +303,10 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                   failedProducts.forEach(p => onReanalyze(p));
                 }
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition-colors shadow-lg shadow-amber-500/10"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition-colors shadow-sm"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" />
-              ⚡ Retry Failed AI ({failedProducts.length})
+              <span>Retry Failed AI ({failedProducts.length})</span>
             </button>
           )}
 
@@ -322,19 +322,19 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                     selected.forEach(p => onReanalyze(p));
                   }
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/20 transition-all"
               >
-                <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-                Re-run AI ({selectedIds.length})
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Re-run AI ({selectedIds.length})</span>
               </button>
 
               <button
                 type="button"
                 onClick={handleBulkCopy}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/30 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/[0.08] transition-all"
               >
-                {bulkCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                {bulkCopied ? 'Copied Names' : `Copy Selected (${selectedIds.length})`}
+                {bulkCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-indigo-400" />}
+                <span>{bulkCopied ? 'Copied Names' : `Copy Selected (${selectedIds.length})`}</span>
               </button>
 
               <button
@@ -343,10 +343,10 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                   const selected = products.filter(p => selectedIds.includes(p.id));
                   exportToExcel(selected, 'GSS_ODA_Selected');
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 transition-colors"
               >
                 <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
-                Export Selected
+                <span>Export Selected</span>
               </button>
 
               <button
@@ -357,33 +357,33 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                     setSelectedIds([]);
                   }
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 transition-colors"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                Delete
+                <span>Delete</span>
               </button>
             </>
           )}
 
-          <div className="flex items-center gap-2 pl-2 border-l border-slate-700">
+          <div className="flex items-center gap-2 pl-2 border-l border-white/[0.08]">
             <button
               type="button"
               onClick={() => exportToExcel(filteredProducts, 'GSS_ODA_Active_Batch')}
               disabled={filteredProducts.length === 0}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition-all disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-600/25 transition-all disabled:opacity-50"
             >
               <FileSpreadsheet className="w-3.5 h-3.5" />
-              Export Excel (With Scope Columns)
+              <span>Export Excel</span>
             </button>
           </div>
         </div>
       </div>
 
       {/* Table Container */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+      <div className="bg-slate-900/90 border border-white/[0.08] rounded-3xl overflow-hidden shadow-2xl backdrop-blur-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-800/80 text-slate-400 font-semibold border-b border-slate-700/80">
+            <thead className="bg-[#0B101D] text-slate-300 font-semibold border-b border-white/[0.08]">
               <tr>
                 <th className="p-3 w-10 text-center">
                   <button
@@ -471,7 +471,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                           className="text-slate-400 hover:text-white"
                         >
                           {isSelected ? (
-                            <CheckSquare className="w-4 h-4 text-cyan-400" />
+                            <CheckSquare className="w-4 h-4 text-indigo-400" />
                           ) : (
                             <Square className="w-4 h-4" />
                           )}
@@ -482,7 +482,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                       <td className="p-3 text-center">
                         <div
                           onClick={() => onInspect(p)}
-                          className="relative w-12 h-12 rounded-lg overflow-hidden bg-slate-950 border border-slate-700/80 mx-auto cursor-pointer group"
+                          className="relative w-12 h-12 rounded-xl overflow-hidden bg-slate-950 border border-white/[0.08] mx-auto cursor-pointer group hover:border-indigo-400/50 transition-colors shadow-sm"
                           title="Click to inspect side-by-side"
                         >
                           <img
@@ -506,7 +506,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                             <button
                               type="button"
                               onClick={() => handleCopyOne(p.id, p.standardName)}
-                              className="p-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-cyan-400 shrink-0 border border-slate-700 transition-colors"
+                              className="p-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-indigo-300 shrink-0 border border-white/[0.08] transition-colors"
                               title="Copy name to clipboard"
                             >
                               {copiedId === p.id ? (
@@ -535,8 +535,8 @@ export const ProductTable: React.FC<ProductTableProps> = ({
                           )}
 
                           {p.status === 'analyzing' && (
-                            <div className="flex items-center gap-1.5 p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-[11px] animate-pulse">
-                              <Sparkles className="w-3 h-3 text-cyan-400 animate-spin shrink-0" />
+                            <div className="flex items-center gap-1.5 p-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-[11px] animate-pulse">
+                              <Sparkles className="w-3 h-3 text-indigo-400 animate-spin shrink-0" />
                               <span>Analyzing image with AI & mapping scope...</span>
                             </div>
                           )}
