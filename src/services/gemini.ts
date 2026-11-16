@@ -355,6 +355,259 @@ export function resolveScopeCategories(
     }
   }
 
+  // Special deterministic rule handler for Beiersdorf Belgium (BEIERSDORF_BE)
+  if (projectScope.id === 'beiersdorf-be') {
+    // 1. Strict Out-of-Scope Exclusions for Beiersdorf BE:
+    // Food, snacks, sweets, confectionery, sauces, soup, noodles, chips, chocolate, candy, biscuits
+    if (
+      /\b(ketchup|mayo|mayonnaise|mustard|pasta sauce|pesto|bolognese|cooking sauce|bouillon|broth|instant soup|canned soup|noodles|pasta snack|instant rice|mashed potato|ice cream|ice pop|popsicle|chips|crisps|snack|chocolate|candy|biscuits|cookie|cookies)\b/i.test(
+        combinedText
+      )
+    ) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Food, snacks, and confectionery are excluded from Beiersdorf BE scope.',
+      };
+    }
+
+    // Beverages, soft drinks, juices, coffee, tea, alcohol, beer, wine, spirits
+    if (
+      /\b(soft drink|coca-cola|pepsi|sprite|fanta|ginger ale|tonic water|mineral water|sparkling water|fruit juice|orange juice|apple juice|nectar|iced tea|ice tea|tea|coffee|espresso|latte|beer|lager|cider|wine|spirit|whisky|vodka|energy drink|sports drink)\b/i.test(
+        combinedText
+      )
+    ) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Beverages, soft drinks, tea, coffee, and alcohol are excluded from Beiersdorf BE scope.',
+      };
+    }
+
+    // Oral care (toothpaste, toothbrush, mouthwash, dental floss)
+    if (/\b(toothpaste|tooth paste|toothbrush|toothbrushes|mouthwash|mouth wash|dental floss|denture|corega|polident)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Oral care products (toothpaste, toothbrush, mouthwash) are excluded from Beiersdorf BE scope.',
+      };
+    }
+
+    // Household cleaning, laundry detergent, dishwashing
+    if (
+      /\b(laundry detergent|washing powder|liquid detergent|detergent capsules|fabric softener|fabric enhancer|bleach spray|kitchen spray|degreaser|bathroom spray|glass cleaner|multisurface|cleaning spray|dishwash|dishwasher|toilet cleaner|floor cleaner|carpet cleaner|air freshener|insecticide)\b/i.test(
+        combinedText
+      )
+    ) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Household cleaning and laundry products are excluded from Beiersdorf BE scope.',
+      };
+    }
+
+    // Tobacco, cigarettes, vapes
+    if (/\b(cigarette|cigar|tobacco|vape|pod)\b/i.test(combinedText)) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Tobacco and vape products are excluded from Beiersdorf BE scope.',
+      };
+    }
+
+    // 2. Specific Category Mappings for In-Scope products in Beiersdorf BE
+
+    // Hansaplast / Wound Care & Healthcare (Medicines & Treatments -> Wound and Plasters)
+    if (
+      /\b(wound spray|wound cream|wound ointment|plaster|plasters|bandage|bandages|liquid wound healing|compress|compresses|wound cleansing|wound healing|hansaplast|elastoplast|first aid|blister plaster|corn plaster|sports tape|kinesiology tape)\b/i.test(
+        combinedText
+      ) ||
+      clientCat.toLowerCase().includes('wound') ||
+      clientCat.toLowerCase() === 'hansaplast' ||
+      traxCat.toLowerCase().includes('medicines') ||
+      smartL1Val.toLowerCase().includes('wound')
+    ) {
+      return {
+        scopeCategory: 'HANSAPLAST',
+        traxCategory: 'Medicines & Treatments',
+        clientCategory: 'HANSAPLAST',
+        smartL1: 'Wound and Plasters',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Lip Balm (Lip Balm -> Lip Balm)
+    if (
+      /\b(lip balm|lip care|lip stick|labello|lip butter|lip oil|hydro care lip|cherry shine|blackberry shine|soft rosé)\b/i.test(
+        combinedText
+      ) ||
+      clientCat.toLowerCase() === 'lip' ||
+      traxCat.toLowerCase().includes('lip balm') ||
+      smartL1Val.toLowerCase().includes('lip balm')
+    ) {
+      return {
+        scopeCategory: 'LIP',
+        traxCategory: 'Lip Balm',
+        clientCategory: 'LIP',
+        smartL1: 'Lip Balm',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Men - Shaving Gel & Foam (Shaving Gel & Foam -> Shaving Gel & Foam)
+    if (
+      /\b(after shave|aftershave|after-shave|shaving gel|shaving foam|shave gel|shave foam|shaving cream|men shaving|female shaving cream)\b/i.test(
+        combinedText
+      ) ||
+      clientCat.toLowerCase() === 'men' ||
+      traxCat.toLowerCase().includes('shaving') ||
+      smartL1Val.toLowerCase().includes('shaving')
+    ) {
+      return {
+        scopeCategory: 'MEN',
+        traxCategory: 'Shaving Gel & Foam',
+        clientCategory: 'MEN',
+        smartL1: 'Shaving Gel & Foam',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Deodorants (APDO -> APDO)
+    if (
+      /\b(deodorant|antiperspirant|deo|deo spray|roll-on|roll on|perfume|body spray|body sprays|eau de toilette|8x4|hidrofugal|black & white invisible|dry comfort|fresh active|protect & care deo)\b/i.test(
+        combinedText
+      ) ||
+      clientCat.toLowerCase() === 'deo' ||
+      traxCat.toLowerCase() === 'apdo' ||
+      smartL1Val.toLowerCase() === 'apdo'
+    ) {
+      return {
+        scopeCategory: 'DEO',
+        traxCategory: 'APDO',
+        clientCategory: 'DEO',
+        smartL1: 'APDO',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Sun Care / Sunscreen (Sunscreen -> Face / Body Care)
+    if (
+      /\b(sunscreen|sun screen|sun lotion|sun spray|face sunscreen|sun protection|after sun|aftersun|nivea sun|eucerin sun|coppertone|protect & moisture|uv face|kids protect|sun milk)\b/i.test(
+        combinedText
+      ) ||
+      clientCat.toLowerCase() === 'sun' ||
+      traxCat.toLowerCase().includes('sunscreen') ||
+      smartL1Val.toLowerCase().includes('sunscreen')
+    ) {
+      return {
+        scopeCategory: 'SUN',
+        traxCategory: 'Sunscreen',
+        clientCategory: 'SUN',
+        smartL1: 'Face / Body Care',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Body Cleansing - Bath Care (Shower Gel, Shampoo, Conditioner, Body Wash)
+    if (
+      /\b(shower gel|shower cream|shower mousse|body wash|men's shower gel|shampoo|conditioner|men's shampoo|nivea shower|creme care shower|creme soft shower)\b/i.test(
+        combinedText
+      ) ||
+      (clientCat.toLowerCase() === 'body cleansing' && traxCat.toLowerCase() === 'bath care') ||
+      smartL1Val.toLowerCase() === 'bath care'
+    ) {
+      return {
+        scopeCategory: 'BODY CLEANSING',
+        traxCategory: 'Bath Care',
+        clientCategory: 'BODY CLEANSING',
+        smartL1: 'Bath Care',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Face Care & Face Cleansing (Face / Body Care -> Face / Body Care)
+    if (
+      /\b(face cream|eye cream|face mask|face serum|facial fillers|facial toner|facial wash|face cleansing|face cleansing bar|face wash|men's face wash|men's moisturizer|night face cream|night cream|day cream|micellar water|micellair|makeup removing|face wipes|facial tissues|hyaluron-filler|cellular|q10|nivea face|luminous 630|derma skin clear)\b/i.test(
+        combinedText
+      ) ||
+      clientCat.toLowerCase() === 'face'
+    ) {
+      return {
+        scopeCategory: 'FACE',
+        traxCategory: 'Face / Body Care',
+        clientCategory: 'FACE',
+        smartL1: 'Face / Body Care',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Hand & Body Care (Face / Body Care -> Face / Body Care)
+    if (
+      /\b(body butter|body moisturizing lotion|body lotion|body oil|foot cream|foot healthcare|foot scrub|hand cream|talcum powder|nivea creme|nivea soft|urearepair|aquaphor|atocontrol|oil pearls)\b/i.test(
+        combinedText
+      ) ||
+      clientCat.toLowerCase() === 'hand body'
+    ) {
+      return {
+        scopeCategory: 'HAND BODY',
+        traxCategory: 'Face / Body Care',
+        clientCategory: 'HAND BODY',
+        smartL1: 'Face / Body Care',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Body Cleansing - Other (Hand Wash, Body Scrub, Foam Bath, Wet Wipes)
+    if (
+      /\b(hand wash|bath soak|foam bath|body scrub|body shaving gel|hair remover|wet tissues|wet wipes)\b/i.test(
+        combinedText
+      ) ||
+      clientCat.toLowerCase() === 'body cleansing'
+    ) {
+      return {
+        scopeCategory: 'BODY CLEANSING',
+        traxCategory: 'Face / Body Care',
+        clientCategory: 'BODY CLEANSING',
+        smartL1: 'Face / Body Care',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Default fallback for Beiersdorf BE (Face / Body Care)
+    return {
+      scopeCategory: 'FACE',
+      traxCategory: 'Face / Body Care',
+      clientCategory: 'FACE',
+      smartL1: 'Face / Body Care',
+      projectScopeName: scopeName,
+      notes,
+    };
+  }
+
   // Special deterministic rule handler for Unilever PT
   if (projectScope.id === 'unilever-pt') {
     // 1. Strict Out-of-Scope Exclusions for Unilever PT
