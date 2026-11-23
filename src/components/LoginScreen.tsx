@@ -32,6 +32,7 @@ interface LoginScreenProps {
 }
 
 const SUPPORTED_SCOPES = [
+  { name: 'JDE Spain', tag: 'Coffee & Tea', color: 'from-amber-700/20 to-orange-700/20 text-amber-300 border-amber-500/30' },
   { name: 'P&G Poland', tag: 'Laundry & Home & Body', color: 'from-blue-600/20 to-sky-600/20 text-sky-300 border-sky-500/30' },
   { name: 'Beiersdorf BE', tag: 'Personal & Wound Care', color: 'from-blue-600/20 to-teal-600/20 text-cyan-300 border-cyan-500/30' },
   { name: 'Pepsi Germany', tag: 'Beverages & Snacks', color: 'from-blue-600/20 to-indigo-600/20 text-blue-300 border-blue-500/30' },

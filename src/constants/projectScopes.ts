@@ -2741,7 +2741,93 @@ export const BEIERSDORF_BE_SCOPE: ProjectScope = {
   ],
 };
 
+export const JDE_SPAIN_SCOPE: ProjectScope = {
+  id: 'jde-es',
+  name: 'JDE Spain Project Scope',
+  clientName: 'JDE Spain',
+  country: 'Spain',
+  description:
+    'Official Project Scope Matrix for JDE Spain / Jacobs Douwe Egberts Spain (Coffee & Tea). Covers Coffee (Grounded Coffee, Coffee Capsules, Coffee Creamers, Coffee Pads, Instant Coffee, Coffee Whiteners, Single & Multi Served Coffee, Coffee Beans) and Tea (Tea, Tea Bags, Loose Tea, Tea Capsules). Strictly excludes Chocolate Powder, Biscuits, Coffee Machines, Hot Chocolate, RTD Coffee & RTD Tea, and all non-Coffee/Tea products.',
+  isDefault: true,
+  smartPaletteChoices: ['Coffee', 'Tea'],
+  specialNotes: [
+    'TRAX SMART PALETTE: There are only 02 valid Smart Level1 options in Trax: 1. Coffee, 2. Tea.',
+    'Category/Base, SMART L1, and Trax Category are aligned identically: Coffee maps to Trax: Coffee, Smart L1: Coffee; Tea maps to Trax: Tea, Smart L1: Tea.',
+    'In-Scope Coffee includes: Grounded Coffee, Coffee Capsules, Coffee Creamers, Coffee Pads, Instant Coffee, Coffee Whiteners, Single & Multi Served Coffee, Coffee Beans.',
+    'In-Scope Tea includes: Tea, Tea Bags, Loose Tea, Tea Capsules.',
+    'Strict Out-of-Scope exclusions: Chocolate Powder, Biscuits, Coffee Machines, Hot Chocolate, RTD Coffee & RTD Tea, and all things that do not fall under Coffee/Tea.',
+  ],
+  inScopeList: [
+    'Coffee: Grounded Coffee, Coffee Capsules, Coffee Creamers, Coffee Pads, Instant Coffee, Coffee Whiteners, Single & Multi Served Coffee, Coffee Beans -> Trax Category: Coffee, Smart L1: Coffee, Category/Base: Coffee',
+    'Tea: Tea, Tea Bags, Loose Tea, Tea Capsules -> Trax Category: Tea, Smart L1: Tea, Category/Base: Tea',
+  ],
+  outOfScopeList: [
+    'Chocolate Powder (Cola Cao, Nesquik, cocoa powder, soluble chocolate mixes)',
+    'Biscuits (all biscuits, cookies, wafers, bakery snacks)',
+    'Coffee Machines (espresso machines, capsule machines, coffee makers, accessories)',
+    'Hot Chocolate (ready hot chocolate drinks, soluble drinking chocolate)',
+    'RTD Coffee & RTD Tea (Ready to Drink canned or bottled cold coffees, iced teas, kombucha)',
+    'All things that do not fall under the Coffee/Tea (Soft drinks, juices, dairy milk, alcohol, food items, personal care, cleaning products)',
+  ],
+  rules: [
+    {
+      id: 'jde-es-coffee',
+      scopeCategory: 'Coffee',
+      traxCategory: 'Coffee',
+      clientCategory: 'Coffee',
+      smartL1List: [
+        'Coffee',
+        'Grounded Coffee',
+        'Coffee Capsules',
+        'Coffee Creamers',
+        'Coffee Pads',
+        'Instant Coffee',
+        'Coffee Whiteners',
+        'Single & Multi Served Coffee',
+        'Coffee Beans',
+      ],
+      inScopeProducts: [
+        'Grounded Coffee',
+        'Coffee Capsules',
+        'Coffee Creamers',
+        'Coffee Pads',
+        'Instant Coffee',
+        'Coffee Whiteners',
+        'Single & Multi Served Coffee',
+        'Coffee Beans',
+      ],
+      outOfScopeProducts: [
+        'Chocolate Powder',
+        'Biscuits',
+        'Coffee Machines',
+        'Hot Chocolate',
+        'RTD Coffee & RTD Tea',
+      ],
+      notes:
+        'Category/Base: Coffee, SMART L1: Coffee, Trax Category: Coffee. In-Scope: Grounded Coffee, Coffee Capsules, Coffee Creamers, Coffee Pads, Instant Coffee, Coffee Whiteners, Single & Multi Served Coffee, Coffee Beans.',
+    },
+    {
+      id: 'jde-es-tea',
+      scopeCategory: 'Tea',
+      traxCategory: 'Tea',
+      clientCategory: 'Tea',
+      smartL1List: ['Tea', 'Tea Bags', 'Loose Tea', 'Tea Capsules'],
+      inScopeProducts: ['Tea', 'Tea Bags', 'Loose Tea', 'Tea Capsules'],
+      outOfScopeProducts: [
+        'Chocolate Powder',
+        'Biscuits',
+        'Coffee Machines',
+        'Hot Chocolate',
+        'RTD Coffee & RTD Tea',
+      ],
+      notes:
+        'Category/Base: Tea, SMART L1: Tea, Trax Category: Tea. In-Scope: Tea, Tea Bags, Loose Tea, Tea Capsules.',
+    },
+  ],
+};
+
 export const DEFAULT_PROJECT_SCOPES: ProjectScope[] = [
+  JDE_SPAIN_SCOPE,
   PNG_PL_SCOPE,
   BEIERSDORF_BE_SCOPE,
   PEPSI_DE_SCOPE,

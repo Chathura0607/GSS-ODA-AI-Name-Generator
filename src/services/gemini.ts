@@ -1254,6 +1254,143 @@ export function resolveScopeCategories(
     }
   }
 
+  // Special deterministic rule handler for JDE Spain (JDE_SPAIN_SCOPE)
+  if (projectScope.id === 'jde-es') {
+    // 1. Strict Out-of-Scope Exclusions for JDE Spain:
+
+    // Chocolate Powder & Hot Chocolate (Cola Cao, Nesquik, cocoa powder, chocolate drinks)
+    if (
+      /\b(chocolate powder|powder chocolate|cocoa powder|cacao|cacao en polvo|cola cao|colacao|nesquik|hot chocolate|drinking chocolate|chocolate caliente)\b/i.test(
+        combinedText
+      )
+    ) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Chocolate Powder and Hot Chocolate are strictly excluded from JDE Spain scope.',
+      };
+    }
+
+    // Biscuits & Cookies
+    if (
+      /\b(biscuit|biscuits|cookie|cookies|galleta|galletas|wafer|wafers|cracker|crackers)\b/i.test(
+        combinedText
+      )
+    ) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Biscuits and bakery items are strictly excluded from JDE Spain scope.',
+      };
+    }
+
+    // Coffee Machines & Appliances
+    if (
+      /\b(coffee machine|coffee maker|cafetera|espresso machine|senseo machine|tassimo machine|dolce gusto machine|nespresso machine|milk frother)\b/i.test(
+        combinedText
+      )
+    ) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Coffee Machines and appliances are strictly excluded from JDE Spain scope.',
+      };
+    }
+
+    // RTD Coffee & RTD Tea (Ready-to-drink canned/bottled iced coffee and iced tea)
+    if (
+      /\b(rtd|ready to drink|iced coffee|cold coffee|ice coffee|frappuccino|iced tea|ice tea|té helado|te helado|nestea|lipton ice tea|fuzetea|kombucha)\b/i.test(
+        combinedText
+      )
+    ) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: RTD Coffee and RTD Tea (ready-to-drink cold beverages) are strictly excluded from JDE Spain scope.',
+      };
+    }
+
+    // Other non-coffee/non-tea FMCG items (soft drinks, juice, water, alcohol, food, personal care, cleaning)
+    if (
+      /\b(soda|cola|pepsi|coke|juice|nectar|water|agua|beer|cerveza|wine|vino|spirits|whisky|gin|vodka|detergent|shampoo|soap|deodorant)\b/i.test(
+        combinedText
+      )
+    ) {
+      return {
+        scopeCategory: 'Out of Scope',
+        traxCategory: 'Out of Scope',
+        clientCategory: 'Out of Scope',
+        smartL1: 'Out of Scope',
+        projectScopeName: scopeName,
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: All items that do not fall under Coffee/Tea are strictly excluded from JDE Spain scope.',
+      };
+    }
+
+    // 2. In-Scope: Coffee
+    // Ground coffee, capsules, creamers, pads, instant, whiteners, single & multi served, beans
+    const isCoffee =
+      /\b(coffee|café|cafe|cafés|cafes|grounded coffee|ground coffee|coffee capsule|coffee capsules|capsulas de cafe|cápsulas de café|coffee pads|coffee pad|monodosis|instant coffee|soluble coffee|cafe soluble|café soluble|coffee creamer|coffee whitener|coffee beans|cafe en grano|café en grano|marcilla|l'or|lor|senseo|saimaza|jacobs|tassimo|douwe egberts|nescafe|nescafé|bonka|illy|lavazza)\b/i.test(
+        combinedText
+      ) ||
+      clientCat.toLowerCase() === 'coffee' ||
+      traxCat.toLowerCase() === 'coffee' ||
+      smartL1Val.toLowerCase() === 'coffee';
+
+    if (isCoffee) {
+      return {
+        scopeCategory: 'Coffee',
+        traxCategory: 'Coffee',
+        clientCategory: 'Coffee',
+        smartL1: 'Coffee',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // 3. In-Scope: Tea
+    // Tea, tea bags, loose tea, tea capsules, herbal tea, infusions
+    const isTea =
+      /\b(tea|té|te|infusion|infusiones|tea bags|bolsitas de te|loose tea|te a granel|tea capsule|tea capsules|capsulas de te|hornimans|twinings|pompadour|lipton|chamomile|manzanilla|poleo menta|rooibos|green tea|black tea|te verde|té verde|te negro|té negro)\b/i.test(
+        combinedText
+      ) ||
+      clientCat.toLowerCase() === 'tea' ||
+      traxCat.toLowerCase() === 'tea' ||
+      smartL1Val.toLowerCase() === 'tea';
+
+    if (isTea) {
+      return {
+        scopeCategory: 'Tea',
+        traxCategory: 'Tea',
+        clientCategory: 'Tea',
+        smartL1: 'Tea',
+        projectScopeName: scopeName,
+        notes,
+      };
+    }
+
+    // Scope mandate: "All things that do not fall under the Coffee/Tea" are Out of Scope
+    return {
+      scopeCategory: 'Out of Scope',
+      traxCategory: 'Out of Scope',
+      clientCategory: 'Out of Scope',
+      smartL1: 'Out of Scope',
+      projectScopeName: scopeName,
+      notes: (notes ? notes + '. ' : '') + 'Out of Scope: Product does not fall under In-Scope Coffee or Tea for JDE Spain.',
+    };
+  }
+
   // Special deterministic rule handler for Unilever PT
   if (projectScope.id === 'unilever-pt') {
     // 1. Strict Out-of-Scope Exclusions for Unilever PT
