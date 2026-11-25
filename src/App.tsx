@@ -12,7 +12,7 @@ import { BrandManufacturerStudio } from './components/BrandManufacturerStudio';
 import { LoginScreen } from './components/LoginScreen';
 
 import { ProcessedProduct, AppSettings, AuthUser } from './types';
-import { ProjectScope, JDE_SPAIN_SCOPE, PNG_PL_SCOPE, BEIERSDORF_BE_SCOPE, PEPSI_DE_SCOPE, PNG_PT_SCOPE, COCA_COLA_ISRAEL_SCOPE, KRAFT_HEINZ_GERMANY_SCOPE, DIAGEO_GR_SCOPE, UNILEVER_PT_SCOPE, UNILEVER_IT_SCOPE, DEFAULT_PROJECT_SCOPES } from './constants/projectScopes';
+import { ProjectScope, PNG_CR_SCOPE, JDE_SPAIN_SCOPE, PNG_PL_SCOPE, BEIERSDORF_BE_SCOPE, PEPSI_DE_SCOPE, PNG_PT_SCOPE, COCA_COLA_ISRAEL_SCOPE, KRAFT_HEINZ_GERMANY_SCOPE, DIAGEO_GR_SCOPE, UNILEVER_PT_SCOPE, UNILEVER_IT_SCOPE, DEFAULT_PROJECT_SCOPES } from './constants/projectScopes';
 import { ExtractedImageFile } from './services/archiveExtractor';
 import { analyzeProductImage, resolveScopeCategories } from './services/gemini';
 import { assembleStandardName, validateStandardName, generateGoogleSkuUrl } from './services/validator';

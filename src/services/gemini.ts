@@ -608,9 +608,9 @@ export function resolveScopeCategories(
     };
   }
 
-  // Special deterministic rule handler for P&G Poland (PNG_PL)
-  if (projectScope.id === 'png-pl') {
-    // 1. Strict Out-of-Scope Exclusions for PNG_PL:
+  // Special deterministic rule handler for P&G Poland (PNG_PL) & P&G CR (PNG_CR)
+  if (projectScope.id === 'png-pl' || projectScope.id === 'png-cr') {
+    // 1. Strict Out-of-Scope Exclusions for PNG_PL / PNG_CR:
 
     // General food, snacks, beverages, alcohol, tobacco
     if (
@@ -624,7 +624,7 @@ export function resolveScopeCategories(
         clientCategory: 'Out of Scope',
         smartL1: 'Out of Scope',
         projectScopeName: scopeName,
-        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Food, snacks, beverages, and tobacco are excluded from PNG_PL scope.',
+        notes: (notes ? notes + '. ' : '') + 'Out of Scope: Food, snacks, beverages, and tobacco are excluded from ' + scopeName + ' scope.',
       };
     }
 
@@ -975,7 +975,7 @@ export function resolveScopeCategories(
     ) {
       return {
         scopeCategory: 'Denture',
-        traxCategory: 'Mouthwash & Denture Cleansers',
+        traxCategory: projectScope.id === 'png-cr' ? 'Toothpaste' : 'Mouthwash & Denture Cleansers',
         clientCategory: 'Denture',
         smartL1: 'Denture',
         projectScopeName: scopeName,

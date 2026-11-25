@@ -1,6 +1,6 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 import { ProcessedProduct, AppSettings, BrandManufacturerInfo } from '../types';
-import { ProjectScope, DEFAULT_PROJECT_SCOPES, JDE_SPAIN_SCOPE, PNG_PL_SCOPE, BEIERSDORF_BE_SCOPE, PEPSI_DE_SCOPE, PNG_PT_SCOPE, COCA_COLA_ISRAEL_SCOPE, KRAFT_HEINZ_GERMANY_SCOPE, UNILEVER_PT_SCOPE, UNILEVER_IT_SCOPE } from '../constants/projectScopes';
+import { ProjectScope, DEFAULT_PROJECT_SCOPES, PNG_CR_SCOPE, JDE_SPAIN_SCOPE, PNG_PL_SCOPE, BEIERSDORF_BE_SCOPE, PEPSI_DE_SCOPE, PNG_PT_SCOPE, COCA_COLA_ISRAEL_SCOPE, KRAFT_HEINZ_GERMANY_SCOPE, UNILEVER_PT_SCOPE, UNILEVER_IT_SCOPE } from '../constants/projectScopes';
 
 interface GssOdaDB extends DBSchema {
   products: {
